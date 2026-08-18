@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Threading.Tasks;
 using Telegram.Td;
 using Telegram.Td.Api;
@@ -111,9 +110,9 @@ namespace Unigram.Services
         {
             try
             {
-                var safeCaption = SecurityElement.Escape(caption ?? string.Empty);
-                var safeMessage = SecurityElement.Escape(message ?? string.Empty);
-                var safePicture = SecurityElement.Escape(picture ?? string.Empty);
+                var safeCaption = EscapeXml(caption);
+                var safeMessage = EscapeXml(message);
+                var safePicture = EscapeXml(picture);
                 var image = string.IsNullOrEmpty(safePicture)
                     ? string.Empty
                     : $"<image hint-crop='circle' src='{safePicture}'/>";
@@ -132,6 +131,16 @@ namespace Unigram.Services
             {
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to update Live Tile: {ex.Message}");
             }
+        }
+
+        private static string EscapeXml(string value)
+        {
+            return (value ?? string.Empty)
+                .Replace("&", "&amp;")
+                .Replace("\"", "&quot;")
+                .Replace("'", "&apos;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;");
         }
 
         public async void Handle(UpdateTermsOfService update)
