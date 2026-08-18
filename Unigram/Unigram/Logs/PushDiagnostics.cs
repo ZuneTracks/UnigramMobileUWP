@@ -16,20 +16,24 @@ namespace Unigram.Logs
         public const string DirectoryName = "Diagnostics";
         public const string FileName = "push-diagnostics.txt";
 
-        public static string FilePath => Path.Combine(ApplicationData.Current.LocalFolder.Path, DirectoryName, FileName);
-
         public static void Write(string eventName, string details = null)
         {
             try
             {
                 lock (FileSyncRoot)
                 {
-                    var directory = Path.GetDirectoryName(FilePath);
+                    var filePath = GetFilePath();
+                    if (string.IsNullOrEmpty(filePath))
+                    {
+                        return;
+                    }
+
+                    var directory = Path.GetDirectoryName(filePath);
                     Directory.CreateDirectory(directory);
 
-                    if (File.Exists(FilePath) && new FileInfo(FilePath).Length >= MaximumFileSize)
+                    if (File.Exists(filePath) && new FileInfo(filePath).Length >= MaximumFileSize)
                     {
-                        File.Delete(FilePath);
+                        File.Delete(filePath);
                     }
 
                     var line = $"{DateTimeOffset.UtcNow:O}|{eventName}";
@@ -40,7 +44,7 @@ namespace Unigram.Logs
 
                     line += Environment.NewLine;
                     var bytes = Encoding.UTF8.GetBytes(line);
-                    using (var stream = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+                    using (var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
                     {
                         stream.Write(bytes, 0, bytes.Length);
                     }
@@ -63,11 +67,35 @@ namespace Unigram.Logs
             {
                 return "none";
             }
+            try
+            {
+                var provider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha256);
+                var input = CryptographicBuffer.ConvertStringToBinary(value, BinaryStringEncoding.Utf8);
+                var hash = CryptographicBuffer.EncodeToHexString(provider.HashData(input));
+                return hash.Substring(0, 12);
+            }
+            catch
+            {
+                return "hash_error";
+            }
+        }
 
-            var provider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha256);
-            var input = CryptographicBuffer.ConvertStringToBinary(value, BinaryStringEncoding.Utf8);
-            var hash = CryptographicBuffer.EncodeToHexString(provider.HashData(input));
-            return hash.Substring(0, 12);
+        private static string GetFilePath()
+        {
+            try
+            {
+                var localFolder = ApplicationData.Current?.LocalFolder;
+                if (localFolder == null || string.IsNullOrEmpty(localFolder.Path))
+                {
+                    return null;
+                }
+
+                return Path.Combine(localFolder.Path, DirectoryName, FileName);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
