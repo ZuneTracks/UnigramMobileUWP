@@ -28,20 +28,24 @@ using namespace Windows::UI::StartScreen;
 void NotificationTask::Run(IBackgroundTaskInstance^ taskInstance)
 {
 	auto deferral = taskInstance->GetDeferral();
+	LogDiagnostic(L"native.task.run", L"entrypoint=Unigram.Native.Tasks.NotificationTask");
 	auto details = dynamic_cast<RawNotification^>(taskInstance->TriggerDetails);
 
 	if (details == nullptr || details->Content == nullptr)
 	{
 		OutputDebugStringW(L"[Notifications] Push task activated without a raw notification payload.\r\n");
+		LogDiagnostic(L"native.task.trigger.invalid", L"trigger=not_raw_or_empty");
 		deferral->Complete();
 		return;
 	}
 
+	LogDiagnostic(L"native.raw.received", ref new String((L"length=" + std::to_wstring(details->Content->Length())).c_str()));
 	UpdateToastAndTiles(details->Content).then([deferral](task<void> completed)
 	{
 		try
 		{
 			completed.get();
+			LogDiagnostic(L"native.raw.processed", L"result=success;tdlib_processing=not_applicable");
 		}
 		catch (Exception ^ ex)
 		{
@@ -49,6 +53,7 @@ void NotificationTask::Run(IBackgroundTaskInstance^ taskInstance)
 		}
 
 		deferral->Complete();
+		LogDiagnostic(L"native.task.complete", nullptr);
 	});
 }
 
@@ -59,8 +64,10 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		auto data = notification->GetNamedObject("data");
 		if (data == nullptr)
 		{
+			LogDiagnostic(L"native.payload.parsed", L"result=no_data");
 			return;
 		}
+		LogDiagnostic(L"native.payload.parsed", L"result=success;has_data=true");
 
 		auto session = GetSession(data);
 		if (session == nullptr)
@@ -90,6 +97,7 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 			{
 				ToastNotificationManager::History->RemoveGroup(group, L"App");
 			}
+			LogDiagnostic(L"native.notification.removed", L"result=success");
 			return;
 		}
 
@@ -145,6 +153,11 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 				create_task(UpdateToast(caption, message, session, session, sound, launch, tag, group, picture, nullptr, date, loc_key)).get();
 				UpdatePrimaryTile(launch, caption, message, picture);
 			}
+			LogDiagnostic(L"native.notification.displayed", L"toast=true;tile=true");
+		}
+		else
+		{
+			LogDiagnostic(L"native.notification.suppressed", L"reason=muted");
 		}
 	});
 }
@@ -440,6 +453,66 @@ void NotificationTask::LogError(String^ operation, Exception^ exception)
 	message += exception->Message->Data();
 	message += L"\r\n";
 	OutputDebugStringW(message.c_str());
+
+	std::wstringstream details;
+	details << L"operation=" << operation->Data() << L";result=error;hresult=0x" << std::hex << exception->HResult;
+	LogDiagnostic(L"native.task.error", ref new String(details.str().c_str()));
+}
+
+void NotificationTask::LogDiagnostic(String^ eventName, String^ details)
+{
+	try
+	{
+		auto root = ApplicationData::Current->LocalFolder->Path;
+		std::wstring directory = root->Data();
+		directory += L"\\Diagnostics";
+		CreateDirectoryW(directory.c_str(), nullptr);
+
+		std::wstring path = directory + L"\\push-diagnostics.txt";
+
+		// Check file size and truncate if over 1 MB
+		{
+			std::ifstream sizeCheck(path, std::ios::ate | std::ios::binary);
+			if (sizeCheck.is_open() && sizeCheck.tellg() >= 1024 * 1024)
+			{
+				sizeCheck.close();
+				std::ofstream truncate(path, std::ios::trunc);
+			}
+		}
+
+		SYSTEMTIME now;
+		GetSystemTime(&now);
+		std::wstringstream line;
+		line << std::setfill(L'0')
+			<< std::setw(4) << now.wYear << L"-"
+			<< std::setw(2) << now.wMonth << L"-"
+			<< std::setw(2) << now.wDay << L"T"
+			<< std::setw(2) << now.wHour << L":"
+			<< std::setw(2) << now.wMinute << L":"
+			<< std::setw(2) << now.wSecond << L"."
+			<< std::setw(3) << now.wMilliseconds << L"Z|"
+			<< eventName->Data();
+		if (details != nullptr && details->Length() > 0)
+		{
+			line << L"|" << details->Data();
+		}
+		line << L"\r\n";
+
+		auto wide = line.str();
+		auto length = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.length()), nullptr, 0, nullptr, nullptr);
+		std::string utf8(length, '\0');
+		WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.length()), &utf8[0], length, nullptr, nullptr);
+
+		std::ofstream file(path, std::ios::app | std::ios::binary);
+		if (file.is_open())
+		{
+			file.write(utf8.data(), utf8.size());
+		}
+	}
+	catch (...)
+	{
+		OutputDebugStringW(L"[Notifications] Unable to write persistent diagnostics.\r\n");
+	}
 }
 
 std::wstring NotificationTask::Escape(std::wstring data)

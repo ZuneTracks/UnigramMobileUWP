@@ -1,0 +1,73 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using Windows.Security.Cryptography;
+using Windows.Security.Cryptography.Core;
+using Windows.Storage;
+
+namespace Unigram.Logs
+{
+    public static class PushDiagnostics
+    {
+        private const long MaximumFileSize = 1024 * 1024;
+        private static readonly object FileSyncRoot = new object();
+
+        public const string DirectoryName = "Diagnostics";
+        public const string FileName = "push-diagnostics.txt";
+
+        public static string FilePath => Path.Combine(ApplicationData.Current.LocalFolder.Path, DirectoryName, FileName);
+
+        public static void Write(string eventName, string details = null)
+        {
+            try
+            {
+                lock (FileSyncRoot)
+                {
+                    var directory = Path.GetDirectoryName(FilePath);
+                    Directory.CreateDirectory(directory);
+
+                    if (File.Exists(FilePath) && new FileInfo(FilePath).Length >= MaximumFileSize)
+                    {
+                        File.Delete(FilePath);
+                    }
+
+                    var line = $"{DateTimeOffset.UtcNow:O}|{eventName}";
+                    if (!string.IsNullOrEmpty(details))
+                    {
+                        line += $"|{details}";
+                    }
+
+                    line += Environment.NewLine;
+                    var bytes = Encoding.UTF8.GetBytes(line);
+                    using (var stream = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+                    {
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to write push diagnostics: 0x{ex.HResult:X8}");
+            }
+        }
+
+        public static void WriteException(string eventName, Exception exception)
+        {
+            Write(eventName, $"result=error;hresult=0x{exception.HResult:X8};type={exception.GetType().Name}");
+        }
+
+        public static string HashIdentifier(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return "none";
+            }
+
+            var provider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha256);
+            var input = CryptographicBuffer.ConvertStringToBinary(value, BinaryStringEncoding.Utf8);
+            var hash = CryptographicBuffer.EncodeToHexString(provider.HashData(input));
+            return hash.Substring(0, 12);
+        }
+    }
+}

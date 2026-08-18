@@ -40,6 +40,7 @@ namespace Unigram
 				String^ GetSession(JsonObject^ data);
 
 				static void LogError(String^ operation, Exception^ exception);
+				static void LogDiagnostic(String^ eventName, String^ details);
 				static std::wstring Escape(std::wstring data);
 			};
 		}

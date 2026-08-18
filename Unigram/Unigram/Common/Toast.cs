@@ -26,6 +26,7 @@ namespace Unigram.Common
         public static async Task<bool> RegisterBackgroundTasks()
         {
             BackgroundAccessStatus access;
+            Logs.PushDiagnostics.Write("background.access.request");
             try
             {
                 access = await BackgroundExecutionManager.RequestAccessAsync();
@@ -33,10 +34,12 @@ namespace Unigram.Common
             catch (Exception ex)
             {
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to request background access: {ex.Message}");
+                Logs.PushDiagnostics.WriteException("background.access.result", ex);
                 return false;
             }
 
-            if (access == BackgroundAccessStatus.DeniedByUser || access == BackgroundAccessStatus.DeniedBySystemPolicy)
+            Logs.PushDiagnostics.Write("background.access.result", $"status={access}");
+            if (!IsBackgroundAccessAllowed(access))
             {
                 Logs.Logger.Warning(Logs.Target.Notifications, $"Background notifications are disabled: {access}");
                 return false;
@@ -44,39 +47,53 @@ namespace Unigram.Common
 
             foreach (var task in BackgroundTaskRegistration.AllTasks)
             {
+                Logs.PushDiagnostics.Write("background.task.found", $"name={task.Value.Name};id={task.Key}");
                 if (LegacyTaskNames.Contains(task.Value.Name))
                 {
                     task.Value.Unregister(true);
+                    Logs.PushDiagnostics.Write("background.task.removed", $"name={task.Value.Name};id={task.Key}");
                 }
             }
 
             var registered = true;
             try
             {
-                Register(NotificationTaskName, NotificationTaskEntryPoint, new PushNotificationTrigger());
+                var registration = Register(NotificationTaskName, NotificationTaskEntryPoint, new PushNotificationTrigger());
                 Logs.Logger.Info(Logs.Target.Notifications, "Registered out-of-process push notification task");
+                Logs.PushDiagnostics.Write("background.task.registered", $"name={NotificationTaskName};entrypoint={NotificationTaskEntryPoint};id={registration.TaskId};trigger=PushNotificationTrigger");
             }
             catch (Exception ex)
             {
                 registered = false;
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register push notification task: {ex.Message}");
+                Logs.PushDiagnostics.WriteException("background.task.push.failed", ex);
             }
 
             try
             {
-                Register(InteractiveTaskName, null, new ToastNotificationActionTrigger());
+                var registration = Register(InteractiveTaskName, null, new ToastNotificationActionTrigger());
                 Logs.Logger.Info(Logs.Target.Notifications, "Registered in-process toast action task");
+                Logs.PushDiagnostics.Write("background.task.registered", $"name={InteractiveTaskName};entrypoint=in-process;id={registration.TaskId};trigger=ToastNotificationActionTrigger");
             }
             catch (Exception ex)
             {
                 registered = false;
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register toast action task: {ex.Message}");
+                Logs.PushDiagnostics.WriteException("background.task.toast.failed", ex);
             }
 
             return registered;
         }
 
-        private static void Register(string name, string entryPoint, IBackgroundTrigger trigger)
+        private static bool IsBackgroundAccessAllowed(BackgroundAccessStatus access)
+        {
+            return access == BackgroundAccessStatus.AllowedMayUseActiveRealTimeConnectivity
+                || access == BackgroundAccessStatus.AllowedWithAlwaysOnRealTimeConnectivity
+                || access == BackgroundAccessStatus.AllowedSubjectToSystemPolicy
+                || access == BackgroundAccessStatus.AlwaysAllowed;
+        }
+
+        private static BackgroundTaskRegistration Register(string name, string entryPoint, IBackgroundTrigger trigger)
         {
             var builder = new BackgroundTaskBuilder
             {
@@ -89,7 +106,7 @@ namespace Unigram.Common
             }
 
             builder.SetTrigger(trigger);
-            builder.Register();
+            return builder.Register();
         }
 
         public static int? GetSession(IActivatedEventArgs args)

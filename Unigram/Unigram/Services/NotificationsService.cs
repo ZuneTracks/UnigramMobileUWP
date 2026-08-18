@@ -126,10 +126,12 @@ namespace Unigram.Services
                 var updater = TileUpdateManager.CreateTileUpdaterForApplication("App");
                 updater.EnableNotificationQueue(false);
                 updater.Update(new TileNotification(document));
+                Logs.PushDiagnostics.Write("managed.tile.update", $"session={_sessionService.Id};result=success");
             }
             catch (Exception ex)
             {
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to update Live Tile: {ex.Message}");
+                Logs.PushDiagnostics.WriteException("managed.tile.update.failed", ex);
             }
         }
 
@@ -487,10 +489,7 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
-                if (_sessionService.IsActive)
-                {
-                    UpdateTile(caption, content, launch, picture);
-                }
+                UpdateTile(caption, content, launch, picture);
             });
         }
 
@@ -525,10 +524,7 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
-                if (_sessionService.IsActive)
-                {
-                    UpdateTile(caption, content, launch, picture);
-                }
+                UpdateTile(caption, content, launch, picture);
             });
 
             if (App.Connection is AppServiceConnection connection && _settings.Notifications.InAppFlash)
@@ -721,20 +717,25 @@ namespace Unigram.Services
             using (await _registrationLock.WaitAsync())
             {
                 var userId = _protoService.Options.MyId;
+                Logs.PushDiagnostics.Write("wns.registration.start", $"session={_sessionService.Id};user_ready={userId != 0};already_registered={_alreadyRegistered}");
                 if (userId == 0)
                 {
                     Logs.Logger.Info(Logs.Target.Notifications, "Deferring push registration until the user ID is available");
+                    Logs.PushDiagnostics.Write("wns.registration.deferred", $"session={_sessionService.Id};reason=user_not_ready");
                     return;
                 }
 
                 if (_alreadyRegistered)
                 {
+                    Logs.PushDiagnostics.Write("wns.registration.skipped", $"session={_sessionService.Id};reason=already_registered");
                     return;
                 }
 
                 try
                 {
+                    Logs.PushDiagnostics.Write("wns.channel.request", $"session={_sessionService.Id}");
                     var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
+                    Logs.PushDiagnostics.Write("wns.channel.created", $"session={_sessionService.Id};uri_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)};expires={channel.ExpirationTime:O}");
                     var ids = new List<long>();
 
                     foreach (var settings in TLContainer.Current.ResolveAll<ISettingsService>())
@@ -747,6 +748,7 @@ namespace Unigram.Services
                         ids.Add(settings.UserId);
                     }
 
+                    Logs.PushDiagnostics.Write("tdlib.register_device.request", $"session={_sessionService.Id};other_accounts={ids.Count};token_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)}");
                     var result = await _protoService.SendAsync(new RegisterDevice(new DeviceTokenWindowsPush(channel.Uri), ids));
                     if (!(result is PushReceiverId receiverId))
                     {
@@ -754,6 +756,14 @@ namespace Unigram.Services
                         _settings.PushToken = null;
                         _alreadyRegistered = false;
                         Logs.Logger.Error(Logs.Target.Notifications, $"TDLib rejected push registration: {result}");
+                        if (result is Error error)
+                        {
+                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=error;code={error.Code}");
+                        }
+                        else
+                        {
+                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=unexpected;type={result?.GetType().Name ?? "null"}");
+                        }
                         return;
                     }
 
@@ -768,21 +778,25 @@ namespace Unigram.Services
                     _settings.PushToken = channel.Uri;
                     _alreadyRegistered = true;
                     Logs.Logger.Info(Logs.Target.Notifications, $"Registered WNS channel for session {_sessionService.Id}");
+                    Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=success;receiver_hash={Logs.PushDiagnostics.HashIdentifier(receiverId.Id.ToString(CultureInfo.InvariantCulture))};mapping_persisted={_settings.PushReceiverId == receiverId.Id}");
                 }
                 catch (Exception ex)
                 {
                     _alreadyRegistered = false;
                     _settings.PushToken = null;
                     Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register WNS channel: {ex.Message}");
+                    Logs.PushDiagnostics.WriteException("wns.registration.failed", ex);
                 }
             }
         }
 
         private void OnPushNotificationReceived(PushNotificationChannel sender, PushNotificationReceivedEventArgs args)
         {
+            Logs.PushDiagnostics.Write("wns.foreground.received", $"type={args.NotificationType}");
             if (args.NotificationType == PushNotificationType.Raw)
             {
                 args.Cancel = true;
+                Logs.PushDiagnostics.Write("wns.foreground.raw.cancelled", "reason=foreground_tdlib_connection");
             }
         }
 
@@ -874,6 +888,7 @@ namespace Unigram.Services
 
             if (update.AuthorizationState is AuthorizationStateReady)
             {
+                Logs.PushDiagnostics.Write("wns.registration.retry", "reason=authorization_ready");
                 _ = RegisterAsync();
             }
         }
@@ -882,6 +897,7 @@ namespace Unigram.Services
         {
             if (update.Name == "my_id" && update.Value is OptionValueInteger myId && myId.Value != 0)
             {
+                Logs.PushDiagnostics.Write("wns.registration.retry", "reason=my_id_ready");
                 _ = RegisterAsync();
             }
         }
