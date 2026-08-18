@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 using Telegram.Td;
 using Telegram.Td.Api;
@@ -47,6 +48,7 @@ namespace Unigram.Services
         IHandle<UpdateServiceNotification>,
         IHandle<UpdateTermsOfService>,
         IHandle<UpdateAuthorizationState>,
+        IHandle<UpdateOption>,
         IHandle<UpdateUser>,
         IHandle<UpdateNotification>,
         IHandle<UpdateNotificationGroup>,
@@ -61,6 +63,7 @@ namespace Unigram.Services
 
         private readonly DisposableMutex _registrationLock;
         private bool _alreadyRegistered;
+        private PushNotificationChannel _channel;
 
         private bool _suppress;
 
@@ -98,7 +101,37 @@ namespace Unigram.Services
 
                 updater.Update(new BadgeNotification(document));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logs.Logger.Error(Logs.Target.Notifications, $"Unable to update badge: {ex.Message}");
+            }
+        }
+
+        private void UpdateTile(string caption, string message, string launch, string picture)
+        {
+            try
+            {
+                var safeCaption = SecurityElement.Escape(caption ?? string.Empty);
+                var safeMessage = SecurityElement.Escape(message ?? string.Empty);
+                var safePicture = SecurityElement.Escape(picture ?? string.Empty);
+                var image = string.IsNullOrEmpty(safePicture)
+                    ? string.Empty
+                    : $"<image hint-crop='circle' src='{safePicture}'/>";
+
+                var body = $"<text hint-style='body'>{safeCaption}</text><text hint-style='captionSubtle' hint-wrap='true'>{safeMessage}</text>";
+                var xml = $"<tile><visual arguments='{launch}'><binding template='TileMedium' branding='name'>{image}{body}</binding><binding template='TileWide' branding='nameAndLogo'><group><subgroup hint-weight='18'>{image}</subgroup><subgroup>{body}</subgroup></group></binding><binding template='TileLarge' branding='nameAndLogo'><group><subgroup hint-weight='18'>{image}</subgroup><subgroup>{body}</subgroup></group></binding></visual></tile>";
+
+                var document = new XmlDocument();
+                document.LoadXml(xml);
+
+                var updater = TileUpdateManager.CreateTileUpdaterForApplication("App");
+                updater.EnableNotificationQueue(false);
+                updater.Update(new TileNotification(document));
+            }
+            catch (Exception ex)
+            {
+                Logs.Logger.Error(Logs.Target.Notifications, $"Unable to update Live Tile: {ex.Message}");
+            }
         }
 
         public async void Handle(UpdateTermsOfService update)
@@ -281,6 +314,7 @@ namespace Unigram.Services
             if (update.User.Id == _protoService.Options.MyId)
             {
                 CreateToastCollection(update.User);
+                _ = RegisterAsync();
             }
         }
 
@@ -444,6 +478,10 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
+                if (_sessionService.IsActive)
+                {
+                    UpdateTile(caption, content, launch, picture);
+                }
             });
         }
 
@@ -478,6 +516,10 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
+                if (_sessionService.IsActive)
+                {
+                    UpdateTile(caption, content, launch, picture);
+                }
             });
 
             if (App.Connection is AppServiceConnection connection && _settings.Notifications.InAppFlash)
@@ -672,6 +714,7 @@ namespace Unigram.Services
                 var userId = _protoService.Options.MyId;
                 if (userId == 0)
                 {
+                    Logs.Logger.Info(Logs.Target.Notifications, "Deferring push registration until the user ID is available");
                     return;
                 }
 
@@ -680,44 +723,48 @@ namespace Unigram.Services
                     return;
                 }
 
-                _alreadyRegistered = true;
-
                 try
                 {
                     var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
-                    if (channel.Uri != _settings.PushToken)
+                    var ids = new List<long>();
+
+                    foreach (var settings in TLContainer.Current.ResolveAll<ISettingsService>())
                     {
-                        var ids = new List<long>();
-
-                        foreach (var settings in TLContainer.Current.ResolveAll<ISettingsService>())
+                        if (settings.UseTestDC != _settings.UseTestDC || settings.UserId == _settings.UserId)
                         {
-                            if (settings.UseTestDC != _settings.UseTestDC || settings.UserId == _settings.UserId)
-                            {
-                                continue;
-                            }
-
-                            ids.Add(settings.UserId);
+                            continue;
                         }
 
-                        var result = await _protoService.SendAsync(new RegisterDevice(new DeviceTokenWindowsPush(channel.Uri), ids));
-                        if (result is PushReceiverId receiverId)
-                        {
-                            _settings.PushReceiverId = receiverId.Id;
-                            _settings.PushToken = channel.Uri;
-                        }
-                        else
-                        {
-                            _settings.PushReceiverId = 0;
-                            _settings.PushToken = null;
-                        }
+                        ids.Add(settings.UserId);
                     }
 
+                    var result = await _protoService.SendAsync(new RegisterDevice(new DeviceTokenWindowsPush(channel.Uri), ids));
+                    if (!(result is PushReceiverId receiverId))
+                    {
+                        _settings.PushReceiverId = 0;
+                        _settings.PushToken = null;
+                        _alreadyRegistered = false;
+                        Logs.Logger.Error(Logs.Target.Notifications, $"TDLib rejected push registration: {result}");
+                        return;
+                    }
+
+                    if (_channel != null)
+                    {
+                        _channel.PushNotificationReceived -= OnPushNotificationReceived;
+                    }
+
+                    _channel = channel;
                     channel.PushNotificationReceived += OnPushNotificationReceived;
+                    _settings.PushReceiverId = receiverId.Id;
+                    _settings.PushToken = channel.Uri;
+                    _alreadyRegistered = true;
+                    Logs.Logger.Info(Logs.Target.Notifications, $"Registered WNS channel for session {_sessionService.Id}");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     _alreadyRegistered = false;
                     _settings.PushToken = null;
+                    Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register WNS channel: {ex.Message}");
                 }
             }
         }
@@ -775,6 +822,15 @@ namespace Unigram.Services
             //}
 
             _settings.PushToken = null;
+            _settings.PushReceiverId = 0;
+            _alreadyRegistered = false;
+
+            if (_channel != null)
+            {
+                _channel.PushNotificationReceived -= OnPushNotificationReceived;
+                _channel = null;
+            }
+
             await Task.CompletedTask;
         }
 
@@ -784,6 +840,7 @@ namespace Unigram.Services
             {
                 var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
                 channel.Close();
+                _alreadyRegistered = false;
             }
             catch (Exception ex)
             {
@@ -804,6 +861,19 @@ namespace Unigram.Services
                 default:
                     _authorizationStateTask.TrySetResult(update.AuthorizationState);
                     break;
+            }
+
+            if (update.AuthorizationState is AuthorizationStateReady)
+            {
+                _ = RegisterAsync();
+            }
+        }
+
+        public void Handle(UpdateOption update)
+        {
+            if (update.Name == "my_id" && update.Value is OptionValueInteger myId && myId.Value != 0)
+            {
+                _ = RegisterAsync();
             }
         }
 

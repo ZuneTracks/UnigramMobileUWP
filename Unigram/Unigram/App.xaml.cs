@@ -275,6 +275,11 @@ namespace Unigram
                 {
                     int? GetSession(long id)
                     {
+                        if (ApplicationData.Current.LocalSettings.Values.TryGet($"PushReceiverId{id}", out int receiverSession))
+                        {
+                            return receiverSession;
+                        }
+
                         if (ApplicationData.Current.LocalSettings.Values.TryGet($"User{id}", out int value))
                         {
                             return value;
@@ -299,10 +304,25 @@ namespace Unigram
 
                     if (TLContainer.Current.TryResolve(session.Value, out IProtoService service))
                     {
-                        var response = await service.SendAsync(new ProcessPushNotification(notification.Content));
-                        if (response is Error error && error.Code == 406)
+                        for (var attempt = 1; attempt <= 3; attempt++)
                         {
-                            // xd memes
+                            var response = await service.SendAsync(new ProcessPushNotification(notification.Content));
+                            if (!(response is Error error) || error.Code != 406)
+                            {
+                                if (response is Error finalError)
+                                {
+                                    Logs.Logger.Error(Logs.Target.Notifications, $"Unable to process push notification: {finalError}");
+                                }
+
+                                break;
+                            }
+
+                            if (attempt == 3)
+                            {
+                                Logs.Logger.Error(Logs.Target.Notifications, $"Unable to process push notification after {attempt} attempts: {error}");
+                                break;
+                            }
+
                             await Task.Delay(5000);
                         }
                     }
@@ -446,12 +466,6 @@ namespace Unigram
             //#endif
 
             await Toast.RegisterBackgroundTasks();
-
-            try
-            {
-                TileUpdateManager.CreateTileUpdaterForApplication("App").Clear();
-            }
-            catch { }
 
             try
             {
