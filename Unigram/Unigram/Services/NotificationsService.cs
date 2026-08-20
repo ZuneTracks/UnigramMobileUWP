@@ -111,7 +111,7 @@ namespace Unigram.Services
             }
         }
 
-        private void UpdateTile(string caption, string message, string launch, string picture)
+        private bool UpdateTile(string caption, string message, string launch, string picture)
         {
             try
             {
@@ -132,12 +132,28 @@ namespace Unigram.Services
                 updater.EnableNotificationQueue(false);
                 updater.Update(new TileNotification(document));
                 Logs.PushDiagnostics.Write("managed.tile.update", $"session={_sessionService.Id};result=success");
+                return true;
             }
             catch (Exception ex)
             {
                 Logs.Logger.Error(Logs.Target.Notifications, $"Unable to update Live Tile: {ex.Message}");
                 Logs.PushDiagnostics.WriteException("managed.tile.update.failed", ex);
+                return false;
             }
+        }
+
+        private void UpdateManagedTile(string caption, string message, string launch, string picture)
+        {
+            var active = _sessionService.IsActive;
+            var pictureAvailable = !string.IsNullOrEmpty(picture);
+            if (!active)
+            {
+                Logs.PushDiagnostics.Write("managed.tile.decision", $"session={_sessionService.Id};active=false;picture_available={pictureAvailable.ToString().ToLowerInvariant()};result=skipped");
+                return;
+            }
+
+            var applied = UpdateTile(caption, message, launch, picture);
+            Logs.PushDiagnostics.Write("managed.tile.decision", $"session={_sessionService.Id};active=true;picture_available={pictureAvailable.ToString().ToLowerInvariant()};result={(applied ? "applied" : "failed")}");
         }
 
         private static string EscapeXml(string value)
@@ -494,7 +510,7 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
-                UpdateTile(caption, content, launch, picture);
+                UpdateManagedTile(caption, content, launch, picture);
             });
         }
 
@@ -529,7 +545,7 @@ namespace Unigram.Services
             await UpdateAsync(chat, async () =>
             {
                 await UpdateToast(caption, content, $"{_sessionService.Id}", sound, launch, $"{id}", $"{groupId}", picture, dateTime, canReply);
-                UpdateTile(caption, content, launch, picture);
+                UpdateManagedTile(caption, content, launch, picture);
             });
 
             if (App.Connection is AppServiceConnection connection && _settings.Notifications.InAppFlash)
