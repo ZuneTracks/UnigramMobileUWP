@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage;
@@ -67,6 +68,7 @@ namespace Unigram.Logs
             {
                 return "none";
             }
+
             try
             {
                 var provider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha256);
@@ -77,6 +79,27 @@ namespace Unigram.Logs
             catch
             {
                 return "hash_error";
+            }
+        }
+
+        public static string SanitizeErrorMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return "none";
+            }
+
+            try
+            {
+                var sanitized = message.Replace('\r', ' ').Replace('\n', ' ').Replace('|', '/');
+                sanitized = Regex.Replace(sanitized, @"https?://\S+", "[redacted_uri]", RegexOptions.IgnoreCase);
+                sanitized = Regex.Replace(sanitized, @"\b\d{6,}\b", "[redacted_number]");
+                sanitized = Regex.Replace(sanitized, @"\b[A-Za-z0-9_-]{24,}\b", "[redacted_token]");
+                return sanitized.Length <= 256 ? sanitized : sanitized.Substring(0, 256);
+            }
+            catch
+            {
+                return "sanitize_error";
             }
         }
 

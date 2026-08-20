@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Td;
 using Telegram.Td.Api;
@@ -63,6 +64,10 @@ namespace Unigram.Services
         private readonly DisposableMutex _registrationLock;
         private bool _alreadyRegistered;
         private PushNotificationChannel _channel;
+        private DateTimeOffset _nextRegistrationAttempt;
+        private CancellationTokenSource _registrationRetryCancellation;
+
+        private static readonly TimeSpan RegistrationRetryDelay = TimeSpan.FromMinutes(5);
 
         private bool _suppress;
 
@@ -731,12 +736,20 @@ namespace Unigram.Services
                     return;
                 }
 
+                var now = DateTimeOffset.UtcNow;
+                if (now < _nextRegistrationAttempt)
+                {
+                    Logs.PushDiagnostics.Write("wns.registration.skipped", $"session={_sessionService.Id};reason=retry_cooldown;retry_after={_nextRegistrationAttempt:O}");
+                    return;
+                }
+
                 try
                 {
                     Logs.PushDiagnostics.Write("wns.channel.request", $"session={_sessionService.Id}");
                     var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
                     Logs.PushDiagnostics.Write("wns.channel.created", $"session={_sessionService.Id};uri_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)};expires={channel.ExpirationTime:O}");
-                    var ids = new List<long>();
+                    var ids = new HashSet<long>();
+                    var invalidIds = 0;
 
                     foreach (var settings in TLContainer.Current.ResolveAll<ISettingsService>())
                     {
@@ -745,24 +758,34 @@ namespace Unigram.Services
                             continue;
                         }
 
-                        ids.Add(settings.UserId);
+                        if (settings.UserId > 0)
+                        {
+                            ids.Add(settings.UserId);
+                        }
+                        else
+                        {
+                            invalidIds++;
+                        }
                     }
 
-                    Logs.PushDiagnostics.Write("tdlib.register_device.request", $"session={_sessionService.Id};other_accounts={ids.Count};token_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)}");
-                    var result = await _protoService.SendAsync(new RegisterDevice(new DeviceTokenWindowsPush(channel.Uri), ids));
+                    Logs.PushDiagnostics.Write("tdlib.register_device.request", $"session={_sessionService.Id};other_accounts={ids.Count};invalid_accounts_omitted={invalidIds};token_type=windows_push;token_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)}");
+                    var result = await _protoService.SendAsync(new RegisterDevice(new DeviceTokenWindowsPush(channel.Uri), ids.ToList()));
                     if (!(result is PushReceiverId receiverId))
                     {
                         _settings.PushReceiverId = 0;
                         _settings.PushToken = null;
                         _alreadyRegistered = false;
+                        _nextRegistrationAttempt = DateTimeOffset.UtcNow.Add(RegistrationRetryDelay);
+                        ScheduleRegistrationRetry();
                         Logs.Logger.Error(Logs.Target.Notifications, $"TDLib rejected push registration: {result}");
                         if (result is Error error)
                         {
-                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=error;code={error.Code}");
+                            var message = Logs.PushDiagnostics.SanitizeErrorMessage(error.Message);
+                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=error;code={error.Code};message={message};retry_after={_nextRegistrationAttempt:O}");
                         }
                         else
                         {
-                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=unexpected;type={result?.GetType().Name ?? "null"}");
+                            Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=unexpected;type={result?.GetType().Name ?? "null"};retry_after={_nextRegistrationAttempt:O}");
                         }
                         return;
                     }
@@ -777,6 +800,8 @@ namespace Unigram.Services
                     _settings.PushReceiverId = receiverId.Id;
                     _settings.PushToken = channel.Uri;
                     _alreadyRegistered = true;
+                    _nextRegistrationAttempt = DateTimeOffset.MinValue;
+                    CancelRegistrationRetry();
                     Logs.Logger.Info(Logs.Target.Notifications, $"Registered WNS channel for session {_sessionService.Id}");
                     Logs.PushDiagnostics.Write("tdlib.register_device.result", $"session={_sessionService.Id};result=success;receiver_hash={Logs.PushDiagnostics.HashIdentifier(receiverId.Id.ToString(CultureInfo.InvariantCulture))};mapping_persisted={_settings.PushReceiverId == receiverId.Id}");
                 }
@@ -784,10 +809,65 @@ namespace Unigram.Services
                 {
                     _alreadyRegistered = false;
                     _settings.PushToken = null;
+                    _nextRegistrationAttempt = DateTimeOffset.UtcNow.Add(RegistrationRetryDelay);
+                    ScheduleRegistrationRetry();
                     Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register WNS channel: {ex.Message}");
-                    Logs.PushDiagnostics.WriteException("wns.registration.failed", ex);
+                    Logs.PushDiagnostics.Write("wns.registration.failed", $"session={_sessionService.Id};result=error;hresult=0x{ex.HResult:X8};type={ex.GetType().Name};message={Logs.PushDiagnostics.SanitizeErrorMessage(ex.Message)};retry_after={_nextRegistrationAttempt:O}");
                 }
             }
+        }
+
+        private void ScheduleRegistrationRetry()
+        {
+            if (_registrationRetryCancellation != null)
+            {
+                return;
+            }
+
+            var cancellation = new CancellationTokenSource();
+            _registrationRetryCancellation = cancellation;
+            _ = RetryRegistrationAsync(cancellation);
+        }
+
+        private async Task RetryRegistrationAsync(CancellationTokenSource cancellation)
+        {
+            try
+            {
+                while (!cancellation.IsCancellationRequested && !_alreadyRegistered)
+                {
+                    var delay = _nextRegistrationAttempt - DateTimeOffset.UtcNow;
+                    if (delay > TimeSpan.Zero)
+                    {
+                        Logs.PushDiagnostics.Write("wns.registration.retry_scheduled", $"session={_sessionService.Id};retry_after={_nextRegistrationAttempt:O}");
+                        await Task.Delay(delay, cancellation.Token);
+                    }
+
+                    if (!cancellation.IsCancellationRequested)
+                    {
+                        Logs.PushDiagnostics.Write("wns.registration.retry", $"session={_sessionService.Id};reason=cooldown_elapsed");
+                        await RegisterAsync();
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+            }
+            finally
+            {
+                if (ReferenceEquals(_registrationRetryCancellation, cancellation))
+                {
+                    _registrationRetryCancellation = null;
+                }
+
+                cancellation.Dispose();
+            }
+        }
+
+        private void CancelRegistrationRetry()
+        {
+            var cancellation = _registrationRetryCancellation;
+            _registrationRetryCancellation = null;
+            cancellation?.Cancel();
         }
 
         private void OnPushNotificationReceived(PushNotificationChannel sender, PushNotificationReceivedEventArgs args)
@@ -847,6 +927,8 @@ namespace Unigram.Services
             _settings.PushToken = null;
             _settings.PushReceiverId = 0;
             _alreadyRegistered = false;
+            _nextRegistrationAttempt = DateTimeOffset.MinValue;
+            CancelRegistrationRetry();
 
             if (_channel != null)
             {
@@ -864,6 +946,8 @@ namespace Unigram.Services
                 var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
                 channel.Close();
                 _alreadyRegistered = false;
+                _nextRegistrationAttempt = DateTimeOffset.MinValue;
+                CancelRegistrationRetry();
             }
             catch (Exception ex)
             {
