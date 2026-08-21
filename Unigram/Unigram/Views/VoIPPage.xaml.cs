@@ -543,7 +543,7 @@ namespace Unigram.Views
             }
             else
             {
-                _protoService.Send(new AcceptCall(_call.Id, new CallProtocol(true, true, 65, 74, new string[0])));
+                _protoService.Send(new AcceptCall(_call.Id, new CallProtocol(true, true, 65, libtgvoip.VoIPControllerWrapper.GetConnectionMaxLayer(), new string[0])));
             }
         }
 
