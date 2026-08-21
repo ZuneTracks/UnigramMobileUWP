@@ -479,11 +479,11 @@ namespace Unigram.ViewModels
 
             var items = new[]
             {
-                new SelectRadioItem(new ChatReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
-                new SelectRadioItem(new ChatReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
-                new SelectRadioItem(new ChatReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
-                new SelectRadioItem(new ChatReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
-                new SelectRadioItem(new ChatReportReasonCustom(), Strings.Resources.ReportChatOther, false)
+                new SelectRadioItem(new ReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
+                new SelectRadioItem(new ReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
+                new SelectRadioItem(new ReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
+                new SelectRadioItem(new ReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
+                new SelectRadioItem(new ReportReasonCustom(), Strings.Resources.ReportChatOther, false)
             };
 
             var dialog = new SelectRadioPopup(items);
@@ -497,7 +497,7 @@ namespace Unigram.ViewModels
                 return;
             }
 
-            var reason = dialog.SelectedIndex as ChatReportReason;
+            var reason = dialog.SelectedIndex as ReportReason;
             if (reason == null)
             {
                 return;
@@ -889,11 +889,11 @@ namespace Unigram.ViewModels
 
             var items = new[]
             {
-                new SelectRadioItem(new ChatReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
-                new SelectRadioItem(new ChatReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
-                new SelectRadioItem(new ChatReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
-                new SelectRadioItem(new ChatReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
-                new SelectRadioItem(new ChatReportReasonCustom(), Strings.Resources.ReportChatOther, false)
+                new SelectRadioItem(new ReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
+                new SelectRadioItem(new ReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
+                new SelectRadioItem(new ReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
+                new SelectRadioItem(new ReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
+                new SelectRadioItem(new ReportReasonCustom(), Strings.Resources.ReportChatOther, false)
             };
 
             var dialog = new SelectRadioPopup(items);
@@ -907,7 +907,7 @@ namespace Unigram.ViewModels
                 return;
             }
 
-            var reason = dialog.SelectedIndex as ChatReportReason;
+            var reason = dialog.SelectedIndex as ReportReason;
             if (reason == null)
             {
                 return;

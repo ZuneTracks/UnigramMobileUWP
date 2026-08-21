@@ -10,7 +10,9 @@ using Unigram.Controls;
 using Unigram.Converters;
 using Unigram.Services;
 using Unigram.ViewModels;
+#if !MODERN_TDLIB
 using Unigram.ViewModels.Folders;
+#endif
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation.Metadata;
 using Windows.UI;
@@ -310,6 +312,7 @@ namespace Unigram.Views.Popups
 
         #region PickFiltersAsync
 
+#if !MODERN_TDLIB
         public static async Task<IList<ChatFilterElement>> AddExecute(bool include, IList<ChatFilterElement> target)
         {
             //var target = new List<ChatFilterElement>();
@@ -448,6 +451,7 @@ namespace Unigram.Views.Popups
             photo.Source = PlaceholderHelper.GetGlyph(MainPage.GetFilterIcon(filter.Flag), (int)filter.Flag, 36);
         }
 
+#endif
         #endregion
 
         #region Recycle

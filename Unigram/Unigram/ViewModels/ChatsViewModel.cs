@@ -8,10 +8,15 @@ using Telegram.Td.Api;
 using Unigram.Collections;
 using Unigram.Common;
 using Unigram.Controls;
+#if MODERN_TDLIB
+using Unigram.Logs;
+#endif
 using Unigram.Navigation.Services;
 using Unigram.Services;
 using Unigram.ViewModels.Delegates;
+#if !MODERN_TDLIB
 using Unigram.Views.Folders;
+#endif
 using Unigram.Views.Popups;
 using Windows.Foundation;
 using Windows.UI.Xaml.Controls;
@@ -640,7 +645,11 @@ namespace Unigram.ViewModels
         public RelayCommand<Chat> FolderCreateCommand { get; }
         private void FolderCreateExecute(Chat chat)
         {
+#if !MODERN_TDLIB
             NavigationService.Navigate(typeof(FolderPage), state: new NavigationState { { "included_chat_id", chat.Id } });
+#else
+            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+#endif
         }
 
         #endregion

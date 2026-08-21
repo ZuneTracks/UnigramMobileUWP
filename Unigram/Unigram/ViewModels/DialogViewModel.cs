@@ -9,6 +9,7 @@ using Unigram.Common;
 using Unigram.Common.Chats;
 using Unigram.Controls;
 using Unigram.Controls.Chats;
+using Unigram.Logs;
 using Unigram.Navigation;
 using Unigram.Navigation.Services;
 using Unigram.Services;
@@ -115,7 +116,7 @@ namespace Unigram.ViewModels
             UnmuteCommand = new RelayCommand(() => ToggleMuteExecute(true));
             ToggleSilentCommand = new RelayCommand(ToggleSilentExecute);
             RemoveActionBarCommand = new RelayCommand(RemoveActionBarExecute);
-            ReportSpamCommand = new RelayCommand<ChatReportReason>(ReportSpamExecute);
+            ReportSpamCommand = new RelayCommand<ReportReason>(ReportSpamExecute);
             ReportCommand = new RelayCommand(ReportExecute);
             OpenStickersCommand = new RelayCommand(OpenStickersExecute);
             ChatDeleteCommand = new RelayCommand(ChatDeleteExecute);
@@ -2133,7 +2134,7 @@ namespace Unigram.ViewModels
                 Items.Add(_messageFactory.Create(this, new Message(4, 7, chat.Id, null, null, false, false, false, false, false, false, false, TodayDate(15, 00), 0, null, 0, 0,  0, 0, string.Empty, 0, 0, string.Empty, new MessageText(new FormattedText("And it has secret chats, like this one, with end-to-end encryption!", new TextEntity[0]), null), null)));
                 Items.Add(_messageFactory.Create(this, new Message(5, 0, chat.Id, null, null, true,  false, false, false, false, false, false, TodayDate(15, 00), 0, null, 0, 0,  0, 0, string.Empty, 0, 0, string.Empty, new MessageText(new FormattedText("End encryption to what end??", new TextEntity[0]), null), null)));
                 Items.Add(_messageFactory.Create(this, new Message(6, 7, chat.Id, null, null, false, false, false, false, false, false, false, TodayDate(15, 01), 0, null, 0, 0,  0, 0, string.Empty, 0, 0, string.Empty, new MessageText(new FormattedText("Arrgh. Forget it. You can set a timer and send photos that will disappear when the time rush out. Yay!", new TextEntity[0]), null), null)));
-                Items.Add(_messageFactory.Create(this, new Message(7, 7, chat.Id, null, null, false, false, false, false, false, false, false, TodayDate(15, 01), 0, null, 0, 0,  0, 0, string.Empty, 0, 0, string.Empty, new MessageChatSetTtl(15), null)));
+                Items.Add(_messageFactory.Create(this, new Message(7, 7, chat.Id, null, null, false, false, false, false, false, false, false, TodayDate(15, 01), 0, null, 0, 0, 0, 0, string.Empty, 0, 0, string.Empty, new MessageChatSetMessageAutoDeleteTime(15, 0), null)));
                 Items.Add(_messageFactory.Create(this, new Message(8, 0, chat.Id, null, null, false, false, false, false, false, false, false, TodayDate(15, 05), 0, null, 0, 15, 0, 0, string.Empty, 0, 0, string.Empty, new MessagePhoto(new Photo(false, null, new[] { new PhotoSize("t", new File(0, 0, 0, new LocalFile(System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets\\Mockup\\hot.png"), true, true, false, true, 0, 0, 0), new RemoteFile()), 580, 596), new PhotoSize("i", new File(0, 0, 0, new LocalFile(System.IO.Path.Combine(Windows.ApplicationModel.Package.Current.InstalledLocation.Path, "Assets\\Mockup\\hot.png"), true, true, false, true, 0, 0, 0), new RemoteFile()), 580, 596) }), new FormattedText(string.Empty, new TextEntity[0]), true), null)));
 
                 SetText("😱🙈👍");
@@ -2882,8 +2883,8 @@ namespace Unigram.ViewModels
             ProtoService.Send(new RemoveChatActionBar(chat.Id));
         }
 
-        public RelayCommand<ChatReportReason> ReportSpamCommand { get; }
-        private async void ReportSpamExecute(ChatReportReason reason)
+        public RelayCommand<ReportReason> ReportSpamCommand { get; }
+        private async void ReportSpamExecute(ReportReason reason)
         {
             var chat = _chat;
             if (chat == null)
@@ -2894,7 +2895,7 @@ namespace Unigram.ViewModels
             var title = Strings.Resources.AppName;
             var message = Strings.Resources.ReportSpamAlert;
 
-            if (reason is ChatReportReasonUnrelatedLocation)
+            if (reason is ReportReasonUnrelatedLocation)
             {
                 title = Strings.Resources.ReportUnrelatedGroup;
 
@@ -2908,7 +2909,7 @@ namespace Unigram.ViewModels
                     message = Strings.Resources.ReportUnrelatedGroupTextNoAddress;
                 }
             }
-            else if (reason is ChatReportReasonSpam)
+            else if (reason is ReportReasonSpam)
             {
                 if (chat.Type is ChatTypeSupergroup supergroup)
                 {
@@ -3032,6 +3033,10 @@ namespace Unigram.ViewModels
         public RelayCommand CallCommand { get; }
         private async void CallExecute()
         {
+#if MODERN_TDLIB
+            PushDiagnostics.Write("voip.disabled", "result=unsupported;feature=experimental_tdlib");
+            return;
+#else
             var chat = _chat;
             if (chat == null)
             {
@@ -3083,6 +3088,7 @@ namespace Unigram.ViewModels
                     await MessagePopup.ShowAsync(string.Format(Strings.Resources.CallNotAvailable, user.GetFullName()), Strings.Resources.AppName, Strings.Resources.OK);
                 }
             }
+#endif
         }
 
         #endregion
@@ -3419,11 +3425,11 @@ namespace Unigram.ViewModels
 
             var items = new[]
             {
-                new SelectRadioItem(new ChatReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
-                new SelectRadioItem(new ChatReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
-                new SelectRadioItem(new ChatReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
-                new SelectRadioItem(new ChatReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
-                new SelectRadioItem(new ChatReportReasonCustom(), Strings.Resources.ReportChatOther, false)
+                new SelectRadioItem(new ReportReasonSpam(), Strings.Resources.ReportChatSpam, true),
+                new SelectRadioItem(new ReportReasonViolence(), Strings.Resources.ReportChatViolence, false),
+                new SelectRadioItem(new ReportReasonPornography(), Strings.Resources.ReportChatPornography, false),
+                new SelectRadioItem(new ReportReasonChildAbuse(), Strings.Resources.ReportChatChild, false),
+                new SelectRadioItem(new ReportReasonCustom(), Strings.Resources.ReportChatOther, false)
             };
 
             var dialog = new SelectRadioPopup(items);
@@ -3437,7 +3443,7 @@ namespace Unigram.ViewModels
                 return;
             }
 
-            var reason = dialog.SelectedIndex as ChatReportReason;
+            var reason = dialog.SelectedIndex as ReportReason;
             if (reason == null)
             {
                 return;

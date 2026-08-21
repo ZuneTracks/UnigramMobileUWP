@@ -27,8 +27,8 @@ if ([double]::TryParse($out, [ref]$rtn) -ne $true) {
 [xml]$document = Get-Content $path_manifest
 
 $h = @{}
-$h["DEBUG"] = "49197Wirdschon.UnigramMobileExperimental"
-$h["RELEASE"] = "49197Wirdschon.UnigramMobile"
+$h["DEBUG"] = "49197Wirdschon.UnigramMobileTdlibExperimental"
+$h["RELEASE"] = "49197Wirdschon.UnigramMobileTdlibExperimental"
 
 $identity = $document.GetElementsByTagName("Identity")[0]
 $original1 = $identity.Attributes["Name"].Value
@@ -47,16 +47,16 @@ if ($original1 -eq $identity.Attributes["Name"].Value -and $original2 -eq $ident
 }
 
 $h = @{}
-$h["DEBUG"] = "Unigram Mobile Experimental"
-$h["RELEASE"] = "Unigram Mobile Messenger"
+$h["DEBUG"] = "Unigram Mobile TDLib Experimental"
+$h["RELEASE"] = "Unigram Mobile TDLib Experimental"
 
 $properties = $document.GetElementsByTagName("Properties")[0]
 $displayName = $properties.GetElementsByTagName("DisplayName")[0]
 $displayName.InnerText = $h[$config]
 
 $h = @{}
-$h["DEBUG"] = "Unigram Mobile Experimental"
-$h["RELEASE"] = "Unigram Mobile Messenger"
+$h["DEBUG"] = "Unigram Mobile TDLib Experimental"
+$h["RELEASE"] = "Unigram Mobile TDLib Experimental"
 
 $visualElements = $document.GetElementsByTagName("uap:VisualElements")[0]
 $visualElements.Attributes["DisplayName"].Value = $h[$config]

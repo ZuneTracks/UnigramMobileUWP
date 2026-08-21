@@ -61,8 +61,10 @@ namespace Unigram.Controls.Messages
                     return UpdateChatDeletePhoto(message, chatDeletePhoto, active);
                 case MessageChatJoinByLink chatJoinByLink:
                     return UpdateChatJoinByLink(message, chatJoinByLink, active);
+#if !MODERN_TDLIB
                 case MessageChatSetTtl chatSetTtl:
                     return UpdateChatSetTtl(message, chatSetTtl, active);
+#endif
                 case MessageChatUpgradeFrom chatUpgradeFrom:
                     return UpdateChatUpgradeFrom(message, chatUpgradeFrom, active);
                 case MessageChatUpgradeTo chatUpgradeTo:
@@ -85,8 +87,10 @@ namespace Unigram.Controls.Messages
                     return UpdateScreenshotTaken(message, screenshotTaken, active);
                 case MessageSupergroupChatCreate supergroupChatCreate:
                     return UpdateSupergroupChatCreate(message, supergroupChatCreate, active);
+#if !MODERN_TDLIB
                 case MessageWebsiteConnected websiteConnected:
                     return UpdateWebsiteConnected(message, websiteConnected, active);
+#endif
                 case MessageExpiredPhoto expiredPhoto:
                     return UpdateExpiredPhoto(message, expiredPhoto, active);
                 case MessageExpiredVideo expiredVideo:
@@ -699,6 +703,7 @@ namespace Unigram.Controls.Messages
             return (content, entities);
         }
 
+#if !MODERN_TDLIB
         private static (string, IList<TextEntity>) UpdateChatSetTtl(MessageViewModel message, MessageChatSetTtl chatSetTtl, bool active)
         {
             var content = string.Empty;
@@ -1066,6 +1071,8 @@ namespace Unigram.Controls.Messages
 
             return (content, entities);
         }
+
+        #endif
 
         private static (string, IList<TextEntity>) UpdateExpiredPhoto(MessageViewModel message, MessageExpiredPhoto expiredPhoto, bool active)
         {

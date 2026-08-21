@@ -30,6 +30,8 @@
     <GenerateTestArtifacts>False</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <UseModernTdlib Condition="'$(UseModernTdlib)' == ''">true</UseModernTdlib>
+    <ModernTdlibRoot Condition="'$(ModernTdlibRoot)' == ''">$(UNIGRAM_MODERN_TDLIB_ROOT)</ModernTdlibRoot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -111,6 +113,9 @@
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
     <CodeAnalysisRuleSet />
     <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(UseModernTdlib)' == 'true'">
+    <DefineConstants>$(DefineConstants);MODERN_TDLIB</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
@@ -241,7 +246,8 @@
     <Compile Include="Common\XamlUtils.cs" />
     <Compile Include="Common\ZoomableListHandler.cs" />
     <Compile Include="Common\ZoomableRepeaterHandler.cs" />
-    <Compile Include="Constants.Secret.cs" />
+    <Compile Include="Constants.Secret.cs" Condition="Exists('$(ProjectDir)Constants.Secret.cs')" />
+    <Compile Include="Constants.Experimental.cs" Condition="!Exists('$(ProjectDir)Constants.Secret.cs')" />
     <Compile Include="Controls\AnimatedBitmapButton.cs" />
     <Compile Include="Controls\AnimatedGlyphButton.cs" />
     <Compile Include="Controls\AnimatedGlyphToggleButton.cs" />
@@ -498,7 +504,10 @@
     <Compile Include="Navigation\Services\NavigationService.cs" />
     <Compile Include="Navigation\Services\NavigationServiceList.cs" />
     <Compile Include="Selectors\ChatStatisticsOverviewTemplateSelector.cs" />
-    <Compile Include="Services\CallsService.cs" />
+    <Compile Include="Services\CallsService.cs" Condition="'$(UseModernTdlib)' != 'true'" />
+    <Compile Include="Services\DataSavingMode.cs" />
+    <Compile Include="Services\ModernTdlibCompatibility.cs" Condition="'$(UseModernTdlib)' == 'true'" />
+    <Compile Include="Services\Updates\UpdateSelectedBackground.cs" />
     <Compile Include="Services\ProtoService.ChatList.cs" />
     <Compile Include="Services\ThemeService.Defaults.cs" />
     <Compile Include="ViewModels\DialogEventLogViewModel.cs" />
@@ -651,7 +660,7 @@
     <Compile Include="ViewModels\CallsViewModel.cs" />
     <Compile Include="ViewModels\Channels\ChannelCreateStep1ViewModel.cs" />
     <Compile Include="ViewModels\Channels\ChannelCreateStep2ViewModel.cs" />
-    <Compile Include="ViewModels\ChatsNearbyViewModel.cs" />
+    <Compile Include="ViewModels\ChatsNearbyViewModel.cs" Condition="'$(UseModernTdlib)' != 'true'" />
     <Compile Include="ViewModels\ChatsViewModel.cs" />
     <Compile Include="ViewModels\Chats\ChatGalleryViewModel.cs" />
     <Compile Include="ViewModels\Chats\ChatInviteLinkViewModel.cs" />
@@ -680,8 +689,8 @@
     <Compile Include="ViewModels\Delegates\IDialogDelegate.cs" />
     <Compile Include="ViewModels\Delegates\IFileDelegate.cs" />
     <Compile Include="ViewModels\Delegates\IMessageDelegate.cs" />
-    <Compile Include="ViewModels\Folders\FoldersViewModel.cs" />
-    <Compile Include="ViewModels\Folders\FolderViewModel.cs" />
+    <Compile Include="ViewModels\Folders\FoldersViewModel.cs" Condition="'$(UseModernTdlib)' != 'true'" />
+    <Compile Include="ViewModels\Folders\FolderViewModel.cs" Condition="'$(UseModernTdlib)' != 'true'" />
     <Compile Include="ViewModels\Gallery\GalleryAnimation.cs" />
     <Compile Include="ViewModels\Gallery\GalleryChatPhoto.cs" />
     <Compile Include="ViewModels\Gallery\GalleryContent.cs" />
@@ -813,10 +822,10 @@
     <Compile Include="Views\DiagnosticsPage.xaml.cs">
       <DependentUpon>DiagnosticsPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\Folders\FolderPage.xaml.cs">
+    <Compile Include="Views\Folders\FolderPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
       <DependentUpon>FolderPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\Folders\FoldersPage.xaml.cs">
+    <Compile Include="Views\Folders\FoldersPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
       <DependentUpon>FoldersPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Host\RootPage.xaml.cs">
@@ -859,7 +868,7 @@
     <Compile Include="Views\Payments\PaymentReceiptPage.xaml.cs">
       <DependentUpon>PaymentReceiptPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ChatsNearbyPage.xaml.cs">
+    <Compile Include="Views\ChatsNearbyPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
       <DependentUpon>ChatsNearbyPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Popups\AttachedStickersPopup.xaml.cs">
@@ -1111,7 +1120,7 @@
     <Compile Include="Views\Users\UserCommonChatsView.xaml.cs">
       <DependentUpon>UserCommonChatsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\VoIPPage.xaml.cs">
+    <Compile Include="Views\VoIPPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
       <DependentUpon>VoIPPage.xaml</DependentUpon>
     </Compile>
     <Content Include="Assets\Audio\sent.mp3" />
@@ -2188,11 +2197,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Folders\FolderPage.xaml">
+    <Page Include="Views\Folders\FolderPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\Folders\FoldersPage.xaml">
+    <Page Include="Views\Folders\FoldersPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -2268,7 +2277,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ChatsNearbyPage.xaml">
+    <Page Include="Views\ChatsNearbyPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -2664,7 +2673,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\VoIPPage.xaml">
+    <Page Include="Views\VoIPPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -2722,7 +2731,7 @@
     <SDKReference Include="Microsoft.VCLibs, Version=14.0">
       <Name>Visual C++ 2015 Runtime for Universal Windows Platform Apps</Name>
     </SDKReference>
-    <SDKReference Include="Telegram.Td.UWP, Version=1.0">
+    <SDKReference Include="Telegram.Td.UWP, Version=1.0" Condition="'$(UseModernTdlib)' != 'true'">
       <Name>TDLib for Universal Windows Platform</Name>
     </SDKReference>
     <SDKReference Include="WindowsDesktop, Version=10.0.18362.0">
@@ -2731,6 +2740,19 @@
     <SDKReference Include="WindowsMobile, Version=10.0.18362.0">
       <Name>Windows Mobile Extensions for the UWP</Name>
     </SDKReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Telegram.Td" Condition="'$(UseModernTdlib)' == 'true'">
+      <HintPath>$(ModernTdlibRoot)\Telegram.Td.winmd</HintPath>
+      <Implementation>Telegram.Td.dll</Implementation>
+      <IsWinMDFile>true</IsWinMDFile>
+      <Private>true</Private>
+    </Reference>
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.dll" Condition="'$(UseModernTdlib)' == 'true'" />
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.pri" Condition="'$(UseModernTdlib)' == 'true'" />
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\libcrypto-3-arm.dll" Condition="'$(UseModernTdlib)' == 'true'" />
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\libssl-3-arm.dll" Condition="'$(UseModernTdlib)' == 'true'" />
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\z.dll" Condition="'$(UseModernTdlib)' == 'true'" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="RLottie">
@@ -2742,18 +2764,30 @@
     <ReferenceCopyLocalPaths Condition=" '$(Configuration)' == 'Debug' " Include="$(ProjectDir)\..\Libraries\rlottie\$(Platform)\zlib1.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="libtgvoip">
+    <Reference Include="libtgvoip" Condition="'$(UseModernTdlib)' != 'true'">
       <HintPath>$(SolutionDir)\Libraries\libtgvoip\$(Platform)\libtgvoip.winmd</HintPath>
       <Implementation>libtgvoip.dll</Implementation>
     </Reference>
-    <ReferenceCopyLocalPaths Include="$(SolutionDir)\Libraries\libtgvoip\$(Platform)\libtgvoip.dll" />
-    <ReferenceCopyLocalPaths Include="$(SolutionDir)\Libraries\libtgvoip\$(Platform)\libtgvoip.pri" />
+    <ReferenceCopyLocalPaths Include="$(SolutionDir)\Libraries\libtgvoip\$(Platform)\libtgvoip.dll" Condition="'$(UseModernTdlib)' != 'true'" />
+    <ReferenceCopyLocalPaths Include="$(SolutionDir)\Libraries\libtgvoip\$(Platform)\libtgvoip.pri" Condition="'$(UseModernTdlib)' != 'true'" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <Target Name="ValidateModernTdlib" BeforeTargets="ResolveAssemblyReferences" Condition="'$(UseModernTdlib)' == 'true'">
+    <Error Condition="'$(Platform)' != 'ARM'" Text="The experimental modern TDLib payload is ARM-only." />
+    <Error Condition="'$(ModernTdlibRoot)' == ''" Text="Set ModernTdlibRoot or UNIGRAM_MODERN_TDLIB_ROOT to the modern TDLib ARM output directory." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\Telegram.Td.winmd')" Text="Modern TDLib WinMD was not found at $(ModernTdlibRoot)\Telegram.Td.winmd." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\Telegram.Td.dll')" Text="Modern TDLib implementation was not found at $(ModernTdlibRoot)\Telegram.Td.dll." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\libcrypto-3-arm.dll')" Text="OpenSSL crypto runtime was not found in $(ModernTdlibRoot)." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\libssl-3-arm.dll')" Text="OpenSSL TLS runtime was not found in $(ModernTdlibRoot)." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\z.dll')" Text="zlib runtime was not found in $(ModernTdlibRoot)." />
+  </Target>
+  <Target Name="RequireTdlibCredentialsForPackage" BeforeTargets="_GenerateAppxPackage;GenerateAppxPackage" Condition="'$(UseModernTdlib)' == 'true'">
+    <Error Condition="!Exists('$(ProjectDir)Constants.Secret.cs')" Text="Packaging the experimental app requires the ignored Constants.Secret.cs. The compile-only placeholder must never be packaged." />
+  </Target>
   <PropertyGroup>
     <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -file "$(ProjectDir)\..\UpdateManifest.ps1" -path $(ProjectDir) -config $(ConfigurationName)</PreBuildEvent>
   </PropertyGroup>

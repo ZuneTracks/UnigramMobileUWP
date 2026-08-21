@@ -75,7 +75,7 @@ namespace Unigram.Services
 
         string PushToken { get; set; }
 
-        libtgvoip.DataSavingMode UseLessData { get; set; }
+        DataSavingMode UseLessData { get; set; }
 
         void SetChatPinnedMessage(long chatId, long messageId);
         long GetChatPinnedMessage(long chatId);
@@ -1055,15 +1055,15 @@ namespace Unigram.Services
             }
         }
 
-        private libtgvoip.DataSavingMode? _useLessData;
-        public libtgvoip.DataSavingMode UseLessData
+        private DataSavingMode? _useLessData;
+        public DataSavingMode UseLessData
         {
             get
             {
                 if (_useLessData == null)
-                    _useLessData = (libtgvoip.DataSavingMode)GetValueOrDefault("UseLessData", 0);
+                    _useLessData = (DataSavingMode)GetValueOrDefault("UseLessData", 0);
 
-                return _useLessData ?? libtgvoip.DataSavingMode.Never;
+                return _useLessData ?? DataSavingMode.Never;
             }
             set
             {

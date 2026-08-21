@@ -8,12 +8,19 @@ using Telegram.Td.Api;
 using Unigram.Common;
 using Unigram.Controls;
 using Unigram.Converters;
+#if MODERN_TDLIB
+using Unigram.Logs;
+#endif
 using Unigram.Navigation;
 using Unigram.Services;
 using Unigram.Services.Updates;
+#if !MODERN_TDLIB
 using Unigram.ViewModels.Folders;
+#endif
 using Unigram.Views;
+#if !MODERN_TDLIB
 using Unigram.Views.Folders;
+#endif
 using Unigram.Views.Popups;
 using Windows.System;
 using Windows.UI.Xaml;
@@ -140,7 +147,11 @@ namespace Unigram.ViewModels
         public RelayCommand SetupFiltersCommand { get; }
         private void SetupFiltersExecute()
         {
+#if !MODERN_TDLIB
             NavigationService.Navigate(typeof(FoldersPage));
+#else
+            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+#endif
         }
 
         public bool CollapseArchivedChats
@@ -465,6 +476,10 @@ namespace Unigram.ViewModels
         public RelayCommand<ChatFilterViewModel> FilterAddCommand { get; }
         private void FilterEditExecute(ChatFilterViewModel filter)
         {
+#if MODERN_TDLIB
+            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+            return;
+#else
             if (filter.ChatFilterId == Constants.ChatListMain)
             {
                 NavigationService.Navigate(typeof(FoldersPage));
@@ -473,15 +488,21 @@ namespace Unigram.ViewModels
             {
                 NavigationService.Navigate(typeof(FolderPage), filter.ChatFilterId);
             }
+#endif
         }
 
         public RelayCommand<ChatFilterViewModel> FilterEditCommand { get; }
         private async void FilterAddExecute(ChatFilterViewModel filter)
         {
+#if MODERN_TDLIB
+            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+            return;
+#else
             var viewModel = TLContainer.Current.Resolve<FolderViewModel>();
             await viewModel.OnNavigatedToAsync(filter.ChatFilterId, NavigationMode.New, null);
             await viewModel.AddIncludeAsync();
             await viewModel.SendAsync();
+#endif
         }
 
         public RelayCommand<ChatFilterViewModel> FilterMarkAsReadCommand { get; }

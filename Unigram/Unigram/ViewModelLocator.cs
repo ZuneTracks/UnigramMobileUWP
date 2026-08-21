@@ -11,7 +11,9 @@ using Unigram.ViewModels.BasicGroups;
 using Unigram.ViewModels.Channels;
 using Unigram.ViewModels.Chats;
 using Unigram.ViewModels.Drawers;
+#if !MODERN_TDLIB
 using Unigram.ViewModels.Folders;
+#endif
 using Unigram.ViewModels.Payments;
 using Unigram.ViewModels.Settings;
 using Unigram.ViewModels.Settings.Password;
@@ -278,9 +280,13 @@ namespace Unigram
                 builder.RegisterType<PaymentFormStep5ViewModel>();
                 builder.RegisterType<PaymentReceiptViewModel>();
                 builder.RegisterType<InviteViewModel>();
+#if !MODERN_TDLIB
                 builder.RegisterType<ChatsNearbyViewModel>();
+#endif
+#if !MODERN_TDLIB
                 builder.RegisterType<FoldersViewModel>();
                 builder.RegisterType<FolderViewModel>();
+#endif
 
                 return builder.Build();
             });

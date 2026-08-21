@@ -8,6 +8,7 @@ using Telegram.Td;
 using Telegram.Td.Api;
 using Unigram.Common;
 using Unigram.Entities;
+using Unigram.Logs;
 using Windows.Storage;
 
 namespace Unigram.Services
@@ -208,10 +209,15 @@ namespace Unigram.Services
         private void Initialize(bool online = true)
         {
             _client = Client.Create(this);
+            PushDiagnostics.Write("tdlib.client", "result=created;version=1.8.66;commit=022d602");
 
             var parameters = new TdlibParameters
             {
+#if MODERN_TDLIB
+                DatabaseDirectory = System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "tdlib-experimental", $"{_session}"),
+#else
                 DatabaseDirectory = System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, $"{_session}"),
+#endif
                 UseSecretChats = true,
                 UseMessageDatabase = true,
                 ApiId = Constants.ApiId,
@@ -227,6 +233,10 @@ namespace Unigram.Services
             {
                 parameters.FilesDirectory = _settings.FilesDirectory;
             }
+
+#if MODERN_TDLIB
+            PushDiagnostics.Write("tdlib.database", "result=isolated;scope=experimental");
+#endif
 
 #if MOCKUP
             ProfilePhoto ProfilePhoto(string name)
@@ -480,12 +490,39 @@ namespace Unigram.Services
 
         public void Send(Function function, Action<BaseObject> handler = null)
         {
-            _client.Send(function, handler);
+            _client.Send(function, result =>
+            {
+                if (result is Error error)
+                {
+                    PushDiagnostics.Write("tdlib.result", $"type=error;code={error.Code}");
+                }
+                else
+                {
+                    PushDiagnostics.Write("tdlib.result", $"type={result?.GetType().Name ?? "null"}");
+                }
+
+                handler?.Invoke(result);
+            });
         }
 
         public Task<BaseObject> SendAsync(Function function)
         {
-            return _client.SendAsync(function);
+            return SendAsyncWithDiagnostics(function);
+        }
+
+        private async Task<BaseObject> SendAsyncWithDiagnostics(Function function)
+        {
+            var result = await _client.SendAsync(function);
+            if (result is Error error)
+            {
+                PushDiagnostics.Write("tdlib.result", $"type=error;code={error.Code}");
+            }
+            else
+            {
+                PushDiagnostics.Write("tdlib.result", $"type={result?.GetType().Name ?? "null"}");
+            }
+
+            return result;
         }
 
 
@@ -1311,6 +1348,7 @@ namespace Unigram.Services
         {
             if (update is UpdateAuthorizationState updateAuthorizationState)
             {
+                PushDiagnostics.Write("tdlib.authorization", $"state={updateAuthorizationState.AuthorizationState?.GetType().Name ?? "null"}");
                 switch (updateAuthorizationState.AuthorizationState)
                 {
                     case AuthorizationStateLoggingOut loggingOut:

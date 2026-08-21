@@ -2440,7 +2440,11 @@ namespace Unigram.Views
 
         private void ChatsNearby_Click(object sender, RoutedEventArgs e)
         {
+#if !MODERN_TDLIB
             MasterDetail.NavigationService.Navigate(typeof(ChatsNearbyPage));
+#else
+            Unigram.Logs.PushDiagnostics.Write("chats_nearby.disabled", "result=unsupported;feature=experimental_tdlib");
+#endif
         }
 
         private void LogOut_Click(object sender, RoutedEventArgs e)

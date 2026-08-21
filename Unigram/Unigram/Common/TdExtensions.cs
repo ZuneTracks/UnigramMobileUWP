@@ -1,4 +1,4 @@
-﻿using libtgvoip;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -1143,7 +1143,9 @@ namespace Unigram.Common
                 case MessageChatDeleteMember chatDeleteMember:
                 case MessageChatDeletePhoto chatDeletePhoto:
                 case MessageChatJoinByLink chatJoinByLink:
+#if !MODERN_TDLIB
                 case MessageChatSetTtl chatSetTtl:
+#endif
                 case MessageChatUpgradeFrom chatUpgradeFrom:
                 case MessageChatUpgradeTo chatUpgradeTo:
                 case MessageContactRegistered contactRegistered:
@@ -1159,7 +1161,9 @@ namespace Unigram.Common
                 case MessageVideoChatEnded newTodo1:
                 case MessageVideoChatScheduled newTodo2:
                 case MessageVideoChatStarted newTodo3:
+#if !MODERN_TDLIB
                 case MessageWebsiteConnected websiteConnected:
+#endif
                     return true;
                 case MessageExpiredPhoto expiredPhoto:
                 case MessageExpiredVideo expiredVideo:
