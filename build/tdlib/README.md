@@ -54,6 +54,12 @@ The existing machine-installed `Telegram.Td.UWP` Extension SDK is never changed.
 Integration must consume proof-build files from the external work root, leaving
 the stable SDK as a reproducible rollback path.
 
+To verify an existing proof output and print stable SHA-256 values:
+
+```powershell
+.\build\tdlib\Verify-TdlibArm.ps1 -OutputRoot C:\tdlib-build\build-uwp-arm\RelWithDebInfo
+```
+
 ## Application port status
 
 The native proof build completes and produces `Telegram.Td.dll` and
