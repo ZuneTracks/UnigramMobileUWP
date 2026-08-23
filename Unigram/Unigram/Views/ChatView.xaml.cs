@@ -1957,12 +1957,13 @@ namespace Unigram.Views
                 var fullInfo = ViewModel.ProtoService.GetUserFull(user.Id);
                 if (fullInfo != null)
                 {
-                    if (fullInfo.Commands.Any(x => x.Command.Equals("Settings")))
+                    var commands = ModernTdlibCompatibility.GetUserFullInfoCommands(fullInfo);
+                    if (commands.Any(x => x.Command.Equals("Settings")))
                     {
                         flyout.CreateFlyoutItem(null, Strings.Resources.BotSettings);
                     }
 
-                    if (fullInfo.Commands.Any(x => x.Command.Equals("help")))
+                    if (commands.Any(x => x.Command.Equals("help")))
                     {
                         flyout.CreateFlyoutItem(null, Strings.Resources.BotHelp);
                     }
@@ -4092,9 +4093,10 @@ namespace Unigram.Views
                 ShowArea();
             }
 
-            if (fullInfo.Commands.Count > 0)
+            var commands = ModernTdlibCompatibility.GetUserFullInfoCommands(fullInfo);
+            if (commands.Count > 0)
             {
-                ViewModel.BotCommands = fullInfo.Commands.Select(x => new UserCommand(user.Id, x)).ToList();
+                ViewModel.BotCommands = commands.Select(x => new UserCommand(user.Id, x)).ToList();
                 ViewModel.HasBotCommands = ViewModel.BotCommands.Count > 0;
                 ///ShowHideBotCommands(true); //TODO: Test
             }

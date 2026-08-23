@@ -88,9 +88,19 @@ namespace Unigram.Services
             return (isBot ? fullInfo?.ShareText : fullInfo?.Bio) ?? string.Empty;
         }
 
+        public static IList<BotCommand> GetUserFullInfoCommands(UserFullInfo fullInfo)
+        {
+            return fullInfo?.Commands ?? new List<BotCommand>();
+        }
+
         public static int GetChatMessageTtlSetting(Chat chat)
         {
             return chat.MessageTtlSetting;
+        }
+
+        public static Function CreateSetChatMessageTtlSetting(long chatId, int ttl)
+        {
+            return new SetChatMessageTtlSetting(chatId, ttl);
         }
 
         public static long GetUpdateChatReplyMarkupMessageId(UpdateChatReplyMarkup update)

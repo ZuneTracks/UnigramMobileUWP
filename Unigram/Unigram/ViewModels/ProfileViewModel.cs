@@ -1042,7 +1042,7 @@ namespace Unigram.ViewModels
                 return;
             }
 
-            ProtoService.Send(new SetChatMessageTtlSetting(chat.Id, dialog.Value));
+            ProtoService.Send(ModernTdlibCompatibility.CreateSetChatMessageTtlSetting(chat.Id, dialog.Value));
         }
 
         #endregion
