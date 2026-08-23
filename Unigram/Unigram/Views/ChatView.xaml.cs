@@ -2233,7 +2233,7 @@ namespace Unigram.Views
                     return false;
                 }
 
-                if (supergroup.Status is ChatMemberStatusCreator || (supergroup.Status is ChatMemberStatusAdministrator admin && (admin.CanPinMessages || supergroup.IsChannel && admin.CanEditMessages)))
+                if (supergroup.Status is ChatMemberStatusCreator || (supergroup.Status is ChatMemberStatusAdministrator admin && (ModernTdlibCompatibility.GetAdministratorCanPinMessages(admin) || supergroup.IsChannel && ModernTdlibCompatibility.GetAdministratorCanEditMessages(admin))))
                 {
                     return true;
                 }
@@ -2250,7 +2250,7 @@ namespace Unigram.Views
                     return false;
                 }
 
-                if (basicGroup.Status is ChatMemberStatusCreator || (basicGroup.Status is ChatMemberStatusAdministrator admin && admin.CanPinMessages))
+                if (basicGroup.Status is ChatMemberStatusCreator || (basicGroup.Status is ChatMemberStatusAdministrator admin && ModernTdlibCompatibility.GetAdministratorCanPinMessages(admin)))
                 {
                     return true;
                 }
@@ -3469,7 +3469,7 @@ namespace Unigram.Views
                     return;
                 }
 
-                if (group.Status is ChatMemberStatusCreator || group.Status is ChatMemberStatusAdministrator administrator && administrator.CanPostMessages)
+                if (group.Status is ChatMemberStatusCreator || group.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPostMessages(administrator))
                 {
                 }
                 else if (group.Status is ChatMemberStatusLeft)
@@ -3533,7 +3533,7 @@ namespace Unigram.Views
                                 ? Strings.Resources.ChannelSilentBroadcast
                                 : Strings.Resources.ChannelBroadcast;
                         }
-                        else if (supergroup.Status is ChatMemberStatusCreator creator && creator.IsAnonymous || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.IsAnonymous)
+                        else if (supergroup.Status is ChatMemberStatusCreator creator && creator.IsAnonymous || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorIsAnonymous(administrator))
                         {
                             return Strings.Resources.SendAnonymously;
                         }
@@ -4219,7 +4219,7 @@ namespace Unigram.Views
                 {
                     ShowAction(Strings.Resources.ChannelJoin, true);
                 }
-                else if (group.Status is ChatMemberStatusCreator || group.Status is ChatMemberStatusAdministrator administrator && administrator.CanPostMessages)
+                else if (group.Status is ChatMemberStatusCreator || group.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPostMessages(administrator))
                 {
                     ShowArea();
                 }
@@ -4291,7 +4291,7 @@ namespace Unigram.Views
                     ? Strings.Resources.ChannelSilentBroadcast
                     : Strings.Resources.ChannelBroadcast;
             }
-            else if (group.Status is ChatMemberStatusCreator creator && creator.IsAnonymous || group.Status is ChatMemberStatusAdministrator administrator && administrator.IsAnonymous)
+            else if (group.Status is ChatMemberStatusCreator creator && creator.IsAnonymous || group.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorIsAnonymous(administrator))
             {
                 TextField.PlaceholderText = Strings.Resources.SendAnonymously;
             }
