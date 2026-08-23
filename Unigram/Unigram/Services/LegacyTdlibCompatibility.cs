@@ -68,6 +68,36 @@ namespace Unigram.Services
             return null;
         }
 
+        public static string GetUserRestrictionReason(User user)
+        {
+            return user?.RestrictionReason ?? string.Empty;
+        }
+
+        public static string GetSupergroupRestrictionReason(Supergroup supergroup)
+        {
+            return supergroup?.RestrictionReason ?? string.Empty;
+        }
+
+        public static FormattedText GetDraftMessageText(DraftMessage draft)
+        {
+            return (draft?.InputMessageText as InputMessageText)?.Text;
+        }
+
+        public static string GetUserFullInfoDescription(UserFullInfo fullInfo, bool isBot)
+        {
+            return (isBot ? fullInfo?.ShareText : fullInfo?.Bio) ?? string.Empty;
+        }
+
+        public static int GetChatMessageTtlSetting(Chat chat)
+        {
+            return chat.MessageTtlSetting;
+        }
+
+        public static long GetUpdateChatReplyMarkupMessageId(UpdateChatReplyMarkup update)
+        {
+            return update.ReplyMarkupMessageId;
+        }
+
         public static bool GetMessageCanBeDeletedForAllUsers(Message message, BaseObject properties)
         {
             return message.CanBeDeletedForAllUsers;

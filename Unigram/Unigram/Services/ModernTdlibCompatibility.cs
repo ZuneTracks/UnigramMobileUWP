@@ -140,6 +140,36 @@ namespace Unigram.Services
             return protoService.Execute(new Telegram.Td.Api.GetMessageProperties(message.ChatId, message.Id));
         }
 
+        public static string GetUserRestrictionReason(User user)
+        {
+            return user?.RestrictionInfo?.RestrictionReason ?? string.Empty;
+        }
+
+        public static string GetSupergroupRestrictionReason(Supergroup supergroup)
+        {
+            return supergroup?.RestrictionInfo?.RestrictionReason ?? string.Empty;
+        }
+
+        public static FormattedText GetDraftMessageText(DraftMessage draft)
+        {
+            return (draft?.Content as DraftMessageContentText)?.Text;
+        }
+
+        public static string GetUserFullInfoDescription(UserFullInfo fullInfo, bool isBot)
+        {
+            return (isBot ? fullInfo?.BotInfo?.Description : fullInfo?.Bio?.Text) ?? string.Empty;
+        }
+
+        public static int GetChatMessageTtlSetting(Chat chat)
+        {
+            return chat.MessageAutoDeleteTime;
+        }
+
+        public static long GetUpdateChatReplyMarkupMessageId(UpdateChatReplyMarkup update)
+        {
+            return update.ReplyMarkupMessage?.Id ?? 0;
+        }
+
         public static bool GetMessageCanBeDeletedForAllUsers(Message message, BaseObject properties)
         {
             return (properties as MessageProperties)?.CanBeDeletedForAllUsers == true;

@@ -560,10 +560,10 @@ namespace Unigram.Controls.Cells
 
             if (chat.DraftMessage != null && draft)
             {
-                switch (chat.DraftMessage.InputMessageText)
+                var text = ModernTdlibCompatibility.GetDraftMessageText(chat.DraftMessage);
+                if (text != null)
                 {
-                    case InputMessageText text:
-                        return text.Text.Text.Replace('\n', ' ');
+                    return text.Text.Replace('\n', ' ');
                 }
             }
 
@@ -611,10 +611,9 @@ namespace Unigram.Controls.Cells
         {
             if (chat.DraftMessage != null)
             {
-                switch (chat.DraftMessage.InputMessageText)
+                if (ModernTdlibCompatibility.GetDraftMessageText(chat.DraftMessage) != null)
                 {
-                    case InputMessageText text:
-                        return string.Format(_expanded ? "{0}\r\n" : "{0}: ", Strings.Resources.Draft);
+                    return string.Format(_expanded ? "{0}\r\n" : "{0}: ", Strings.Resources.Draft);
                 }
             }
 
@@ -629,10 +628,9 @@ namespace Unigram.Controls.Cells
             }
             else if (chat.DraftMessage != null)
             {
-                switch (chat.DraftMessage.InputMessageText)
+                if (ModernTdlibCompatibility.GetDraftMessageText(chat.DraftMessage) != null)
                 {
-                    case InputMessageText text:
-                        return string.Empty;
+                    return string.Empty;
                 }
             }
 

@@ -1581,7 +1581,7 @@ namespace Unigram.Services
             {
                 if (_chats.TryGetValue(updateChatReplyMarkup.ChatId, out Chat value))
                 {
-                    value.ReplyMarkupMessageId = updateChatReplyMarkup.ReplyMarkupMessageId;
+                    value.ReplyMarkupMessageId = ModernTdlibCompatibility.GetUpdateChatReplyMarkupMessageId(updateChatReplyMarkup);
                 }
             }
             else if (update is UpdateChatTitle updateChatTitle)

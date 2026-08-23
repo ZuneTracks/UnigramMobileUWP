@@ -2454,7 +2454,8 @@ namespace Unigram.ViewModels
             }
             else
             {
-                if (draft.InputMessageText is InputMessageText text)
+                var text = ModernTdlibCompatibility.GetDraftMessageText(draft);
+                if (text != null)
                 {
                     SetText(text.Text);
                 }
@@ -3511,7 +3512,7 @@ namespace Unigram.ViewModels
 
 
             var dialog = new ChatTtlPopup(chat.Type is ChatTypeSecret);
-            dialog.Value = chat.MessageTtlSetting;
+            dialog.Value = ModernTdlibCompatibility.GetChatMessageTtlSetting(chat);
 
             var confirm = await dialog.ShowQueuedAsync();
             if (confirm != ContentDialogResult.Primary)
