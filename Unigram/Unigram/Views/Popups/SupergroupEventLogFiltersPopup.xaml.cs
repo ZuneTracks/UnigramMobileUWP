@@ -159,6 +159,8 @@ namespace Unigram.Views.Popups
                 MessageEdits = MessageEdits.IsChecked == true,
                 MessagePins = MessagePins.IsChecked == true,
                 MemberLeaves = MemberLeaves.IsChecked == true,
+                InviteLinkChanges = true,
+                VideoChatChanges = true,
             };
 
             var areAllAdministratorsSelected = List.Items.All(x => List.SelectedItems.Contains(x));
