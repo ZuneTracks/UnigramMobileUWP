@@ -2748,6 +2748,7 @@
       <IsWinMDFile>true</IsWinMDFile>
       <Private>true</Private>
     </Reference>
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.winmd" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.dll" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.pri" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\libcrypto-3-arm.dll" Condition="'$(UseModernTdlib)' == 'true'" />
@@ -2781,6 +2782,7 @@
     <Error Condition="'$(ModernTdlibRoot)' == ''" Text="Set ModernTdlibRoot or UNIGRAM_MODERN_TDLIB_ROOT to the modern TDLib ARM output directory." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\Telegram.Td.winmd')" Text="Modern TDLib WinMD was not found at $(ModernTdlibRoot)\Telegram.Td.winmd." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\Telegram.Td.dll')" Text="Modern TDLib implementation was not found at $(ModernTdlibRoot)\Telegram.Td.dll." />
+    <Error Condition="!Exists('$(ModernTdlibRoot)\Telegram.Td.pri')" Text="Modern TDLib PRI resources were not found at $(ModernTdlibRoot)\Telegram.Td.pri." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\libcrypto-3-arm.dll')" Text="OpenSSL crypto runtime was not found in $(ModernTdlibRoot)." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\libssl-3-arm.dll')" Text="OpenSSL TLS runtime was not found in $(ModernTdlibRoot)." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\z.dll')" Text="zlib runtime was not found in $(ModernTdlibRoot)." />
