@@ -243,7 +243,11 @@ namespace Unigram.ViewModels
             {
                 foreach (var filter in _filters)
                 {
+#if MODERN_TDLIB
                     if (filter.ChatList is ChatListFolder && filter.ChatList.ListEquals(update.ChatList))
+#else
+                    if (filter.ChatList is ChatListFilter && filter.ChatList.ListEquals(update.ChatList))
+#endif
                     {
                         filter.UpdateCount(update);
                     }
@@ -265,7 +269,11 @@ namespace Unigram.ViewModels
 
                 Merge(Filters, new[] { new ChatFilterInfo { Id = Constants.ChatListMain, Title = Strings.Resources.FilterAllChats, IconName = "All" } }.Union(chatFilters).ToArray());
 
+#if MODERN_TDLIB
                 if (Chats.Items.ChatList is ChatListFolder already && already.ChatFolderId != selected)
+#else
+                if (Chats.Items.ChatList is ChatListFilter already && already.ChatFilterId != selected)
+#endif
                 {
                     SelectedFilter = Filters[0];
                 }
@@ -367,10 +375,17 @@ namespace Unigram.ViewModels
         {
             get
             {
+#if MODERN_TDLIB
                 if (Chats.Items.ChatList is ChatListFolder filter && _filters != null)
                 {
                     return _filters.FirstOrDefault(x => x.ChatFilterId == filter.ChatFolderId);
                 }
+#else
+                if (Chats.Items.ChatList is ChatListFilter filter && _filters != null)
+                {
+                    return _filters.FirstOrDefault(x => x.ChatFilterId == filter.ChatFilterId);
+                }
+#endif
 
                 return _filters?.FirstOrDefault();
             }
@@ -476,10 +491,6 @@ namespace Unigram.ViewModels
         public RelayCommand<ChatFilterViewModel> FilterAddCommand { get; }
         private void FilterEditExecute(ChatFilterViewModel filter)
         {
-#if MODERN_TDLIB
-            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
-            return;
-#else
             if (filter.ChatFilterId == Constants.ChatListMain)
             {
                 NavigationService.Navigate(typeof(FoldersPage));
@@ -488,21 +499,15 @@ namespace Unigram.ViewModels
             {
                 NavigationService.Navigate(typeof(FolderPage), filter.ChatFilterId);
             }
-#endif
         }
 
         public RelayCommand<ChatFilterViewModel> FilterEditCommand { get; }
         private async void FilterAddExecute(ChatFilterViewModel filter)
         {
-#if MODERN_TDLIB
-            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
-            return;
-#else
             var viewModel = TLContainer.Current.Resolve<FolderViewModel>();
             await viewModel.OnNavigatedToAsync(filter.ChatFilterId, NavigationMode.New, null);
             await viewModel.AddIncludeAsync();
             await viewModel.SendAsync();
-#endif
         }
 
         public RelayCommand<ChatFilterViewModel> FilterMarkAsReadCommand { get; }
@@ -542,7 +547,7 @@ namespace Unigram.ViewModels
             }
 
 #if MODERN_TDLIB
-            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+            ProtoService.Send(new DeleteChatFolder(filter.ChatFilterId, new List<long>()));
 #else
             ProtoService.Send(new DeleteChatFilter(filter.ChatFilterId));
 #endif
@@ -565,7 +570,11 @@ namespace Unigram.ViewModels
             }
             else
             {
+#if MODERN_TDLIB
                 ChatList = new ChatListFolder(info.Id);
+#else
+                ChatList = new ChatListFilter(info.Id);
+#endif
             }
 
             ChatFilterId = info.Id;

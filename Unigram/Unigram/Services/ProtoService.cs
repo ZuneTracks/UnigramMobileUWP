@@ -652,10 +652,12 @@ namespace Unigram.Services
             {
                 return 1;
             }
+#if !MODERN_TDLIB
             else if (chatList is ChatListFilter filter)
             {
                 return filter.ChatFilterId;
             }
+#endif
 #if MODERN_TDLIB
             else if (chatList is ChatListFolder folder)
             {
@@ -1434,10 +1436,22 @@ namespace Unigram.Services
                     Monitor.Exit(value);
                 }
             }
+#if MODERN_TDLIB
+            else if (update is UpdateChatFolders updateChatFolders)
+            {
+                _chatFilters = updateChatFolders.ChatFolders.Select(x => new ChatFilterInfo
+                {
+                    Id = x.Id,
+                    Title = x.Name?.Text?.Text ?? string.Empty,
+                    IconName = x.Icon?.Name ?? string.Empty
+                }).ToList();
+            }
+#else
             else if (update is UpdateChatFilters updateChatFilters)
             {
                 _chatFilters = updateChatFilters.ChatFilters.ToList();
             }
+#endif
             else if (update is UpdateChatHasScheduledMessages updateChatHasScheduledMessages)
             {
                 if (_chats.TryGetValue(updateChatHasScheduledMessages.ChatId, out Chat value))
