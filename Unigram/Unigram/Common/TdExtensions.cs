@@ -640,7 +640,7 @@ namespace Unigram.Common
             public static int GetLivePeriod(this MessageLocation location)
             {
 #if MODERN_TDLIB
-                return 0;
+                return location.LivePeriod;
 #else
                 return location.LivePeriod;
 #endif

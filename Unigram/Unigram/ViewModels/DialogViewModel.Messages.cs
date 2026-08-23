@@ -442,7 +442,7 @@ namespace Unigram.ViewModels
                     }
                     else if (message.Content is MessagePoll poll)
                     {
-                        builder.AppendLine($"[{Strings.Resources.Poll}: {poll.Poll.Question}");
+                        builder.AppendLine($"[{Strings.Resources.Poll}: {ModernTdlibCompatibility.GetPollQuestion(poll.Poll)}");
 
                         foreach (var option in poll.Poll.Options)
                         {

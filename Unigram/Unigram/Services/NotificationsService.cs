@@ -1285,7 +1285,7 @@ namespace Unigram.Services
             }
             else if (message.Content is MessagePoll poll)
             {
-                return result + "\uD83D\uDCCA " + poll.Poll.Question;
+                return result + "\uD83D\uDCCA " + ModernTdlibCompatibility.GetPollQuestion(poll.Poll);
             }
             else if (message.Content is MessageCall call)
             {

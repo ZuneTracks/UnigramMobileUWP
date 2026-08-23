@@ -101,7 +101,7 @@ namespace Unigram.Common
             else if (message.Content is MessagePoll poll)
             {
                 builder.Append($"{Strings.Resources.Poll}. ");
-                builder.Append($"{poll.Poll.Question}");
+                builder.Append($"{ModernTdlibCompatibility.GetPollQuestion(poll.Poll)}");
             }
             else if (message.Content is MessageCall call)
             {
@@ -319,11 +319,11 @@ namespace Unigram.Common
 
                     if (type != null)
                     {
-                        return type + ", " + poll.Poll.Question + ", ";
+                        return type + ", " + ModernTdlibCompatibility.GetPollQuestion(poll.Poll) + ", ";
                     }
                 }
 
-                return Strings.Resources.Poll + ", " + poll.Poll.Question + ", ";
+                return Strings.Resources.Poll + ", " + ModernTdlibCompatibility.GetPollQuestion(poll.Poll) + ", ";
             }
             else if (message.Content is MessageCall call)
             {

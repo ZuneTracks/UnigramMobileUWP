@@ -909,7 +909,7 @@ namespace Unigram.Controls.Messages
             }
             else if (message.Content is MessagePoll poll)
             {
-                return $"\uD83D\uDCCA {poll.Poll.Question}";
+                return $"\uD83D\uDCCA {ModernTdlibCompatibility.GetPollQuestion(poll.Poll)}";
             }
             else if (message.Content is MessageCall call)
             {
