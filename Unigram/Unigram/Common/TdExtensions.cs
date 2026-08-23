@@ -219,6 +219,12 @@ namespace Unigram.Common
             {
                 return filter.ChatFilterId;
             }
+#if MODERN_TDLIB
+            else if (chatList is ChatListFolder folder)
+            {
+                return folder.ChatFolderId;
+            }
+#endif
 
             return -1;
         }
@@ -350,6 +356,12 @@ namespace Unigram.Common
             {
                 return filterX.ChatFilterId == filterY.ChatFilterId;
             }
+#if MODERN_TDLIB
+            else if (x is ChatListFolder folderX && y is ChatListFolder folderY)
+            {
+                return folderX.ChatFolderId == folderY.ChatFolderId;
+            }
+#endif
 
             return false;
         }

@@ -4,6 +4,11 @@ using System.Numerics;
 using Unigram.Services.Settings;
 using Windows.Globalization;
 using Windows.Storage;
+#if MODERN_TDLIB
+using DataSavingMode = Unigram.Services.DataSavingMode;
+#else
+using DataSavingMode = libtgvoip.DataSavingMode;
+#endif
 
 namespace Unigram.Services
 {

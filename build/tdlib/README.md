@@ -28,7 +28,7 @@ it does not change the projected WinMD API.
 
 `patches/0002-project-legacy-web-page.patch` keeps the legacy `WebPage` projected
 name for the modern `LinkPreview` object and exposes typed media accessors over
-the modern `LinkPreviewType` variants. This is a narrow compatibility surface
+the direct `LinkPreviewType` variants. This is a narrow compatibility surface
 for the existing message renderer; unsupported preview categories still retain
 their modern typed `Type` object.
 
@@ -64,8 +64,8 @@ To verify an existing proof output and print stable SHA-256 values:
 
 The native proof build completes and produces `Telegram.Td.dll` and
 `Telegram.Td.winmd`. The application project consumes those files only when
-`UseModernTdlib=true`; the stable Extension SDK remains the default when that
-property is disabled.
+`UseModernTdlib=true`; the stable Extension SDK remains the default unless the
+experimental property is explicitly enabled for an ARM build.
 
 The modern schema is not source-compatible with the 26.8 application surface.
 The experimental build explicitly disables VoIP, nearby chats, and chat-folder

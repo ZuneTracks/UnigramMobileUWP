@@ -55,8 +55,10 @@ namespace Unigram.ViewModels
             ChatsDeleteCommand = new RelayCommand(ChatsDeleteExecute);
             ChatsClearCommand = new RelayCommand(ChatsClearExecute);
 
+#if !MODERN_TDLIB
             FolderAddCommand = new RelayCommand<(int, Chat)>(FolderAddExecute);
             FolderRemoveCommand = new RelayCommand<(int, Chat)>(FolderRemoveExecute);
+#endif
             FolderCreateCommand = new RelayCommand<Chat>(FolderCreateExecute);
 
             ClearRecentChatsCommand = new RelayCommand(ClearRecentChatsExecute);
@@ -576,6 +578,7 @@ namespace Unigram.ViewModels
 
         #endregion
 
+#if !MODERN_TDLIB
         #region Folder add
 
         public RelayCommand<(int, Chat)> FolderAddCommand { get; }
@@ -607,7 +610,9 @@ namespace Unigram.ViewModels
         }
 
         #endregion
+#endif
 
+#if !MODERN_TDLIB
         #region Folder remove
 
         public RelayCommand<(int, Chat)> FolderRemoveCommand { get; }
@@ -639,6 +644,7 @@ namespace Unigram.ViewModels
         }
 
         #endregion
+#endif
 
         #region Folder create
 

@@ -29,14 +29,14 @@ index b6eac7a2d..000000000 100644
 +    auto class_name = gen_class_name(t->name);
      if (is_header_ && function_name == "ToUnmanaged") {
 +      if (class_name == "WebPage") {
-+        ss << "  property ::Telegram::Td::Api::Animation^ Animation { ::Telegram::Td::Api::Animation^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::Audio^ Audio { ::Telegram::Td::Api::Audio^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::Document^ Document { ::Telegram::Td::Api::Document^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::Photo^ Photo { ::Telegram::Td::Api::Photo^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::Sticker^ Sticker { ::Telegram::Td::Api::Sticker^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::Video^ Video { ::Telegram::Td::Api::Video^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::VideoNote^ VideoNote { ::Telegram::Td::Api::VideoNote^ get() { return nullptr; } }\n"
-+              "  property ::Telegram::Td::Api::VoiceNote^ VoiceNote { ::Telegram::Td::Api::VoiceNote^ get() { return nullptr; } }\n"
++        ss << "  property ::Telegram::Td::Api::Animation^ Animation { ::Telegram::Td::Api::Animation^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeAnimation^>(Type); return value == nullptr ? nullptr : value->Animation; } }\n"
++              "  property ::Telegram::Td::Api::Audio^ Audio { ::Telegram::Td::Api::Audio^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeAudio^>(Type); return value == nullptr ? nullptr : value->Audio; } }\n"
++              "  property ::Telegram::Td::Api::Document^ Document { ::Telegram::Td::Api::Document^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeDocument^>(Type); return value == nullptr ? nullptr : value->Document; } }\n"
++              "  property ::Telegram::Td::Api::Photo^ Photo { ::Telegram::Td::Api::Photo^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypePhoto^>(Type); return value == nullptr ? nullptr : value->Photo; } }\n"
++              "  property ::Telegram::Td::Api::Sticker^ Sticker { ::Telegram::Td::Api::Sticker^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeSticker^>(Type); return value == nullptr ? nullptr : value->Sticker; } }\n"
++              "  property ::Telegram::Td::Api::Video^ Video { ::Telegram::Td::Api::Video^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeVideo^>(Type); return value == nullptr ? nullptr : value->Video; } }\n"
++              "property ::Telegram::Td::Api::VideoNote^ VideoNote { ::Telegram::Td::Api::VideoNote^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeVideoNote^>(Type); return value == nullptr ? nullptr : value->VideoNote; } }\n"
++              "  property ::Telegram::Td::Api::VoiceNote^ VoiceNote { ::Telegram::Td::Api::VoiceNote^ get() { auto value = dynamic_cast<::Telegram::Td::Api::LinkPreviewTypeVoiceNote^>(Type); return value == nullptr ? nullptr : value->VoiceNote; } }\n"
 +              "  property int32 EmbedWidth { int32 get() { return 0; } }\n"
 +              "  property int32 EmbedHeight { int32 get() { return 0; } }\n";
 +      }

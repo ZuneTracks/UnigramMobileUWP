@@ -13,6 +13,11 @@ using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+#if MODERN_TDLIB
+using DataSavingMode = Unigram.Services.DataSavingMode;
+#else
+using DataSavingMode = libtgvoip.DataSavingMode;
+#endif
 
 namespace Unigram.ViewModels.Settings
 {

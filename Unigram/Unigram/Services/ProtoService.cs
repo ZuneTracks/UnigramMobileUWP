@@ -648,6 +648,12 @@ namespace Unigram.Services
             {
                 return filter.ChatFilterId;
             }
+#if MODERN_TDLIB
+            else if (chatList is ChatListFolder folder)
+            {
+                return folder.ChatFolderId;
+            }
+#endif
 
             return -1;
         }
