@@ -223,7 +223,7 @@ namespace Unigram.ViewModels
                     if (chat != null && chat.Type is ChatTypeSupergroup super && !super.IsChannel)
                     {
                         var supergroup = message.ProtoService.GetSupergroup(super.SupergroupId);
-                        return supergroup != null && supergroup.Username.Length > 0 && !(message.Content is MessageContact) && !(message.Content is MessageLocation);
+                        return supergroup != null && supergroup.GetUsername().Length > 0 && !(message.Content is MessageContact) && !(message.Content is MessageLocation);
                     }
                 }
             }

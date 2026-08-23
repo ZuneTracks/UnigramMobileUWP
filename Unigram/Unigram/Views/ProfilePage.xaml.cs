@@ -158,8 +158,8 @@ namespace Unigram.Views
             UserPhone.Badge = PhoneNumber.Format(user.PhoneNumber);
             UserPhone.Visibility = string.IsNullOrEmpty(user.PhoneNumber) ? Visibility.Collapsed : Visibility.Visible;
 
-            Username.Badge = $"{user.Username}";
-            Username.Visibility = string.IsNullOrEmpty(user.Username) ? Visibility.Collapsed : Visibility.Visible;
+            Username.Badge = $"{user.GetUsername()}";
+            Username.Visibility = string.IsNullOrEmpty(user.GetUsername()) ? Visibility.Collapsed : Visibility.Visible;
 
             DescriptionTitle.Text = user.Type is UserTypeBot ? Strings.Resources.DescriptionPlaceholder : Strings.Resources.UserBio;
 
@@ -335,8 +335,8 @@ namespace Unigram.Views
 
             Verified.Visibility = group.IsVerified ? Visibility.Visible : Visibility.Collapsed;
 
-            Username.Badge = $"{group.Username}";
-            Username.Visibility = string.IsNullOrEmpty(group.Username) ? Visibility.Collapsed : Visibility.Visible;
+            Username.Badge = $"{group.GetUsername()}";
+            Username.Visibility = string.IsNullOrEmpty(group.GetUsername()) ? Visibility.Collapsed : Visibility.Visible;
 
             Location.Visibility = group.HasLocation ? Visibility.Visible : Visibility.Collapsed;
 
@@ -510,7 +510,7 @@ namespace Unigram.Views
                     if (user.IsContact)
                     {
                         flyout.CreateFlyoutItem(ViewModel.ShareCommand, Strings.Resources.ShareContact, new FontIcon { Glyph = Icons.Share });
-                        flyout.CreateFlyoutItem(chat.IsBlocked ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsBlocked ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsBlocked ? Icons.Banned : Icons.Banned });
+                        flyout.CreateFlyoutItem(chat.IsChatBlocked() ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsChatBlocked() ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsChatBlocked() ? Icons.Banned : Icons.Banned });
                         flyout.CreateFlyoutItem(ViewModel.EditCommand, Strings.Resources.EditContact, new FontIcon { Glyph = Icons.Edit });
                         flyout.CreateFlyoutItem(ViewModel.DeleteCommand, Strings.Resources.DeleteContact, new FontIcon { Glyph = Icons.Delete });
                     }
@@ -533,17 +533,17 @@ namespace Unigram.Views
                         if (user.PhoneNumber.Length > 0)
                         {
                             flyout.CreateFlyoutItem(ViewModel.ShareCommand, Strings.Resources.ShareContact, new FontIcon { Glyph = Icons.Share });
-                            flyout.CreateFlyoutItem(chat.IsBlocked ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsBlocked ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsBlocked ? Icons.Banned : Icons.Banned });
+                            flyout.CreateFlyoutItem(chat.IsChatBlocked() ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsChatBlocked() ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsChatBlocked() ? Icons.Banned : Icons.Banned });
                         }
                         else
                         {
                             if (user.Type is UserTypeBot)
                             {
-                                flyout.CreateFlyoutItem(chat.IsBlocked ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsBlocked ? Strings.Resources.BotRestart : Strings.Resources.BotStop, new FontIcon { Glyph = chat.IsBlocked ? Icons.Banned : Icons.Banned });
+                                flyout.CreateFlyoutItem(chat.IsChatBlocked() ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsChatBlocked() ? Strings.Resources.BotRestart : Strings.Resources.BotStop, new FontIcon { Glyph = chat.IsChatBlocked() ? Icons.Banned : Icons.Banned });
                             }
                             else
                             {
-                                flyout.CreateFlyoutItem(chat.IsBlocked ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsBlocked ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsBlocked ? Icons.Banned : Icons.Banned });
+                                flyout.CreateFlyoutItem(chat.IsChatBlocked() ? ViewModel.UnblockCommand : ViewModel.BlockCommand, chat.IsChatBlocked() ? Strings.Resources.Unblock : Strings.Resources.BlockContact, new FontIcon { Glyph = chat.IsChatBlocked() ? Icons.Banned : Icons.Banned });
                             }
                         }
                     }

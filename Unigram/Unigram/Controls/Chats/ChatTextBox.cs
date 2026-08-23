@@ -511,7 +511,7 @@ namespace Unigram.Controls.Chats
                             foreach (var id in chats.ChatIds)
                             {
                                 var user = _protoService.GetUser(_protoService.GetChat(id));
-                                if (user != null && user.Username.StartsWith(_query, StringComparison.OrdinalIgnoreCase))
+                                if (user != null && user.GetUsername().StartsWith(_query, StringComparison.OrdinalIgnoreCase))
                                 {
                                     Add(user);
                                     count++;
@@ -992,7 +992,7 @@ namespace Unigram.Controls.Chats
 
             if (ViewModel.CurrentInlineBot != null)
             {
-                var username = ViewModel.CurrentInlineBot.Username;
+                var username = ViewModel.CurrentInlineBot.GetUsername();
                 if (text != null && text.TrimStart().StartsWith("@" + username, StringComparison.OrdinalIgnoreCase))
                 {
                     searchText = ReplaceFirst(text.TrimStart(), "@" + username, string.Empty);

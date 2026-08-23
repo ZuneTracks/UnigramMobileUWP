@@ -168,7 +168,7 @@ namespace Unigram.Views
                 var supergroup = ViewModel.ProtoService.GetSupergroup(super.SupergroupId);
                 if (supergroup != null)
                 {
-                    return string.IsNullOrEmpty(supergroup.Username) && !super.IsChannel;
+                    return string.IsNullOrEmpty(supergroup.GetUsername()) && !super.IsChannel;
                 }
             }
 

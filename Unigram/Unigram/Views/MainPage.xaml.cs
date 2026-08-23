@@ -2067,7 +2067,7 @@ namespace Unigram.Views
                         var user = result.User ?? ViewModel.ProtoService.GetUser(result.Chat);
                         if (result.IsPublic)
                         {
-                            subtitle.Text = $"@{user.Username}";
+                            subtitle.Text = $"@{user.GetUsername()}";
                         }
                         else
                         {
@@ -2081,11 +2081,11 @@ namespace Unigram.Views
                         {
                             if (supergroup.MemberCount > 0)
                             {
-                                subtitle.Text = string.Format("@{0}, {1}", supergroup.Username, Locale.Declension(supergroup.IsChannel ? "Subscribers" : "Members", supergroup.MemberCount));
+                                subtitle.Text = string.Format("@{0}, {1}", supergroup.GetUsername(), Locale.Declension(supergroup.IsChannel ? "Subscribers" : "Members", supergroup.MemberCount));
                             }
                             else
                             {
-                                subtitle.Text = $"@{supergroup.Username}";
+                                subtitle.Text = $"@{supergroup.GetUsername()}";
                             }
                         }
                         else if (supergroup.MemberCount > 0)
@@ -2275,7 +2275,7 @@ namespace Unigram.Views
                 var subtitle = content.Children[2] as TextBlock;
                 if (result.IsPublic)
                 {
-                    subtitle.Text = $"@{user.Username}";
+                    subtitle.Text = $"@{user.GetUsername()}";
                 }
                 else
                 {

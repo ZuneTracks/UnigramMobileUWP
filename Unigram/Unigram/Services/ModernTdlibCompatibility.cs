@@ -14,6 +14,24 @@ namespace Unigram.Services
             return threadId == 0 ? null : new MessageTopicThread(threadId);
         }
 
+        public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
+        {
+#if MODERN_TDLIB
+            return new SetMessageSenderBlockList(sender, blocked ? new BlockListMain() : null);
+#else
+            return new ToggleMessageSenderIsBlocked(sender, blocked);
+#endif
+        }
+
+        public static ChatPermissions CreateChatPermissions(bool allowed)
+        {
+#if MODERN_TDLIB
+            return new ChatPermissions(allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed);
+#else
+            return new ChatPermissions(allowed, allowed, allowed, allowed, allowed, allowed, allowed, allowed);
+#endif
+        }
+
         public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
         {
             return new Message(

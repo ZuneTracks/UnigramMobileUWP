@@ -2385,8 +2385,8 @@ namespace Unigram.ViewModels
                     return;
                 }
 
-                SetText(string.Format("@{0} {1}", bot.Username, query), focus: true);
-                ResolveInlineBot(bot.Username, query);
+                SetText(string.Format("@{0} {1}", bot.GetUsername(), query), focus: true);
+                ResolveInlineBot(bot.GetUsername(), query);
             }
         }
 
@@ -2935,11 +2935,11 @@ namespace Unigram.ViewModels
             }
             else if (chat.Type is ChatTypePrivate privata)
             {
-                ProtoService.Send(new ToggleMessageSenderIsBlocked(new MessageSenderUser(privata.UserId), true));
+                ProtoService.Send(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(privata.UserId), true));
             }
             else if (chat.Type is ChatTypeSecret secret)
             {
-                ProtoService.Send(new ToggleMessageSenderIsBlocked(new MessageSenderUser(secret.UserId), true));
+                ProtoService.Send(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(secret.UserId), true));
             }
 
             ProtoService.Send(new DeleteChatHistory(chat.Id, true, false));
@@ -2995,7 +2995,7 @@ namespace Unigram.ViewModels
                 {
                     if (updated.Type is ChatTypePrivate privata && check)
                     {
-                        await ProtoService.SendAsync(new ToggleMessageSenderIsBlocked(new MessageSenderUser(privata.UserId), true));
+                        await ProtoService.SendAsync(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(privata.UserId), true));
                     }
 
                     ProtoService.Send(new DeleteChatHistory(updated.Id, true, false));
@@ -3181,7 +3181,7 @@ namespace Unigram.ViewModels
             var user = CacheService.GetUser(privata.UserId);
             if (user.Type is UserTypeBot)
             {
-                await ProtoService.SendAsync(new ToggleMessageSenderIsBlocked(new MessageSenderUser(user.Id), false));
+                await ProtoService.SendAsync(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(user.Id), false));
                 StartExecute();
             }
             else
@@ -3192,7 +3192,7 @@ namespace Unigram.ViewModels
                     return;
                 }
 
-                ProtoService.Send(new ToggleMessageSenderIsBlocked(new MessageSenderUser(user.Id), false));
+                ProtoService.Send(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(user.Id), false));
             }
         }
 
@@ -3573,7 +3573,7 @@ namespace Unigram.ViewModels
                 {
                     ToggleMuteExecute(CacheService.GetNotificationSettingsMuteFor(chat) > 0);
                 }
-                else if (chat.IsBlocked)
+                else if (chat.IsChatBlocked())
                 {
                     UnblockExecute();
                 }

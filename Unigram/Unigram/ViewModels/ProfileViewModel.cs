@@ -452,11 +452,11 @@ namespace Unigram.ViewModels
         {
             if (chat.Type is ChatTypePrivate privata)
             {
-                ProtoService.Send(new ToggleMessageSenderIsBlocked(new MessageSenderUser(privata.UserId), blocked));
+                ProtoService.Send(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(privata.UserId), blocked));
             }
             else if (chat.Type is ChatTypeSecret secret)
             {
-                ProtoService.Send(new ToggleMessageSenderIsBlocked(new MessageSenderUser(secret.UserId), blocked));
+                ProtoService.Send(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(secret.UserId), blocked));
             }
         }
 
@@ -620,7 +620,7 @@ namespace Unigram.ViewModels
                 }
 
                 var dataPackage = new DataPackage();
-                dataPackage.SetText($"@{supergroup.Username}");
+                dataPackage.SetText($"@{supergroup.GetUsername()}");
                 ClipboardEx.TrySetContent(dataPackage);
             }
             else
@@ -632,7 +632,7 @@ namespace Unigram.ViewModels
                 }
 
                 var dataPackage = new DataPackage();
-                dataPackage.SetText($"@{user.Username}");
+                dataPackage.SetText($"@{user.GetUsername()}");
                 ClipboardEx.TrySetContent(dataPackage);
             }
         }
@@ -655,7 +655,7 @@ namespace Unigram.ViewModels
                 }
 
                 var dataPackage = new DataPackage();
-                dataPackage.SetText(MeUrlPrefixConverter.Convert(CacheService, supergroup.Username));
+                dataPackage.SetText(MeUrlPrefixConverter.Convert(CacheService, supergroup.GetUsername()));
                 ClipboardEx.TrySetContent(dataPackage);
             }
             else
@@ -667,7 +667,7 @@ namespace Unigram.ViewModels
                 }
 
                 var dataPackage = new DataPackage();
-                dataPackage.SetText(MeUrlPrefixConverter.Convert(CacheService, user.Username));
+                dataPackage.SetText(MeUrlPrefixConverter.Convert(CacheService, user.GetUsername()));
                 ClipboardEx.TrySetContent(dataPackage);
             }
         }

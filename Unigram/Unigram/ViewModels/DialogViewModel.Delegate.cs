@@ -426,8 +426,8 @@ namespace Unigram.ViewModels
             var user = ProtoService.GetUser(viaBotUserId);
             if (user != null)
             {
-                SetText($"@{user.Username} ");
-                ResolveInlineBot(user.Username);
+                SetText($"@{user.GetUsername()} ");
+                ResolveInlineBot(user.GetUsername());
             }
         }
 

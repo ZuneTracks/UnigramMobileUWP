@@ -46,7 +46,7 @@ namespace Unigram.Common.Chats
             }
 
             _lastTypingTime = DateTime.Now;
-            _protoService.Send(new SendChatAction(chat.Id, _threadId, action));
+            _protoService.Send(new SendChatAction(chat.Id, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, action));
         }
 
         public void CancelTyping()
@@ -63,7 +63,7 @@ namespace Unigram.Common.Chats
             }
 
             _lastTypingTime = null;
-            _protoService.Send(new SendChatAction(chat.Id, _threadId, new ChatActionCancel()));
+            _protoService.Send(new SendChatAction(chat.Id, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, new ChatActionCancel()));
         }
     }
 }
