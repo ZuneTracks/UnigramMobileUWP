@@ -58,7 +58,7 @@ namespace Unigram.Controls
             }
             else if (constraint is Message message)
             {
-                ttl = message.Ttl > 0;
+                ttl = ModernTdlibCompatibility.GetMessageTtl(message) > 0;
                 constraint = message.Content;
 
                 if (message.MediaAlbumId != 0 && Tag is true)

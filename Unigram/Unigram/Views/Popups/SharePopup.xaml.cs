@@ -514,12 +514,12 @@ namespace Unigram.Views.Popups
                     if (result.User != null || result.Chat.Type is ChatTypePrivate || result.Chat.Type is ChatTypeSecret)
                     {
                         var user = result.User ?? ViewModel.ProtoService.GetUser(result.Chat);
-                        verified.Visibility = user != null && user.IsVerified ? Visibility.Visible : Visibility.Collapsed;
+                        verified.Visibility = user != null && ModernTdlibCompatibility.GetUserIsVerified(user) ? Visibility.Visible : Visibility.Collapsed;
                     }
                     else if (result.Chat != null && result.Chat.Type is ChatTypeSupergroup supergroup)
                     {
                         var group = ViewModel.ProtoService.GetSupergroup(supergroup.SupergroupId);
-                        verified.Visibility = group != null && group.IsVerified ? Visibility.Visible : Visibility.Collapsed;
+                        verified.Visibility = group != null && ModernTdlibCompatibility.GetSupergroupIsVerified(group) ? Visibility.Visible : Visibility.Collapsed;
                     }
                     else
                     {

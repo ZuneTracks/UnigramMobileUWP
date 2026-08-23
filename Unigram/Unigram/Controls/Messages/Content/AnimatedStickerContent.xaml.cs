@@ -115,11 +115,11 @@ namespace Unigram.Controls.Messages.Content
 
             if (content is MessageSticker sticker)
             {
-                return sticker.Sticker.IsAnimated;
+                return ModernTdlibCompatibility.GetStickerIsAnimated(sticker.Sticker);
             }
             else if (content is MessageText text && text.WebPage != null && !primary)
             {
-                return text.WebPage.Sticker != null && text.WebPage.Sticker.IsAnimated;
+                return ModernTdlibCompatibility.GetStickerIsAnimated(text.WebPage.Sticker);
             }
 
             return false;

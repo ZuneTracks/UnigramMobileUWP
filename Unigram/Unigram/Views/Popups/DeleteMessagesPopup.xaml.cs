@@ -10,7 +10,7 @@ namespace Unigram.Views.Popups
 {
     public sealed partial class DeleteMessagesPopup : ContentPopup
     {
-        public DeleteMessagesPopup(ICacheService cacheService, IList<Message> messages)
+        public DeleteMessagesPopup(IProtoService protoService, IList<Message> messages)
         {
             this.InitializeComponent();
 
@@ -61,9 +61,9 @@ namespace Unigram.Views.Popups
                 ReportSpamCheck.Visibility = Visibility.Collapsed;
                 DeleteAllCheck.Visibility = Visibility.Collapsed;
 
-                var canBeDeletedForAllUsers = messages.All(x => x.CanBeDeletedForAllUsers);
-                var canBeDeletedOnlyForSelf = messages.All(x => x.CanBeDeletedOnlyForSelf);
-                var anyCanBeDeletedForAllUsers = messages.Any(x => x.IsOutgoing && x.CanBeDeletedForAllUsers);
+                var canBeDeletedForAllUsers = messages.All(x => ModernTdlibCompatibility.GetMessageCanBeDeletedForAllUsers(protoService, x));
+                var canBeDeletedOnlyForSelf = messages.All(x => ModernTdlibCompatibility.GetMessageCanBeDeletedOnlyForSelf(protoService, x));
+                var anyCanBeDeletedForAllUsers = messages.Any(x => x.IsOutgoing && ModernTdlibCompatibility.GetMessageCanBeDeletedForAllUsers(protoService, x));
 
                 if (chat.Type is ChatTypePrivate || chat.Type is ChatTypeBasicGroup)
                 {

@@ -154,7 +154,7 @@ namespace Unigram.Views
             Subtitle.Text = LastSeenConverter.GetLabel(user, true);
             SubtitleInfo.Text = Subtitle.Text;
 
-            Verified.Visibility = user.IsVerified ? Visibility.Visible : Visibility.Collapsed;
+            Verified.Visibility = ModernTdlibCompatibility.GetUserIsVerified(user) ? Visibility.Visible : Visibility.Collapsed;
 
             UserPhone.Badge = PhoneNumber.Format(user.PhoneNumber);
             UserPhone.Visibility = string.IsNullOrEmpty(user.PhoneNumber) ? Visibility.Collapsed : Visibility.Visible;
@@ -334,7 +334,7 @@ namespace Unigram.Views
             Edit.Visibility = group.Status is ChatMemberStatusCreator || group.Status is ChatMemberStatusAdministrator ? Visibility.Visible : Visibility.Collapsed;
             Edit.Glyph = Icons.Edit;
 
-            Verified.Visibility = group.IsVerified ? Visibility.Visible : Visibility.Collapsed;
+            Verified.Visibility = ModernTdlibCompatibility.GetSupergroupIsVerified(group) ? Visibility.Visible : Visibility.Collapsed;
 
             Username.Badge = $"{group.GetUsername()}";
             Username.Visibility = string.IsNullOrEmpty(group.GetUsername()) ? Visibility.Collapsed : Visibility.Visible;

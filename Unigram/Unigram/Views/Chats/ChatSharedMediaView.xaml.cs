@@ -13,6 +13,7 @@ using Unigram.Controls.Chats;
 using Unigram.Controls.Gallery;
 using Unigram.Converters;
 using Unigram.Navigation;
+using Unigram.Services;
 using Unigram.ViewModels.Chats;
 using Unigram.ViewModels.Delegates;
 using Windows.UI.Xaml;
@@ -452,12 +453,13 @@ namespace Unigram.Views.Chats
 
         private bool MessageDelete_Loaded(Message message)
         {
-            return message.CanBeDeletedOnlyForSelf || message.CanBeDeletedForAllUsers;
+            return ModernTdlibCompatibility.GetMessageCanBeDeletedOnlyForSelf(ViewModel.ProtoService, message)
+                || ModernTdlibCompatibility.GetMessageCanBeDeletedForAllUsers(ViewModel.ProtoService, message);
         }
 
         private bool MessageForward_Loaded(Message message)
         {
-            return message.CanBeForwarded;
+            return ModernTdlibCompatibility.GetMessageCanBeForwarded(ViewModel.ProtoService, message);
         }
 
         private bool MessageSelect_Loaded(Message message)

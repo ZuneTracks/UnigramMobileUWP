@@ -996,9 +996,9 @@ namespace Unigram.Common
             switch (content)
             {
                 case MessageSticker sticker:
-                    return sticker.Sticker.IsAnimated ? sticker.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
+                    return ModernTdlibCompatibility.GetStickerIsAnimated(sticker.Sticker) ? sticker.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
                 case MessageText text:
-                    return text.WebPage?.Sticker?.IsAnimated ?? false ? text.WebPage.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
+                    return ModernTdlibCompatibility.GetStickerIsAnimated(text.WebPage?.Sticker) ? text.WebPage.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
                 case MessageDice dice:
                     var state = dice.InitialState;
                     if (state is DiceStickersRegular regular)
@@ -1076,9 +1076,9 @@ namespace Unigram.Common
             switch (message.Content)
             {
                 case MessageSticker sticker:
-                    return sticker.Sticker.IsAnimated ? sticker.Sticker.StickerValue : null;
+                    return ModernTdlibCompatibility.GetStickerIsAnimated(sticker.Sticker) ? sticker.Sticker.StickerValue : null;
                 case MessageText text:
-                    return text.WebPage?.Sticker?.IsAnimated ?? false ? text.WebPage?.Sticker?.StickerValue : null;
+                    return ModernTdlibCompatibility.GetStickerIsAnimated(text.WebPage?.Sticker) ? text.WebPage?.Sticker?.StickerValue : null;
                 default:
                     return null;
             }

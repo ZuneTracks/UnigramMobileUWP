@@ -952,7 +952,7 @@ namespace Unigram.Controls.Messages
                 }
                 else if (content is MessageSticker sticker)
                 {
-                    if (sticker.Sticker.IsAnimated)
+                    if (ModernTdlibCompatibility.GetStickerIsAnimated(sticker.Sticker))
                     {
                         Media.Child = new AnimatedStickerContent(message);
                     }
@@ -1859,7 +1859,7 @@ namespace Unigram.Controls.Messages
             }
             else if (constraint is Message message)
             {
-                ttl = message.Ttl > 0;
+                ttl = ModernTdlibCompatibility.GetMessageTtl(message) > 0;
                 constraint = message.Content;
             }
 

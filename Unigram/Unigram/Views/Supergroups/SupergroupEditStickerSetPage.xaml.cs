@@ -113,7 +113,7 @@ namespace Unigram.Views.Supergroups
             var file = cover.File;
             if (file.Local.IsDownloadingCompleted)
             {
-                if (stickerSet.IsAnimated)
+                if (ModernTdlibCompatibility.GetStickerSetIsAnimated(stickerSet))
                 {
                     photo.Source = PlaceholderHelper.GetLottieFrame(file.Local.Path, 0, 48, 48);
                 }

@@ -148,7 +148,7 @@ namespace Unigram.Views.Popups
 #if MODERN_TDLIB
                     sticker.Format is StickerFormatTgs || sticker.Format is StickerFormatWebm
 #else
-                    sticker.IsAnimated
+                    ModernTdlibCompatibility.GetStickerIsAnimated(sticker)
 #endif
                 )
                 {

@@ -2459,9 +2459,10 @@ namespace Unigram.ViewModels
                     SetText(text.Text);
                 }
 
-                if (draft.ReplyToMessageId != 0)
+                var replyToMessageId = ModernTdlibCompatibility.GetDraftReplyToMessageId(draft);
+                if (replyToMessageId != 0)
                 {
-                    var response = await ProtoService.SendAsync(new GetMessage(chat.Id, draft.ReplyToMessageId));
+                    var response = await ProtoService.SendAsync(new GetMessage(chat.Id, replyToMessageId));
                     if (response is Message message)
                     {
                         ComposerHeader = new MessageComposerHeader { ReplyToMessage = _messageFactory.Create(this, message) };

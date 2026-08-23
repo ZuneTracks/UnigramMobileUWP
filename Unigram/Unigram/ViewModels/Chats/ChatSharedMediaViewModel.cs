@@ -310,7 +310,7 @@ namespace Unigram.ViewModels.Chats
             }
             
             var sameUser = messages.All(x => x.SenderId.IsEqual(first.SenderId));
-            var dialog = new DeleteMessagesPopup(CacheService, messages.Where(x => x != null).ToArray());
+            var dialog = new DeleteMessagesPopup(ProtoService, messages.Where(x => x != null).ToArray());
 
             var confirm = await dialog.ShowQueuedAsync();
             if (confirm != ContentDialogResult.Primary)
@@ -377,7 +377,9 @@ namespace Unigram.ViewModels.Chats
 
         private bool MessagesDeleteCanExecute()
         {
-            return SelectedItems.Count > 0 && SelectedItems.All(x => x.CanBeDeletedForAllUsers || x.CanBeDeletedOnlyForSelf);
+            return SelectedItems.Count > 0 && SelectedItems.All(x =>
+                ModernTdlibCompatibility.GetMessageCanBeDeletedForAllUsers(ProtoService, x)
+                || ModernTdlibCompatibility.GetMessageCanBeDeletedOnlyForSelf(ProtoService, x));
         }
 
         #endregion
@@ -387,7 +389,7 @@ namespace Unigram.ViewModels.Chats
         public RelayCommand MessagesForwardCommand { get; }
         private async void MessagesForwardExecute()
         {
-            var messages = SelectedItems.Where(x => x.CanBeForwarded).OrderBy(x => x.Id).ToList();
+            var messages = SelectedItems.Where(x => ModernTdlibCompatibility.GetMessageCanBeForwarded(ProtoService, x)).OrderBy(x => x.Id).ToList();
             if (messages.Count > 0)
             {
                 SelectionMode = ListViewSelectionMode.None;
@@ -397,7 +399,7 @@ namespace Unigram.ViewModels.Chats
 
         private bool MessagesForwardCanExecute()
         {
-            return SelectedItems.Count > 0 && SelectedItems.All(x => x.CanBeForwarded);
+            return SelectedItems.Count > 0 && SelectedItems.All(x => ModernTdlibCompatibility.GetMessageCanBeForwarded(ProtoService, x));
         }
 
         #endregion

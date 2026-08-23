@@ -201,7 +201,7 @@ namespace Unigram.ViewModels.Supergroups
                         set.Stickers.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm),
                         set.StickerType is StickerTypeMask,
 #else
-                        set.IsAnimated,
+                        ModernTdlibCompatibility.GetStickerSetIsAnimated(set),
                         set.IsMasks,
 #endif
                         set.IsViewed,
@@ -281,7 +281,7 @@ namespace Unigram.ViewModels.Supergroups
                     stickerSet.Stickers.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm),
                     stickerSet.StickerType is StickerTypeMask,
 #else
-                    stickerSet.IsAnimated,
+                    ModernTdlibCompatibility.GetStickerSetIsAnimated(stickerSet),
                     stickerSet.IsMasks,
 #endif
                     stickerSet.IsViewed,

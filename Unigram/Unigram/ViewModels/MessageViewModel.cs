@@ -13,6 +13,8 @@ namespace Unigram.ViewModels
         private readonly IMessageDelegate _delegate;
 
         private Message _message;
+        private BaseObject _messageProperties;
+        private bool _messagePropertiesLoaded;
 
         public MessageViewModel(IProtoService protoService, IPlaybackService playbackService, IMessageDelegate delegato, Message message)
         {
@@ -38,28 +40,28 @@ namespace Unigram.ViewModels
         public MessageInteractionInfo InteractionInfo { get => _message.InteractionInfo; set => _message.InteractionInfo = value; }
         public string AuthorSignature => _message.AuthorSignature;
         public long ViaBotUserId => _message.ViaBotUserId;
-        public double TtlExpiresIn { get => _message.TtlExpiresIn; set => _message.TtlExpiresIn = value; }
-        public int Ttl => _message.Ttl;
-        public long ReplyToMessageId { get => _message.ReplyToMessageId; set => _message.ReplyToMessageId = value; }
-        public long ReplyInChatId => _message.ReplyInChatId;
+        public double TtlExpiresIn { get => ModernTdlibCompatibility.GetMessageTtlExpiresIn(_message); set => ModernTdlibCompatibility.SetMessageTtlExpiresIn(_message, value); }
+        public int Ttl => ModernTdlibCompatibility.GetMessageTtl(_message);
+        public long ReplyToMessageId { get => ModernTdlibCompatibility.GetMessageReplyToMessageId(_message); set => ModernTdlibCompatibility.SetMessageReplyToMessageId(_message, value); }
+        public long ReplyInChatId => ModernTdlibCompatibility.GetMessageReplyInChatId(_message);
         public MessageForwardInfo ForwardInfo => _message.ForwardInfo;
         public int EditDate { get => _message.EditDate; set => _message.EditDate = value; }
         public int Date => _message.Date;
         public bool ContainsUnreadMention { get => _message.ContainsUnreadMention; set => _message.ContainsUnreadMention = value; }
         public bool IsChannelPost => _message.IsChannelPost;
-        public bool CanBeDeletedForAllUsers => _message.CanBeDeletedForAllUsers;
-        public bool CanBeDeletedOnlyForSelf => _message.CanBeDeletedOnlyForSelf;
-        public bool CanBeForwarded => _message.CanBeForwarded;
-        public bool CanBeEdited => _message.CanBeEdited;
+        public bool CanBeDeletedForAllUsers => ModernTdlibCompatibility.GetMessageCanBeDeletedForAllUsers(_message, MessageProperties);
+        public bool CanBeDeletedOnlyForSelf => ModernTdlibCompatibility.GetMessageCanBeDeletedOnlyForSelf(_message, MessageProperties);
+        public bool CanBeForwarded => ModernTdlibCompatibility.GetMessageCanBeForwarded(_message, MessageProperties);
+        public bool CanBeEdited => ModernTdlibCompatibility.GetMessageCanBeEdited(_message, MessageProperties);
         public bool CanBeSaved => _message.CanBeSaved;
-        public bool CanGetMessageThread => _message.CanGetMessageThread;
-        public bool CanGetStatistics => _message.CanGetStatistics;
+        public bool CanGetMessageThread => ModernTdlibCompatibility.GetMessageCanGetMessageThread(_message, MessageProperties);
+        public bool CanGetStatistics => ModernTdlibCompatibility.GetMessageCanGetStatistics(_message, MessageProperties);
         public bool IsOutgoing { get => _message.IsOutgoing; set => _message.IsOutgoing = value; }
         public bool IsPinned { get => _message.IsPinned; set => _message.IsPinned = value; }
         public MessageSchedulingState SchedulingState => _message.SchedulingState;
         public MessageSendingState SendingState => _message.SendingState;
         public long ChatId => _message.ChatId;
-        public long MessageThreadId => _message.MessageThreadId;
+        public long MessageThreadId => ModernTdlibCompatibility.GetMessageThreadId(_message);
         public MessageSender SenderId => _message.SenderId;
         public long Id => _message.Id;
 
@@ -121,6 +123,8 @@ namespace Unigram.ViewModels
         public void Replace(Message message)
         {
             _message = message;
+            _messageProperties = null;
+            _messagePropertiesLoaded = false;
         }
 
         public bool UpdateFile(File file)
@@ -169,6 +173,20 @@ namespace Unigram.ViewModels
                     return chatChangePhoto.UpdateFile(file);
                 default:
                     return false;
+            }
+        }
+
+        private BaseObject MessageProperties
+        {
+            get
+            {
+                if (!_messagePropertiesLoaded)
+                {
+                    _messageProperties = ModernTdlibCompatibility.GetMessageProperties(_protoService, _message);
+                    _messagePropertiesLoaded = true;
+                }
+
+                return _messageProperties;
             }
         }
 
@@ -273,13 +291,7 @@ namespace Unigram.ViewModels
         public void UpdateWith(Message message)
         {
             _message.AuthorSignature = message.AuthorSignature;
-            _message.CanBeDeletedForAllUsers = message.CanBeDeletedForAllUsers;
-            _message.CanBeDeletedOnlyForSelf = message.CanBeDeletedOnlyForSelf;
-            _message.CanBeEdited = message.CanBeEdited;
             _message.CanBeSaved = message.CanBeSaved;
-            _message.CanBeForwarded = message.CanBeForwarded;
-            _message.CanGetMessageThread = message.CanGetMessageThread;
-            _message.CanGetStatistics = message.CanGetStatistics;
             _message.ChatId = message.ChatId;
             _message.ContainsUnreadMention = message.ContainsUnreadMention;
             //_message.Content = message.Content;
@@ -290,17 +302,15 @@ namespace Unigram.ViewModels
             _message.IsChannelPost = message.IsChannelPost;
             _message.IsOutgoing = message.IsOutgoing;
             _message.IsPinned = message.IsPinned;
-            _message.MessageThreadId = message.MessageThreadId;
             _message.MediaAlbumId = message.MediaAlbumId;
             _message.ReplyMarkup = message.ReplyMarkup;
-            _message.ReplyInChatId = message.ReplyInChatId;
-            _message.ReplyToMessageId = message.ReplyToMessageId;
+            ModernTdlibCompatibility.UpdateMessageReplyTo(_message, message);
             _message.SenderId = message.SenderId;
             _message.SendingState = message.SendingState;
-            _message.Ttl = message.Ttl;
-            _message.TtlExpiresIn = message.TtlExpiresIn;
             _message.ViaBotUserId = message.ViaBotUserId;
             _message.InteractionInfo = message.InteractionInfo;
+            _messageProperties = null;
+            _messagePropertiesLoaded = false;
 
             if (_message.Content is MessageAlbum album)
             {
