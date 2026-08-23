@@ -226,7 +226,12 @@ namespace Unigram.Services.Factories
                     {
                         InputFile = generated,
                         Type = new FileTypeSticker(),
-                        Delegate = (inputFile, caption) => new InputMessageSticker(inputFile, null, width, height, string.Empty)
+                        Delegate = (inputFile, caption) =>
+#if MODERN_TDLIB
+                            new InputMessageSticker(new InputSticker(inputFile, null, width, height), caption ?? string.Empty)
+#else
+                            new InputMessageSticker(inputFile, null, width, height, caption ?? string.Empty)
+#endif
                     };
                 }
                 catch
