@@ -474,6 +474,102 @@ namespace Unigram.Services
 #endif
         }
 
+        public static Function CreateNewBasicGroupChat(IList<long> userIds, string title)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.CreateNewBasicGroupChat(userIds, title, 0);
+#else
+            return new Telegram.Td.Api.CreateNewBasicGroupChat(userIds, title);
+#endif
+        }
+
+        public static Function CreateNewSupergroupChat(string title, bool isChannel, string description, ChatLocation location, bool forImport)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.CreateNewSupergroupChat(title, false, isChannel, description, location, 0, forImport);
+#else
+            return new Telegram.Td.Api.CreateNewSupergroupChat(title, isChannel, description, location, forImport);
+#endif
+        }
+
+        public static Function CreateImportContacts(string phoneNumber, string firstName, string lastName)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.ImportContacts(new[] { new Telegram.Td.Api.ImportedContact(phoneNumber, firstName, lastName, null) });
+#else
+            return new Telegram.Td.Api.ImportContacts(new[] { new Telegram.Td.Api.Contact(phoneNumber, firstName, lastName, string.Empty, 0) });
+#endif
+        }
+
+        public static Function CreateChangeImportedContacts(IEnumerable<(string PhoneNumber, string FirstName, string LastName)> contacts)
+        {
+#if MODERN_TDLIB
+            var importedContacts = new List<Telegram.Td.Api.ImportedContact>();
+            foreach (var contact in contacts)
+            {
+                importedContacts.Add(new Telegram.Td.Api.ImportedContact(contact.PhoneNumber, contact.FirstName, contact.LastName, null));
+            }
+
+            return new Telegram.Td.Api.ChangeImportedContacts(importedContacts);
+#else
+            var importedContacts = new List<Telegram.Td.Api.Contact>();
+            foreach (var contact in contacts)
+            {
+                importedContacts.Add(new Telegram.Td.Api.Contact(contact.PhoneNumber, contact.FirstName, contact.LastName, string.Empty, 0));
+            }
+
+            return new Telegram.Td.Api.ChangeImportedContacts(importedContacts);
+#endif
+        }
+
+        public static IList<long> GetChatStatisticsMessageIds(ChatStatisticsChannel statistics)
+        {
+            var messageIds = new List<long>();
+#if MODERN_TDLIB
+            foreach (var interaction in statistics.RecentInteractions)
+            {
+                if (interaction.ObjectType is ChatStatisticsObjectTypeMessage message)
+                {
+                    messageIds.Add(message.MessageId);
+                }
+            }
+#else
+            foreach (var interaction in statistics.RecentMessageInteractions)
+            {
+                messageIds.Add(interaction.MessageId);
+            }
+#endif
+            return messageIds;
+        }
+
+        public static bool TryGetChatStatisticsInteraction(ChatStatisticsChannel statistics, long messageId, out int forwardCount, out int viewCount)
+        {
+#if MODERN_TDLIB
+            foreach (var interaction in statistics.RecentInteractions)
+            {
+                if (interaction.ObjectType is ChatStatisticsObjectTypeMessage message && message.MessageId == messageId)
+                {
+                    forwardCount = interaction.ForwardCount;
+                    viewCount = interaction.ViewCount;
+                    return true;
+                }
+            }
+#else
+            foreach (var interaction in statistics.RecentMessageInteractions)
+            {
+                if (interaction.MessageId == messageId)
+                {
+                    forwardCount = interaction.ForwardCount;
+                    viewCount = interaction.ViewCount;
+                    return true;
+                }
+            }
+#endif
+            forwardCount = 0;
+            viewCount = 0;
+            return false;
+        }
+
         public static Function CreateSearchEmojis(string query, string inputLanguage)
         {
 #if MODERN_TDLIB
