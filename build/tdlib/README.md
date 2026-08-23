@@ -66,6 +66,10 @@ The native proof build completes and produces `Telegram.Td.dll` and
 `Telegram.Td.winmd`. The application project consumes those files only when
 `UseModernTdlib=true`; the stable Extension SDK remains the default unless the
 experimental property is explicitly enabled for an ARM build.
+`UpdateManifest.ps1` selects the stable package identity/display name for the
+default configuration and the isolated experimental identity when that property
+is enabled. Modern bundles are ARM-only so they cannot accidentally include
+unsupported x64 TDLib payloads.
 
 The modern schema is not source-compatible with the 26.8 application surface.
 The experimental build explicitly disables VoIP, nearby chats, and chat-folder
