@@ -93,3 +93,12 @@ public CER remain local-only; the current test certificate thumbprint is
 disabled until the server-driven `ReportChatResult` option flow is implemented.
 Device installation, fresh login, push, and Live Tile validation remain
 outstanding.
+
+The experimental project explicitly excludes the portable
+`System.Numerics.Vectors` packages, selects the matching UWP reference
+assemblies from `Microsoft.NETCore.UniversalWindowsPlatform` 6.2.10 for
+compile and native interop generation, and leaves those framework assemblies
+out of the APPX so the device-provided UWP framework supplies them. This
+avoids packaging the portable `4.1.1.0`/`4.0.1.0` pair, which caused a
+pre-managed-startup assembly binding crash (`0x80131040`); the selected UWP
+pair is `4.1.4.0`/`4.0.4.0`.

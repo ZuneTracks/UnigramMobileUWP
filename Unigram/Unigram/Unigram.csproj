@@ -2696,6 +2696,16 @@
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.10</Version>
     </PackageReference>
+    <PackageReference Include="System.Numerics.Vectors" Condition="'$(UseModernTdlib)' == 'true'">
+      <Version>4.1.1</Version>
+      <ExcludeAssets>compile;runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.Numerics.Vectors.WindowsRuntime" Condition="'$(UseModernTdlib)' == 'true'">
+      <Version>4.0.1</Version>
+      <ExcludeAssets>compile;runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
       <Version>2.4.2</Version>
     </PackageReference>
@@ -2715,6 +2725,10 @@
       <Version>1.25.0</Version>
     </PackageReference>
   </ItemGroup>
+  <PropertyGroup>
+    <UwpNumericsReferenceRoot Condition="Exists('$(SolutionDir)\packages\microsoft.netcore.universalwindowsplatform\6.2.10\ref\uap10.0.15138')">$(SolutionDir)\packages\microsoft.netcore.universalwindowsplatform\6.2.10\ref\uap10.0.15138</UwpNumericsReferenceRoot>
+    <UwpNumericsReferenceRoot Condition="'$(UwpNumericsReferenceRoot)' == '' and '$(NuGetPackageRoot)' != ''">$(NuGetPackageRoot)\microsoft.netcore.universalwindowsplatform\6.2.10\ref\uap10.0.15138</UwpNumericsReferenceRoot>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Unigram.Native.Media\Unigram.Native.Media.vcxproj">
       <Project>{3adbf08f-0550-4a1c-9794-fea30cf69e3a}</Project>
@@ -2793,6 +2807,56 @@
     <Error Condition="!Exists('$(ModernTdlibRoot)\libcrypto-3-arm.dll')" Text="OpenSSL crypto runtime was not found in $(ModernTdlibRoot)." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\libssl-3-arm.dll')" Text="OpenSSL TLS runtime was not found in $(ModernTdlibRoot)." />
     <Error Condition="!Exists('$(ModernTdlibRoot)\z.dll')" Text="zlib runtime was not found in $(ModernTdlibRoot)." />
+  </Target>
+  <Target Name="OverrideModernUwpNumerics" AfterTargets="ResolveNuGetPackageAssets" BeforeTargets="ResolveAssemblyReferences" Condition="'$(UseModernTdlib)' == 'true' and Exists('$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll')">
+    <ItemGroup>
+      <Reference Remove="System.Numerics.Vectors" />
+      <Reference Include="System.Numerics.Vectors">
+        <HintPath>$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll</HintPath>
+        <Private>true</Private>
+      </Reference>
+      <Reference Remove="System.Numerics.Vectors.WindowsRuntime" />
+      <Reference Include="System.Numerics.Vectors.WindowsRuntime">
+        <HintPath>$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll</HintPath>
+        <Private>true</Private>
+      </Reference>
+      <_ReferencePathWithoutModernNumerics Include="@(ReferencePath)" Condition="'%(ReferencePath.Filename)' != 'System.Numerics.Vectors' and '%(ReferencePath.Filename)' != 'System.Numerics.Vectors.WindowsRuntime'" />
+      <ReferencePath Remove="@(ReferencePath)" />
+      <ReferencePath Include="@(_ReferencePathWithoutModernNumerics)" />
+      <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll">
+        <Private>true</Private>
+      </ReferencePath>
+      <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll">
+        <Private>true</Private>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
+  <Target Name="OverrideModernUwpNumericsForCompile" AfterTargets="ResolveAssemblyReferences" BeforeTargets="CoreCompile" Condition="'$(UseModernTdlib)' == 'true' and Exists('$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll')">
+    <ItemGroup>
+      <_ReferencePathWithoutModernNumerics Include="@(ReferencePath)" Condition="'%(ReferencePath.Filename)' != 'System.Numerics.Vectors' and '%(ReferencePath.Filename)' != 'System.Numerics.Vectors.WindowsRuntime'" />
+      <ReferencePath Remove="@(ReferencePath)" />
+      <ReferencePath Include="@(_ReferencePathWithoutModernNumerics)" />
+      <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll" />
+      <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll" />
+      <_ReferenceCopyLocalWithoutModernNumerics Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Filename)' != 'System.Numerics.Vectors' and '%(ReferenceCopyLocalPaths.Filename)' != 'System.Numerics.Vectors.WindowsRuntime'" />
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+      <ReferenceCopyLocalPaths Include="@(_ReferenceCopyLocalWithoutModernNumerics)" />
+      <ReferenceCopyLocalPaths Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll" />
+      <ReferenceCopyLocalPaths Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll" />
+    </ItemGroup>
+  </Target>
+  <Target Name="RemoveModernUwpNumericsFromAppx" BeforeTargets="_GenerateAppxPackageFile;_GenerateAppxUploadPackageFile" Condition="'$(UseModernTdlib)' == 'true'">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Filename)' == 'System.Numerics.Vectors' or '%(ReferenceCopyLocalPaths.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+      <AppxPackagePayload Remove="@(AppxPackagePayload)" Condition="'%(AppxPackagePayload.Filename)' == 'System.Numerics.Vectors' or '%(AppxPackagePayload.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+      <AppxUploadPackagePayload Remove="@(AppxUploadPackagePayload)" Condition="'%(AppxUploadPackagePayload.Filename)' == 'System.Numerics.Vectors' or '%(AppxUploadPackagePayload.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="RemoveModernUwpNumericsFromPackageLayouts" BeforeTargets="_CreatePackageLayout;_CreateUploadPackageLayout" Condition="'$(UseModernTdlib)' == 'true'">
+    <ItemGroup>
+      <_PackageLayoutFileSource Remove="@(_PackageLayoutFileSource)" Condition="'%(Filename)' == 'System.Numerics.Vectors' or '%(Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+      <_UploadPackageLayoutFileSource Remove="@(_UploadPackageLayoutFileSource)" Condition="'%(Filename)' == 'System.Numerics.Vectors' or '%(Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+    </ItemGroup>
   </Target>
   <Target Name="RequireTdlibCredentialsForPackage" BeforeTargets="_GenerateAppxPackage;GenerateAppxPackage" Condition="'$(UseModernTdlib)' == 'true'">
     <Error Condition="!Exists('$(ProjectDir)Constants.Secret.cs')" Text="Packaging the experimental app requires the ignored Constants.Secret.cs. The compile-only placeholder must never be packaged." />
