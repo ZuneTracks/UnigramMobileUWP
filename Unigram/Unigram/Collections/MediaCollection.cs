@@ -34,7 +34,7 @@ namespace Unigram.Collections
             {
                 IsLoading = true;
 
-                var response = await _protoService.SendAsync(new SearchChatMessages(_chatId, _query, null, _lastMaxId, 0, 50, _filter, 0));
+                var response = await _protoService.SendAsync(new SearchChatMessages(_chatId, null, _query, null, _lastMaxId, 0, 50, _filter));
                 if (response is Messages messages)
                 {
                     if (messages.MessagesValue.Count > 0)
@@ -86,13 +86,13 @@ namespace Unigram.Collections
                 var previousDate = Utils.UnixTimestampToDateTime(previous.Date);
                 if (previousDate.Year != itemDate.Year || previousDate.Month != itemDate.Month)
                 {
-                    var service = new Message(0, previous.SenderId, previous.ChatId, null, null, previous.IsOutgoing, false, false, false, false, true, false, false, false, false, false, false, previous.IsChannelPost, false, previous.Date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, new MessageHeaderDate(), null);
+                    var service = ModernTdlibCompatibility.CreateMessage(0, previous.SenderId, previous.ChatId, null, null, previous.IsOutgoing, previous.IsChannelPost, previous.Date, new MessageHeaderDate());
                     return service;
                 }
             }
             else if (item == null && previous != null)
             {
-                var service = new Message(0, previous.SenderId, previous.ChatId, null, null, previous.IsOutgoing, false, false, false, false, true, false, false, false, false, false, false, previous.IsChannelPost, false, previous.Date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, new MessageHeaderDate(), null);
+                var service = ModernTdlibCompatibility.CreateMessage(0, previous.SenderId, previous.ChatId, null, null, previous.IsOutgoing, previous.IsChannelPost, previous.Date, new MessageHeaderDate());
                 return service;
             }
 
@@ -138,10 +138,6 @@ namespace Unigram.Collections
                     {
                         content = gameMessage.Game.Photo;
                     }
-                }
-                else if (content is MessageInvoice invoiceMessage)
-                {
-                    content = invoiceMessage.Photo;
                 }
                 else if (content is MessageLocation locationMessage)
                 {
@@ -309,7 +305,7 @@ namespace Unigram.Collections
         {
             try
             {
-                var response = await _protoService.SendAsync(new SearchChatMessages(_chatId, _query, null, _lastMaxId, 0, 50, _filter, 0));
+                var response = await _protoService.SendAsync(new SearchChatMessages(_chatId, null, _query, null, _lastMaxId, 0, 50, _filter));
                 if (response is Messages messages)
                 {
                     ProcessFiles(messages.MessagesValue);

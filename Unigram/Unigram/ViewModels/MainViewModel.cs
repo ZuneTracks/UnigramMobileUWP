@@ -243,7 +243,7 @@ namespace Unigram.ViewModels
             {
                 foreach (var filter in _filters)
                 {
-                    if (filter.ChatList is ChatListFilter && filter.ChatList.ListEquals(update.ChatList))
+                    if (filter.ChatList is ChatListFolder && filter.ChatList.ListEquals(update.ChatList))
                     {
                         filter.UpdateCount(update);
                     }
@@ -265,7 +265,7 @@ namespace Unigram.ViewModels
 
                 Merge(Filters, new[] { new ChatFilterInfo { Id = Constants.ChatListMain, Title = Strings.Resources.FilterAllChats, IconName = "All" } }.Union(chatFilters).ToArray());
 
-                if (Chats.Items.ChatList is ChatListFilter already && already.ChatFilterId != selected)
+                if (Chats.Items.ChatList is ChatListFolder already && already.ChatFolderId != selected)
                 {
                     SelectedFilter = Filters[0];
                 }
@@ -367,9 +367,9 @@ namespace Unigram.ViewModels
         {
             get
             {
-                if (Chats.Items.ChatList is ChatListFilter filter && _filters != null)
+                if (Chats.Items.ChatList is ChatListFolder filter && _filters != null)
                 {
-                    return _filters.FirstOrDefault(x => x.ChatFilterId == filter.ChatFilterId);
+                    return _filters.FirstOrDefault(x => x.ChatFilterId == filter.ChatFolderId);
                 }
 
                 return _filters?.FirstOrDefault();
@@ -528,7 +528,7 @@ namespace Unigram.ViewModels
                     continue;
                 }
 
-                ProtoService.Send(new ViewMessages(chat.Id, 0, new[] { chat.LastMessage.Id }, true));
+                ProtoService.Send(new ViewMessages(chat.Id, new[] { chat.LastMessage.Id }, null, true));
             }
         }
 
@@ -541,7 +541,11 @@ namespace Unigram.ViewModels
                 return;
             }
 
+#if MODERN_TDLIB
+            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
+#else
             ProtoService.Send(new DeleteChatFilter(filter.ChatFilterId));
+#endif
         }
     }
 
@@ -561,7 +565,7 @@ namespace Unigram.ViewModels
             }
             else
             {
-                ChatList = new ChatListFilter(info.Id);
+                ChatList = new ChatListFolder(info.Id);
             }
 
             ChatFilterId = info.Id;
