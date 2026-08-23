@@ -55,10 +55,8 @@ namespace Unigram.ViewModels
             ChatsDeleteCommand = new RelayCommand(ChatsDeleteExecute);
             ChatsClearCommand = new RelayCommand(ChatsClearExecute);
 
-#if !MODERN_TDLIB
             FolderAddCommand = new RelayCommand<(int, Chat)>(FolderAddExecute);
             FolderRemoveCommand = new RelayCommand<(int, Chat)>(FolderRemoveExecute);
-#endif
             FolderCreateCommand = new RelayCommand<Chat>(FolderCreateExecute);
 
             ClearRecentChatsCommand = new RelayCommand(ClearRecentChatsExecute);
@@ -578,13 +576,16 @@ namespace Unigram.ViewModels
 
         #endregion
 
-#if !MODERN_TDLIB
         #region Folder add
 
         public RelayCommand<(int, Chat)> FolderAddCommand { get; }
         private async void FolderAddExecute((int ChatFilterId, Chat Chat) data)
         {
+#if MODERN_TDLIB
+            var filter = await ProtoService.SendAsync(new GetChatFolder(data.ChatFilterId)) as ChatFolder;
+#else
             var filter = await ProtoService.SendAsync(new GetChatFilter(data.ChatFilterId)) as ChatFilter;
+#endif
             if (filter == null)
             {
                 return;
@@ -606,19 +607,25 @@ namespace Unigram.ViewModels
             filter.ExcludedChatIds.Remove(data.Chat.Id);
             filter.IncludedChatIds.Add(data.Chat.Id);
 
+#if MODERN_TDLIB
+            ProtoService.Send(new EditChatFolder(data.ChatFilterId, filter));
+#else
             ProtoService.Send(new EditChatFilter(data.ChatFilterId, filter));
+#endif
         }
 
         #endregion
-#endif
 
-#if !MODERN_TDLIB
         #region Folder remove
 
         public RelayCommand<(int, Chat)> FolderRemoveCommand { get; }
         private async void FolderRemoveExecute((int ChatFilterId, Chat Chat) data)
         {
+#if MODERN_TDLIB
+            var filter = await ProtoService.SendAsync(new GetChatFolder(data.ChatFilterId)) as ChatFolder;
+#else
             var filter = await ProtoService.SendAsync(new GetChatFilter(data.ChatFilterId)) as ChatFilter;
+#endif
             if (filter == null)
             {
                 return;
@@ -640,22 +647,21 @@ namespace Unigram.ViewModels
             filter.IncludedChatIds.Remove(data.Chat.Id);
             filter.ExcludedChatIds.Add(data.Chat.Id);
 
+#if MODERN_TDLIB
+            ProtoService.Send(new EditChatFolder(data.ChatFilterId, filter));
+#else
             ProtoService.Send(new EditChatFilter(data.ChatFilterId, filter));
+#endif
         }
 
         #endregion
-#endif
 
         #region Folder create
 
         public RelayCommand<Chat> FolderCreateCommand { get; }
         private void FolderCreateExecute(Chat chat)
         {
-#if !MODERN_TDLIB
             NavigationService.Navigate(typeof(FolderPage), state: new NavigationState { { "included_chat_id", chat.Id } });
-#else
-            PushDiagnostics.Write("chat-folder.disabled", "result=unsupported;feature=experimental_tdlib");
-#endif
         }
 
         #endregion

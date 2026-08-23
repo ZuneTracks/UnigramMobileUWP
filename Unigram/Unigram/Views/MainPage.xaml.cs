@@ -779,7 +779,11 @@ namespace Unigram.Views
                 SetFolder(new ChatListMain());
                 args.Handled = true;
             }
+#if MODERN_TDLIB
+            else if (ViewModel.Chats.Items.ChatList is ChatListFolder)
+#else
             else if (ViewModel.Chats.Items.ChatList is ChatListFilter)
+#endif
             {
                 ViewModel.SelectedFilter = ChatFilterViewModel.Main;
                 ConvertFilter(ChatFilterViewModel.Main);
@@ -3037,10 +3041,21 @@ namespace Unigram.Views
                     compare = items[index + 1];
                 }
 
+#if MODERN_TDLIB
+                if (compare.ChatList is ChatListFolder)
+                {
+                    var chatFolderIds = items
+                        .Where(x => x.ChatList is ChatListFolder)
+                        .Select(x => x.ChatFilterId)
+                        .ToList();
+                    ViewModel.ProtoService.Send(new ReorderChatFolders(chatFolderIds, 0));
+                }
+#else
                 if (compare.ChatList is ChatListFilter)
                 {
                     ViewModel.ProtoService.Send(new ReorderChatFilters(items.Where(x => x.ChatList is ChatListFilter).Select(x => x.ChatFilterId).ToArray()));
                 }
+#endif
                 else
                 {
                     ViewModel.Handle(new UpdateChatFilters(ViewModel.CacheService.ChatFilters));

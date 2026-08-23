@@ -394,8 +394,7 @@ namespace Telegram.Td.Api
 {
     using System.Collections.Generic;
 
-    // The experimental app keeps the legacy filter view model for the main chat list,
-    // while the folder editor is disabled until its ChatFolder port is complete.
+    // The experimental app uses these small compatibility models for shared folder views.
     public sealed class ChatFilterInfo
     {
         public int Id { get; set; }
@@ -410,6 +409,8 @@ namespace Telegram.Td.Api
 
     public sealed class RecommendedChatFilter
     {
+        public ChatFolder Folder { get; set; }
+        public string Description { get; set; }
     }
 
     public sealed class UpdateChatFilters

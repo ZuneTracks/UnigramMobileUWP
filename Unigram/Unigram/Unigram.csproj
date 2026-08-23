@@ -691,8 +691,8 @@
     <Compile Include="ViewModels\Delegates\IDialogDelegate.cs" />
     <Compile Include="ViewModels\Delegates\IFileDelegate.cs" />
     <Compile Include="ViewModels\Delegates\IMessageDelegate.cs" />
-    <Compile Include="ViewModels\Folders\FoldersViewModel.cs" Condition="'$(UseModernTdlib)' != 'true'" />
-    <Compile Include="ViewModels\Folders\FolderViewModel.cs" Condition="'$(UseModernTdlib)' != 'true'" />
+    <Compile Include="ViewModels\Folders\FoldersViewModel.cs" />
+    <Compile Include="ViewModels\Folders\FolderViewModel.cs" />
     <Compile Include="ViewModels\Gallery\GalleryAnimation.cs" />
     <Compile Include="ViewModels\Gallery\GalleryChatPhoto.cs" />
     <Compile Include="ViewModels\Gallery\GalleryContent.cs" />
@@ -824,10 +824,10 @@
     <Compile Include="Views\DiagnosticsPage.xaml.cs">
       <DependentUpon>DiagnosticsPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\Folders\FolderPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
+    <Compile Include="Views\Folders\FolderPage.xaml.cs">
       <DependentUpon>FolderPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\Folders\FoldersPage.xaml.cs" Condition="'$(UseModernTdlib)' != 'true'">
+    <Compile Include="Views\Folders\FoldersPage.xaml.cs">
       <DependentUpon>FoldersPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Host\RootPage.xaml.cs">
@@ -2199,11 +2199,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Folders\FolderPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
+    <Page Include="Views\Folders\FolderPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\Folders\FoldersPage.xaml" Condition="'$(UseModernTdlib)' != 'true'">
+    <Page Include="Views\Folders\FoldersPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
