@@ -80,10 +80,13 @@ invoked. Notification registration continues to use
 `RegisterDevice(DeviceTokenWindowsPush)` and preserves the existing
 `PushReceiverId` session mapping and native background-task entry point.
 
-The modern Release ARM managed/XAML compile now completes with the pinned WinMD
-and native payload. Packaging still requires the ignored local
-`Constants.Secret.cs` and a signing certificate that is not present in this
-worktree; unsigned package files emitted during validation are not distributable.
-Modern chat/message reporting is compile-time disabled until the server-driven
-`ReportChatResult` option flow is implemented. No signed APPX, sideload ZIP, or
-device validation has been completed.
+The modern Release ARM managed/XAML compile and signed APPX packaging complete
+with the pinned WinMD and native payload when the ignored local
+`Constants.Secret.cs` and test signing certificate are present. The PFX and
+public CER remain local-only; the current test certificate thumbprint is
+`B5E7EBF1650558A9D670BD1C5B9F82E24A213434`. The generated APPX and
+`.appxupload` files are under `Unigram\Unigram\bin\ARM\Release\Upload` and
+`Unigram\Unigram\AppPackages`. Modern chat/message reporting is compile-time
+disabled until the server-driven `ReportChatResult` option flow is implemented.
+Device installation, fresh login, push, and Live Tile validation remain
+outstanding.

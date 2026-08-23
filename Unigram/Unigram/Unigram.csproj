@@ -23,7 +23,7 @@
     <UseModernTdlib Condition="'$(UseModernTdlib)' == ''">false</UseModernTdlib>
     <AppxBundlePlatforms Condition="'$(UseModernTdlib)' == 'true'">arm</AppxBundlePlatforms>
     <AppxBundlePlatforms Condition="'$(UseModernTdlib)' != 'true'">x64|arm</AppxBundlePlatforms>
-    <PackageCertificateThumbprint>A2A8DEBFB129BF1ED16C0CF24397A3FD27C2FBC5</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>B5E7EBF1650558A9D670BD1C5B9F82E24A213434</PackageCertificateThumbprint>
     <BuildAppxSideloadPackageForUap>False</BuildAppxSideloadPackageForUap>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
