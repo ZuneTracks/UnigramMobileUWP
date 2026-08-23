@@ -68,7 +68,7 @@ namespace Unigram.Services
         public static StickerType GetStickerType(bool masks)
         {
 #if MODERN_TDLIB
-            return (StickerType)(masks ? new StickerTypeMask() : new StickerTypeRegular());
+            return masks ? (StickerType)new StickerTypeMask() : new StickerTypeRegular();
 #else
             return null;
 #endif
