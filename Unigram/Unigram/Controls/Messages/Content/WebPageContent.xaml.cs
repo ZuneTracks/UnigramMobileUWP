@@ -79,7 +79,7 @@ namespace Unigram.Controls.Messages.Content
                 }
                 else if (webPage.Document != null)
                 {
-                    if (string.Equals(webPage.Type, "telegram_background", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_background", StringComparison.OrdinalIgnoreCase))
                     {
                         Media.Child = new DocumentPhotoContent(message);
                     }

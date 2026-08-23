@@ -6,6 +6,11 @@ namespace Unigram.Services
     // Keeps shared sticker/event-log view models buildable against the legacy SDK.
     public static class ModernTdlibCompatibility
     {
+        public static string GetWebPageTypeName(WebPage webPage)
+        {
+            return webPage?.Type;
+        }
+
         public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
         {
             return new ToggleMessageSenderIsBlocked(sender, blocked);

@@ -270,10 +270,12 @@ namespace Unigram.Common
             {
                 return 1;
             }
+#if !MODERN_TDLIB
             else if (chatList is ChatListFilter filter)
             {
                 return filter.ChatFilterId;
             }
+#endif
 #if MODERN_TDLIB
             else if (chatList is ChatListFolder folder)
             {
@@ -407,10 +409,12 @@ namespace Unigram.Common
             {
                 return true;
             }
+#if !MODERN_TDLIB
             else if (x is ChatListFilter filterX && y is ChatListFilter filterY)
             {
                 return filterX.ChatFilterId == filterY.ChatFilterId;
             }
+#endif
 #if MODERN_TDLIB
             else if (x is ChatListFolder folderX && y is ChatListFolder folderY)
             {
@@ -423,10 +427,14 @@ namespace Unigram.Common
 
         public static bool IsInstantGallery(this WebPage webPage)
         {
+#if MODERN_TDLIB
+            return webPage.InstantViewVersion != 0 && webPage.Type is LinkPreviewTypeAlbum;
+#else
             return webPage.InstantViewVersion != 0 &&
                 (string.Equals(webPage.SiteName, "twitter", StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(webPage.SiteName, "instagram", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(webPage.Type, "telegram_album", StringComparison.OrdinalIgnoreCase));
+                 string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_album", StringComparison.OrdinalIgnoreCase));
+#endif
         }
 
         public static InputThumbnail ToInputThumbnail(this PhotoSize photo)
@@ -1149,13 +1157,13 @@ namespace Unigram.Common
         {
             if (webPage.Photo != null && webPage.Type != null)
             {
-                if (string.Equals(webPage.Type, "photo", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(webPage.Type, "video", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(webPage.Type, "telegram_album", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "photo", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "video", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_album", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
-                else if (string.Equals(webPage.Type, "article", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "article", StringComparison.OrdinalIgnoreCase))
                 {
                     var photo = webPage.Photo;
                     var big = photo.GetBig();

@@ -280,9 +280,9 @@ namespace Unigram.ViewModels
                 NavigationService.NavigateToInstant(webPage.Url);
             }
             else if (MessageHelper.TryCreateUri(webPage.Url, out Uri uri) &&
-                    (string.Equals(webPage.Type, "telegram_megagroup", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(webPage.Type, "telegram_channel", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(webPage.Type, "telegram_message", StringComparison.OrdinalIgnoreCase)))
+                    (string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_megagroup", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_channel", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_message", StringComparison.OrdinalIgnoreCase)))
             {
                 MessageHelper.OpenTelegramUrl(ProtoService, NavigationService, uri);
             }

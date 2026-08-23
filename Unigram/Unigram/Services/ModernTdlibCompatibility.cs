@@ -14,6 +14,48 @@ namespace Unigram.Services
             return threadId == 0 ? null : new MessageTopicThread(threadId);
         }
 
+        public static string GetWebPageTypeName(WebPage webPage)
+        {
+            if (webPage?.Type == null)
+            {
+                return null;
+            }
+
+            if (webPage.Type is LinkPreviewTypePhoto)
+            {
+                return "photo";
+            }
+            if (webPage.Type is LinkPreviewTypeEmbeddedVideoPlayer || webPage.Type is LinkPreviewTypeExternalVideo)
+            {
+                return "video";
+            }
+            if (webPage.Type is LinkPreviewTypeArticle)
+            {
+                return "article";
+            }
+            if (webPage.Type is LinkPreviewTypeBackground)
+            {
+                return "telegram_background";
+            }
+            if (webPage.Type is LinkPreviewTypeMessage)
+            {
+                return "telegram_message";
+            }
+            if (webPage.Type is LinkPreviewTypeChat chat)
+            {
+                if (chat.Type is InviteLinkChatTypeChannel)
+                {
+                    return "telegram_channel";
+                }
+                if (chat.Type is InviteLinkChatTypeSupergroup)
+                {
+                    return "telegram_megagroup";
+                }
+            }
+
+            return null;
+        }
+
         public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
         {
 #if MODERN_TDLIB
@@ -26,7 +68,7 @@ namespace Unigram.Services
         public static StickerType GetStickerType(bool masks)
         {
 #if MODERN_TDLIB
-            return masks ? new StickerTypeMask() : new StickerTypeRegular();
+            return (StickerType)(masks ? new StickerTypeMask() : new StickerTypeRegular());
 #else
             return null;
 #endif
