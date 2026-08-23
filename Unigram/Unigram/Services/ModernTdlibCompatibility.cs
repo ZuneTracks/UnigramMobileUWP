@@ -135,6 +135,79 @@ namespace Unigram.Services
             return new SendMessage(chatId, null, replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), options, null, content);
         }
 
+        public static Function CreateSendMessage(long chatId, long threadId, long replyToMessageId, MessageSendOptions options, InputMessageContent content)
+        {
+            return new SendMessage(chatId, GetMessageTopic(threadId), replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), options, null, content);
+        }
+
+        public static Function CreateSendMessageAlbum(long chatId, long threadId, long replyToMessageId, MessageSendOptions options, IList<InputMessageContent> contents)
+        {
+            return new SendMessageAlbum(chatId, GetMessageTopic(threadId), replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), options, contents);
+        }
+
+        public static Function CreateUploadFile(InputFile file, FileType type, int priority)
+        {
+            return new PreliminaryUploadFile(file, type, priority);
+        }
+
+        public static Function CreateCancelUploadFile(int fileId)
+        {
+            return new CancelPreliminaryUploadFile(fileId);
+        }
+
+        public static Function CreateResendMessages(long chatId, IList<long> messageIds)
+        {
+            return new ResendMessages(chatId, messageIds, null, 0);
+        }
+
+        public static Function CreateGetMessageLink(long chatId, long messageId, int mediaTimestamp, int checklistTaskId, string pollOptionId, bool forAlbum, bool inMessageThread)
+        {
+            return new GetMessageLink(chatId, messageId, mediaTimestamp, checklistTaskId, pollOptionId, forAlbum, inMessageThread);
+        }
+
+        public static Function CreateAddContact(long userId, Telegram.Td.Api.ImportedContact contact)
+        {
+            return new AddContact(userId, contact, false);
+        }
+
+        public static Function CreateAddContact(Contact contact, bool sharePhoneNumber)
+        {
+            return new AddContact(contact.UserId,
+                new Telegram.Td.Api.ImportedContact(contact.PhoneNumber, contact.FirstName, contact.LastName, new FormattedText(contact.Vcard, new TextEntity[0])),
+                sharePhoneNumber);
+        }
+
+        public static Function CreateGetChatMessageCount(long chatId, long threadId, SearchMessagesFilter filter, bool returnLocal)
+        {
+            return new GetChatMessageCount(chatId, GetMessageTopic(threadId), filter, returnLocal);
+        }
+
+        public static DraftMessage CreateDraftMessage(long replyToMessageId, int date, FormattedText text)
+        {
+            return new DraftMessage(replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty),
+                date, new DraftMessageContentText(text, new LinkPreviewOptions(false, string.Empty, false, false, false)), 0, null);
+        }
+
+        public static Function CreateSetChatDraftMessage(long chatId, long threadId, DraftMessage draft)
+        {
+            return new SetChatDraftMessage(chatId, GetMessageTopic(threadId), draft);
+        }
+
+        public static Function CreateEditMessageCaption(long chatId, long messageId, ReplyMarkup replyMarkup, FormattedText caption)
+        {
+            return new EditMessageCaption(chatId, messageId, replyMarkup, caption, false);
+        }
+
+        public static bool GetLoginUrlSkipConfirmation(LoginUrlInfoOpen info)
+        {
+            return info?.SkipConfirmation == true;
+        }
+
+        public static bool GetSwitchInlineInCurrentChat(InlineKeyboardButtonTypeSwitchInline info)
+        {
+            return info?.TargetChat is TargetChatCurrent;
+        }
+
         public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
         {
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
@@ -389,6 +462,11 @@ namespace Unigram.Services
             return stickerSet?.Stickers?.Any(GetStickerIsAnimated) == true;
         }
 
+        public static bool GetStickerSetIsMasks(StickerSet stickerSet)
+        {
+            return stickerSet?.StickerType is StickerTypeMask;
+        }
+
         public static bool GetStickerSetInfoIsAnimated(StickerSetInfo stickerSet)
         {
             return stickerSet?.Covers?.Any(GetStickerIsAnimated) == true;
@@ -415,6 +493,11 @@ namespace Unigram.Services
         public static MessageSendOptions CreateMessageSendOptions(bool disableNotification, bool fromBackground, MessageSchedulingState schedulingState)
         {
             return new MessageSendOptions(null, disableNotification, fromBackground, false, false, 0, false, schedulingState, 0, 0, false);
+        }
+
+        public static MessageSchedulingState CreateMessageSchedulingStateSendAtDate(int date)
+        {
+            return new MessageSchedulingStateSendAtDate(date, 0);
         }
 
         public static MessageContent CreateMessageText(FormattedText text, WebPage webPage)
@@ -1009,6 +1092,11 @@ namespace Unigram.Services
                 content,
                 null,
                 0);
+        }
+
+        public static MessageContent CreateMessageSticker(Sticker sticker)
+        {
+            return new MessageSticker(sticker, false);
         }
     }
 

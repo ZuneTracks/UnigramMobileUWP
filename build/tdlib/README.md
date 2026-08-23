@@ -69,7 +69,9 @@ experimental property is explicitly enabled for an ARM build.
 `UpdateManifest.ps1` selects the stable package identity/display name for the
 default configuration and the isolated experimental identity when that property
 is enabled. Modern bundles are ARM-only so they cannot accidentally include
-unsupported x64 TDLib payloads.
+unsupported x64 TDLib payloads. The experimental `uap:VisualElements` label is
+unmistakable; the top-level `Properties/DisplayName` remains the localized
+`Unigram Mobile` resource required by APPX validation.
 
 The modern schema is not source-compatible with the 26.8 application surface.
 The experimental build explicitly disables VoIP, nearby chats, and chat-folder
@@ -78,8 +80,10 @@ invoked. Notification registration continues to use
 `RegisterDevice(DeviceTokenWindowsPush)` and preserves the existing
 `PushReceiverId` session mapping and native background-task entry point.
 
-The current Release ARM application compile is blocked by the remaining broad
-schema migration (message constructors, topic-aware search, event-log filters,
-and media/settings APIs). No APPX or sideload ZIP is produced until that
-compile is clean; the native proof output is therefore the only reproducible
-artifact at this stage.
+The modern Release ARM managed/XAML compile now completes with the pinned WinMD
+and native payload. Packaging still requires the ignored local
+`Constants.Secret.cs` and a signing certificate that is not present in this
+worktree; unsigned package files emitted during validation are not distributable.
+Modern chat/message reporting is compile-time disabled until the server-driven
+`ReportChatResult` option flow is implemented. No signed APPX, sideload ZIP, or
+device validation has been completed.

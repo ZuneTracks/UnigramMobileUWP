@@ -1662,7 +1662,11 @@ namespace Unigram.Services
                 {
                     _installedMaskSets = updateInstalledStickerSets.StickerSetIds;
                 }
+#if MODERN_TDLIB
+                else if (updateInstalledStickerSets.StickerType is StickerTypeRegular)
+#else
                 else
+#endif
                 {
                     _installedStickerSets = updateInstalledStickerSets.StickerSetIds;
                 }

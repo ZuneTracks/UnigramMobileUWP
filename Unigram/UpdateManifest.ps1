@@ -55,15 +55,17 @@ if ($original1 -eq $identity.Attributes["Name"].Value -and $original2 -eq $ident
 
 $h = @{}
 if ($useExperimental) {
-    $h["DEBUG"] = "Unigram Mobile TDLib Experimental"
-    $h["RELEASE"] = "Unigram Mobile TDLib Experimental"
+    $h["DEBUG"] = "Unigram Mobile"
+    # Properties.DisplayName must match a localized AppName resource; keep the
+    # experimental label on uap:VisualElements below.
+    $h["RELEASE"] = "Unigram Mobile"
 } else {
     $h["DEBUG"] = "Unigram Mobile Experimental"
     $h["RELEASE"] = "Unigram"
 }
 
 $properties = $document.GetElementsByTagName("Properties")[0]
-$displayName = $properties.GetElementsByTagName("DisplayName")[0]
+$displayName = $properties.SelectSingleNode("*[local-name()='DisplayName']")
 $displayName.InnerText = $h[$config]
 
 $h = @{}

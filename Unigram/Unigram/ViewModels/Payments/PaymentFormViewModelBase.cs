@@ -1,4 +1,5 @@
 ﻿using Telegram.Td.Api;
+using Unigram.Common;
 using Unigram.Services;
 
 namespace Unigram.ViewModels.Payments
@@ -35,6 +36,9 @@ namespace Unigram.ViewModels.Payments
                 Set(ref _invoice, value);
             }
         }
+
+        public string InvoiceTitle => Invoice?.GetTitle();
+        public string InvoiceDescription => Invoice?.GetDescription();
 
         protected PaymentForm _paymentForm;
         public PaymentForm PaymentForm

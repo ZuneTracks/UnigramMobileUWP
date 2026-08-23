@@ -703,7 +703,7 @@ namespace Unigram.ViewModels
                 }
                 else
                 {
-                    return ModernTdlibCompatibility.CreateMessageSendOptions(false, false, new MessageSchedulingStateSendAtDate(dialog.Value.ToTimestamp()));
+                    return ModernTdlibCompatibility.CreateMessageSendOptions(false, false, ModernTdlibCompatibility.CreateMessageSchedulingStateSendAtDate(dialog.Value.ToTimestamp()));
                 }
             }
             else
@@ -719,7 +719,7 @@ namespace Unigram.ViewModels
                 options = ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null);
             }
 
-            var response = await ProtoService.SendAsync(new SendMessage(chat.Id, _threadId, replyToMessageId, options, null, inputMessageContent));
+            var response = await ProtoService.SendAsync(ModernTdlibCompatibility.CreateSendMessage(chat.Id, _threadId, replyToMessageId, options, inputMessageContent));
             if (response is Error error)
             {
                 if (error.TypeEquals(ErrorType.PEER_FLOOD))
@@ -741,7 +741,7 @@ namespace Unigram.ViewModels
 
         private async Task<BaseObject> EditMessageAsync(MessageViewModel message, InputFile inputFile, FileType type, Func<InputFile, InputMessageContent> inputMessageContent)
         {
-            var response = await ProtoService.SendAsync(new UploadFile(inputFile, type, 32));
+            var response = await ProtoService.SendAsync(ModernTdlibCompatibility.CreateUploadFile(inputFile, type, 32));
             if (response is Telegram.Td.Api.File file)
             {
                 ComposerHeader = new MessageComposerHeader { EditingMessage = message, EditingMessageMedia = null, EditingMessageFileId = file.Id };
@@ -900,7 +900,7 @@ namespace Unigram.ViewModels
                 }
             }
 
-            return await ProtoService.SendAsync(new SendMessageAlbum(chat.Id, _threadId, reply, options, operations));
+            return await ProtoService.SendAsync(ModernTdlibCompatibility.CreateSendMessageAlbum(chat.Id, _threadId, reply, options, operations));
         }
 
         private FormattedText GetFormattedText(string text)

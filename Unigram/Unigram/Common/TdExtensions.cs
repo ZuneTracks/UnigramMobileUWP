@@ -750,6 +750,24 @@ namespace Unigram.Common
 #endif
             }
 
+            public static StatisticalValue GetMeanMessageViewCount(this ChatStatisticsChannel value)
+            {
+#if MODERN_TDLIB
+                return value?.MeanMessageViewCount;
+#else
+                return value?.MeanViewCount;
+#endif
+            }
+
+            public static StatisticalValue GetMeanMessageShareCount(this ChatStatisticsChannel value)
+            {
+#if MODERN_TDLIB
+                return value?.MeanMessageShareCount;
+#else
+                return value?.MeanShareCount;
+#endif
+            }
+
             public static bool HasEmbedUrl(this WebPage value)
             {
 #if MODERN_TDLIB

@@ -3,7 +3,7 @@
   <Identity Name="49197Wirdschon.UnigramMobileTdlibExperimental" Publisher="CN=DC409D7A-979D-42E5-AAA5-E9A0F674260F" Version="26.8.6079.0" />
   <mp:PhoneIdentity PhoneProductId="e607ca15-ad1f-4f35-bb13-db442610d0ea" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>Unigram Mobile TDLib Experimental</DisplayName>
+    <DisplayName>Unigram Mobile</DisplayName>
     <PublisherDisplayName>abaculi</PublisherDisplayName>
     <Logo>Assets\Logos\StoreLogo.png</Logo>
   </Properties>

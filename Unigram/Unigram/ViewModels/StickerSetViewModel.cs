@@ -71,6 +71,8 @@ namespace Unigram.ViewModels
             }
         }
 
+        public bool IsStickerSetMasks => ModernTdlibCompatibility.GetStickerSetIsMasks(StickerSet);
+
         public MvxObservableCollection<Sticker> Items { get; private set; }
 
         public RelayCommand SendCommand { get; }

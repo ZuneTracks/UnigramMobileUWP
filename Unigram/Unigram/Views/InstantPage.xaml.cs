@@ -870,8 +870,19 @@ namespace Unigram.Views
         {
             var element = new StackPanel { Style = Resources["BlockBlockquoteStyle"] as Style };
 
+#if MODERN_TDLIB
+            foreach (var childBlock in block.GetPageBlocks())
+            {
+                var child = ProcessBlock(childBlock);
+                if (child != null)
+                {
+                    element.Children.Add(child);
+                }
+            }
+#else
             var text = ProcessText(block, false);
             if (text != null) element.Children.Add(text);
+#endif
 
             var caption = ProcessText(block, true);
             if (caption != null) element.Children.Add(caption);

@@ -63,9 +63,102 @@ namespace Unigram.Services
             return new SendMessage(chatId, 0, replyToMessageId, options, null, content);
         }
 
+        public static Function CreateSendMessage(long chatId, long threadId, long replyToMessageId, MessageSendOptions options, InputMessageContent content)
+        {
+            return new SendMessage(chatId, threadId, replyToMessageId, options, null, content);
+        }
+
+        public static Function CreateSendMessageAlbum(long chatId, long threadId, long replyToMessageId, MessageSendOptions options, IList<InputMessageContent> contents)
+        {
+            return new SendMessageAlbum(chatId, threadId, replyToMessageId, options, contents);
+        }
+
+        public static Function CreateUploadFile(InputFile file, FileType type, int priority)
+        {
+            return new UploadFile(file, type, priority);
+        }
+
+        public static Function CreateCancelUploadFile(int fileId)
+        {
+            return new CancelUploadFile(fileId);
+        }
+
+        public static Function CreateResendMessages(long chatId, IList<long> messageIds)
+        {
+            return new ResendMessages(chatId, messageIds);
+        }
+
+        public static Function CreateGetMessageLink(long chatId, long messageId, int mediaTimestamp, int checklistTaskId, string pollOptionId, bool forAlbum, bool inMessageThread)
+        {
+            return new GetMessageLink(chatId, messageId, mediaTimestamp, forAlbum, inMessageThread);
+        }
+
+        public static Function CreateAddContact(Contact contact, bool sharePhoneNumber)
+        {
+            return new AddContact(contact, sharePhoneNumber);
+        }
+
+        public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
+        {
+            return new Message(id, sender, chatId, null, schedulingState, isOutgoing,
+                false, false, false, false, false, false, false, false, false, false, false,
+                isChannelPost, false, date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty,
+                0, string.Empty, content, null);
+        }
+
+        public static MessageContent CreateMessageSticker(Sticker sticker)
+        {
+            return new MessageSticker(sticker);
+        }
+
+        public static bool GetStickerSetIsMasks(StickerSet stickerSet)
+        {
+            return stickerSet?.IsMasks == true;
+        }
+
+        public static Function CreateGetChatMessageCount(long chatId, long threadId, SearchMessagesFilter filter, bool returnLocal)
+        {
+            return new GetChatMessageCount(chatId, filter, returnLocal);
+        }
+
+        public static DraftMessage CreateDraftMessage(long replyToMessageId, int date, FormattedText text)
+        {
+            return new DraftMessage(replyToMessageId, date, new InputMessageText(text, false, false));
+        }
+
+        public static Function CreateEditMessageCaption(long chatId, long messageId, ReplyMarkup replyMarkup, FormattedText caption)
+        {
+            return new EditMessageCaption(chatId, messageId, replyMarkup, caption);
+        }
+
+        public static Function CreateSetChatDraftMessage(long chatId, long threadId, DraftMessage draft)
+        {
+            return new SetChatDraftMessage(chatId, threadId, draft);
+        }
+
+        public static Function CreateReportChat(long chatId, IList<long> messageIds, ChatReportReason reason, string text)
+        {
+            return new ReportChat(chatId, messageIds, reason, text);
+        }
+
+        public static bool GetLoginUrlSkipConfirmation(LoginUrlInfoOpen info)
+        {
+            return info?.SkipConfirm == true;
+        }
+
+        public static bool GetSwitchInlineInCurrentChat(InlineKeyboardButtonTypeSwitchInline info)
+        {
+            return info?.InCurrentChat == true;
+        }
+
         public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
         {
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
+        }
+
+        public static MessageSchedulingState CreateMessageSchedulingStateSendAtDate(int date)
+        {
+            return new MessageSchedulingStateSendAtDate(date);
         }
 
         public static Invoice GetPaymentFormInvoice(PaymentForm paymentForm)

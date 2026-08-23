@@ -58,8 +58,8 @@ using Windows.UI.Xaml.Media.Imaging;
 using Point = Windows.Foundation.Point;
 
 #if !MODERN_TDLIB
-using ReportReasonSpam = ChatReportReasonSpam;
-using ReportReasonUnrelatedLocation = ChatReportReasonUnrelatedLocation;
+using ReportReasonSpam = Telegram.Td.Api.ChatReportReasonSpam;
+using ReportReasonUnrelatedLocation = Telegram.Td.Api.ChatReportReasonUnrelatedLocation;
 #endif
 
 namespace Unigram.Views
@@ -1903,7 +1903,9 @@ namespace Unigram.Views
 
             if (supergroup != null && !(supergroup.Status is ChatMemberStatusCreator) && (supergroup.IsChannel || !string.IsNullOrEmpty(supergroup.GetUsername())))
             {
+#if !MODERN_TDLIB
                 flyout.CreateFlyoutItem(ViewModel.ReportCommand, Strings.Resources.ReportChat, new FontIcon { Glyph = Icons.Report });
+#endif
             }
             if (user != null && user.Id != ViewModel.CacheService.Options.MyId)
             {
@@ -2120,7 +2122,9 @@ namespace Unigram.Views
                 flyout.CreateFlyoutItem(MessagePin_Loaded, ViewModel.MessagePinCommand, message, message.IsPinned ? Strings.Resources.UnpinMessage : Strings.Resources.PinMessage, new FontIcon { Glyph = message.IsPinned ? Icons.Unpin : Icons.Pin });
 
                 flyout.CreateFlyoutItem(MessageForward_Loaded, ViewModel.MessageForwardCommand, message, Strings.Resources.Forward, new FontIcon { Glyph = Icons.Forward });
+#if !MODERN_TDLIB
                 flyout.CreateFlyoutItem(MessageReport_Loaded, ViewModel.MessageReportCommand, message, Strings.Resources.ReportChat, new FontIcon { Glyph = Icons.Report });
+#endif
                 flyout.CreateFlyoutItem(MessageDelete_Loaded, ViewModel.MessageDeleteCommand, message, Strings.Resources.Delete, new FontIcon { Glyph = Icons.Delete });
                 flyout.CreateFlyoutItem(MessageSelect_Loaded, ViewModel.MessageSelectCommand, message, Strings.Additional.Select, new FontIcon { Glyph = Icons.Select });
 
@@ -2335,6 +2339,9 @@ namespace Unigram.Views
 
         private bool MessageReport_Loaded(MessageViewModel message)
         {
+#if MODERN_TDLIB
+            return false;
+#else
             var chat = ViewModel.Chat;
             if (chat == null || !chat.CanBeReported)
             {
@@ -2353,6 +2360,7 @@ namespace Unigram.Views
             }
 
             return true;
+#endif
         }
 
         private bool MessageRetry_Loaded(MessageViewModel message)
@@ -3399,11 +3407,18 @@ namespace Unigram.Views
             }
             else if (chat.ActionBar is ChatActionBarReportAddBlock)
             {
+#if !MODERN_TDLIB
                 ActionBarRoot.Children.Add(CreateButton(Strings.Resources.ReportSpamUser, ViewModel.ReportSpamCommand));
+#endif
+#if MODERN_TDLIB
+                ActionBarRoot.Children.Add(CreateButton(Strings.Resources.AddContactChat, ViewModel.AddContactCommand));
+#else
                 ActionBarRoot.Children.Add(CreateButton(Strings.Resources.AddContactChat, ViewModel.AddContactCommand, column: 1));
+#endif
             }
             else if (chat.ActionBar is ChatActionBarReportSpam)
             {
+#if !MODERN_TDLIB
                 var user = ViewModel.CacheService.GetUser(chat);
                 if (user != null)
                 {
@@ -3413,11 +3428,14 @@ namespace Unigram.Views
                 {
                     ActionBarRoot.Children.Add(CreateButton(Strings.Resources.ReportSpamAndLeave, ViewModel.ReportSpamCommand, new ReportReasonSpam()));
                 }
+#endif
             }
+#if !MODERN_TDLIB
             else if (chat.ActionBar is ChatActionBarReportUnrelatedLocation)
             {
                 ActionBarRoot.Children.Add(CreateButton(Strings.Resources.ReportSpamLocation, ViewModel.ReportSpamCommand, new ReportReasonUnrelatedLocation()));
             }
+#endif
             else if (chat.ActionBar is ChatActionBarSharePhoneNumber)
             {
                 ActionBarRoot.Children.Add(CreateButton(Strings.Resources.ShareMyPhone, ViewModel.ShareContactCommand));
