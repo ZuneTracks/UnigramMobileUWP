@@ -79,6 +79,9 @@ editing. Those areas are gated at compile time and emit a diagnostic event when
 invoked. Notification registration continues to use
 `RegisterDevice(DeviceTokenWindowsPush)` and preserves the existing
 `PushReceiverId` session mapping and native background-task entry point.
+The package manifest explicitly registers `Telegram.Td.Client` against
+`Telegram.Td.dll`; the TDLib component PRI is also added as an APPX payload.
+This is required for WinRT activation of the external C++/CX proof payload.
 
 The modern Release ARM managed/XAML compile and signed APPX packaging complete
 with the pinned WinMD and native payload when the ignored local

@@ -97,6 +97,12 @@
         <ActivatableClass ActivatableClassId="Unigram.Native.Media.OpusByteStreamHandler" ThreadingModel="both" />
       </InProcessServer>
     </Extension>
+    <Extension Category="windows.activatableClass.inProcessServer">
+      <InProcessServer>
+        <Path>Telegram.Td.dll</Path>
+        <ActivatableClass ActivatableClassId="Telegram.Td.Client" ThreadingModel="both" />
+      </InProcessServer>
+    </Extension>
   </Extensions>
   <Capabilities>
     <Capability Name="internetClient" />

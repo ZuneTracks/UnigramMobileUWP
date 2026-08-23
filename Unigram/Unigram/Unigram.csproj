@@ -2750,9 +2750,14 @@
       <IsWinMDFile>true</IsWinMDFile>
       <Private>true</Private>
     </Reference>
-    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.winmd" Condition="'$(UseModernTdlib)' == 'true'" />
+    <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.winmd" Condition="'$(UseModernTdlib)' == 'true'">
+      <Implementation>Telegram.Td.dll</Implementation>
+    </ReferenceCopyLocalPaths>
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.dll" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\Telegram.Td.pri" Condition="'$(UseModernTdlib)' == 'true'" />
+    <AppxPackagePayload Include="$(ModernTdlibRoot)\Telegram.Td.pri" Condition="'$(UseModernTdlib)' == 'true'">
+      <TargetPath>Telegram.Td.pri</TargetPath>
+    </AppxPackagePayload>
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\libcrypto-3-arm.dll" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\libssl-3-arm.dll" Condition="'$(UseModernTdlib)' == 'true'" />
     <ReferenceCopyLocalPaths Include="$(ModernTdlibRoot)\z.dll" Condition="'$(UseModernTdlib)' == 'true'" />
