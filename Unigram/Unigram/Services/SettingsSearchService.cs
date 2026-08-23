@@ -107,7 +107,7 @@ namespace Unigram.Services
                 var title = string.Empty;
                 var cicci = new List<SettingsSearchEntry>();
 
-                foreach (var block in webPage.PageBlocks)
+                foreach (var block in webPage.GetPageBlocks())
                 {
                     if (block is PageBlockList list)
                     {
@@ -115,7 +115,7 @@ namespace Unigram.Services
 
                         foreach (var item in list.Items)
                         {
-                            if (item.PageBlocks.Count == 1 && item.PageBlocks[0] is PageBlockParagraph paragraph && paragraph.Text is RichTextUrl url)
+                            if (item.GetPageBlocks().Count == 1 && item.GetPageBlocks()[0] is PageBlockParagraph paragraph && paragraph.Text is RichTextUrl url)
                             {
                                 items.Add(new SettingsSearchFaq(url.Url, url.ToPlainText()));
                             }

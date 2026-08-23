@@ -206,7 +206,7 @@ namespace Unigram.Views
             PageBlock previousBlock = null;
             FrameworkElement previousElement = null;
             FrameworkElement firstElement = null;
-            foreach (var block in instantView.PageBlocks)
+            foreach (var block in instantView.GetPageBlocks())
             {
                 var element = ProcessBlock(block);
                 var spacing = SpacingBetweenBlocks(previousBlock, block);
@@ -541,7 +541,7 @@ namespace Unigram.Views
             panel.Children.Add(header);
             panel.Children.Add(inner);
 
-            foreach (var block in details.PageBlocks)
+            foreach (var block in details.GetPageBlocks())
             {
                 inner.Children.Add(ProcessBlock(block));
             }
@@ -839,7 +839,7 @@ namespace Unigram.Views
                 var label = new TextBlock { Text = item.Label, TextAlignment = TextAlignment.Right, Margin = new Thickness(0, 0, 8, 0) };
                 var stack = new StackPanel();
 
-                foreach (var inner in item.PageBlocks)
+                foreach (var inner in item.GetPageBlocks())
                 {
                     var child = ProcessBlock(inner);
                     if (child != null)
@@ -1069,7 +1069,7 @@ namespace Unigram.Views
             var element = new StackPanel { Style = Resources["BlockSlideshowStyle"] as Style };
 
             var items = new List<FrameworkElement>();
-            foreach (var item in block.PageBlocks)
+            foreach (var item in block.GetPageBlocks())
             {
                 if (item is PageBlockPhoto photoBlock)
                 {
@@ -1136,7 +1136,7 @@ namespace Unigram.Views
             var element = new StackPanel { Style = Resources["BlockCollageStyle"] as Style };
 
             var items = new List<ImageView>();
-            foreach (var item in block.PageBlocks)
+            foreach (var item in block.GetPageBlocks())
             {
                 if (item is PageBlockPhoto photoBlock)
                 {
@@ -1250,7 +1250,7 @@ namespace Unigram.Views
 
             PageBlock previousBlock = null;
             FrameworkElement previousElement = null;
-            foreach (var subBlock in block.PageBlocks)
+            foreach (var subBlock in block.GetPageBlocks())
             {
                 var subLayout = ProcessBlock(subBlock);
                 var spacing = SpacingBetweenBlocks(previousBlock, block);

@@ -198,18 +198,18 @@ namespace Unigram.Controls.Messages.Content
         {
             var result = 0;
 
-            foreach (var block in webPage.PageBlocks)
+            foreach (var block in webPage.GetPageBlocks())
             {
                 if (block is PageBlockSlideshow slideshow)
                 {
-                    foreach (var item in slideshow.PageBlocks)
+                    foreach (var item in slideshow.GetPageBlocks())
                     {
                         result = CountBlock(webPage, item, result);
                     }
                 }
                 else if (block is PageBlockCollage collage)
                 {
-                    foreach (var item in collage.PageBlocks)
+                    foreach (var item in collage.GetPageBlocks())
                     {
                         result = CountBlock(webPage, item, result);
                     }

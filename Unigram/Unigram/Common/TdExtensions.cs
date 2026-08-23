@@ -669,6 +669,60 @@ namespace Unigram.Common
 #endif
             }
 
+            public static IList<PageBlock> GetPageBlocks(this WebPageInstantView value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
+            public static IList<PageBlock> GetPageBlocks(this PageBlockDetails value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
+            public static IList<PageBlock> GetPageBlocks(this PageBlockBlockQuote value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
+            public static IList<PageBlock> GetPageBlocks(this PageBlockListItem value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
+            public static IList<PageBlock> GetPageBlocks(this PageBlockSlideshow value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
+            public static IList<PageBlock> GetPageBlocks(this PageBlockCollage value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
             public static string GetText(this PollOption option)
             {
 #if MODERN_TDLIB
