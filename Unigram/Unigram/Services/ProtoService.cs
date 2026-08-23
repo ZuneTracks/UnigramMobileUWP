@@ -351,7 +351,9 @@ namespace Unigram.Services
                 _client.Send(new SetOption("online", new OptionValueBoolean(false)));
                 _client.Send(new SetOption("notification_group_count_max", new OptionValueInteger(25)));
                 _client.Send(ModernTdlibCompatibility.CreateSetTdlibParameters(parameters));
+#if !MODERN_TDLIB
                 _client.Send(ModernTdlibCompatibility.CreateCheckDatabaseEncryptionKey(new byte[0]));
+#endif
                 _client.Send(new GetApplicationConfig(), result => UpdateConfig(result));
 
                 _longRunningTask = _longRunningTask ?? Task.Factory.StartNew(Client.Run, TaskCreationOptions.LongRunning);

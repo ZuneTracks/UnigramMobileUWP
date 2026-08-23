@@ -8,6 +8,40 @@ using Unigram.ViewModels;
 
 namespace Unigram.Services
 {
+    public sealed class TdlibParameters
+    {
+        public TdlibParameters(bool useTestDc, string databaseDirectory, string filesDirectory, bool useFileDatabase, bool useChatInfoDatabase, bool useMessageDatabase, bool useSecretChats, int apiId, string apiHash, string systemLanguageCode, string deviceModel, string systemVersion, string applicationVersion, bool enableStorageOptimizer, bool ignoreFileNames)
+        {
+            UseTestDc = useTestDc;
+            DatabaseDirectory = databaseDirectory;
+            FilesDirectory = filesDirectory;
+            UseFileDatabase = useFileDatabase;
+            UseChatInfoDatabase = useChatInfoDatabase;
+            UseMessageDatabase = useMessageDatabase;
+            UseSecretChats = useSecretChats;
+            ApiId = apiId;
+            ApiHash = apiHash;
+            SystemLanguageCode = systemLanguageCode;
+            DeviceModel = deviceModel;
+            SystemVersion = systemVersion;
+            ApplicationVersion = applicationVersion;
+        }
+
+        public bool UseTestDc { get; }
+        public string DatabaseDirectory { get; }
+        public string FilesDirectory { get; set; }
+        public bool UseFileDatabase { get; }
+        public bool UseChatInfoDatabase { get; }
+        public bool UseMessageDatabase { get; }
+        public bool UseSecretChats { get; }
+        public int ApiId { get; }
+        public string ApiHash { get; }
+        public string SystemLanguageCode { get; }
+        public string DeviceModel { get; }
+        public string SystemVersion { get; }
+        public string ApplicationVersion { get; }
+    }
+
     public static class ModernTdlibCompatibility
     {
         public static MessageTopic GetMessageTopic(long threadId)
@@ -27,12 +61,21 @@ namespace Unigram.Services
 
         public static Function CreateSetTdlibParameters(TdlibParameters parameters)
         {
-            return new SetTdlibParameters(parameters);
-        }
-
-        public static Function CreateCheckDatabaseEncryptionKey(IList<byte> encryptionKey)
-        {
-            return new CheckDatabaseEncryptionKey(encryptionKey);
+            return new SetTdlibParameters(
+                parameters.UseTestDc,
+                parameters.DatabaseDirectory,
+                parameters.FilesDirectory,
+                new byte[0],
+                parameters.UseFileDatabase,
+                parameters.UseChatInfoDatabase,
+                parameters.UseMessageDatabase,
+                parameters.UseSecretChats,
+                parameters.ApiId,
+                parameters.ApiHash,
+                parameters.SystemLanguageCode,
+                parameters.DeviceModel,
+                parameters.SystemVersion,
+                parameters.ApplicationVersion);
         }
 
         public static Function CreateGetWebPagePreview(FormattedText text)
