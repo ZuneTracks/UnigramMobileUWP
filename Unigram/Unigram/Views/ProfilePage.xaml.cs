@@ -216,13 +216,15 @@ namespace Unigram.Views
         {
             if (user.Type is UserTypeBot)
             {
-                GetEntities(fullInfo.ShareText);
-                DescriptionPanel.Visibility = string.IsNullOrEmpty(fullInfo.ShareText) ? Visibility.Collapsed : Visibility.Visible;
+                var description = ModernTdlibCompatibility.GetUserFullInfoDescription(fullInfo, true);
+                GetEntities(description);
+                DescriptionPanel.Visibility = string.IsNullOrEmpty(description) ? Visibility.Collapsed : Visibility.Visible;
             }
             else
             {
-                GetEntities(fullInfo.Bio);
-                DescriptionPanel.Visibility = string.IsNullOrEmpty(fullInfo.Bio) ? Visibility.Collapsed : Visibility.Visible;
+                var description = ModernTdlibCompatibility.GetUserFullInfoDescription(fullInfo, false);
+                GetEntities(description);
+                DescriptionPanel.Visibility = string.IsNullOrEmpty(description) ? Visibility.Collapsed : Visibility.Visible;
             }
 
             //UserCommonChats.Badge = fullInfo.GroupInCommonCount;
@@ -252,7 +254,8 @@ namespace Unigram.Views
         {
             if (secretChat.State is SecretChatStateReady ready)
             {
-                SecretLifetime.Badge = chat.MessageTtlSetting > 0 ? Locale.FormatTtl(chat.MessageTtlSetting) : Strings.Resources.ShortMessageLifetimeForever;
+                var ttl = ModernTdlibCompatibility.GetChatMessageTtlSetting(chat);
+                SecretLifetime.Badge = ttl > 0 ? Locale.FormatTtl(ttl) : Strings.Resources.ShortMessageLifetimeForever;
                 //SecretIdenticon.Source = PlaceholderHelper.GetIdenticon(secretChat.KeyHash, 24);
 
                 MiscPanel.Visibility = Visibility.Visible;

@@ -1391,12 +1391,12 @@ namespace Unigram.Common
 
         public static string GetRestrictionReason(this User user)
         {
-            return GetRestrictionReason(user.RestrictionReason);
+            return GetRestrictionReason(ModernTdlibCompatibility.GetUserRestrictionReason(user));
         }
 
         public static string GetRestrictionReason(this Supergroup supergroup)
         {
-            return GetRestrictionReason(supergroup.RestrictionReason);
+            return GetRestrictionReason(ModernTdlibCompatibility.GetSupergroupRestrictionReason(supergroup));
         }
 
         public static string GetRestrictionReason(string reason)

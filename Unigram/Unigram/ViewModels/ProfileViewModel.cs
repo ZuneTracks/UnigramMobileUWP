@@ -1034,7 +1034,7 @@ namespace Unigram.ViewModels
             }
 
             var dialog = new ChatTtlPopup(chat.Type is ChatTypeSecret);
-            dialog.Value = chat.MessageTtlSetting;
+            dialog.Value = ModernTdlibCompatibility.GetChatMessageTtlSetting(chat);
 
             var confirm = await dialog.ShowQueuedAsync();
             if (confirm != ContentDialogResult.Primary)
