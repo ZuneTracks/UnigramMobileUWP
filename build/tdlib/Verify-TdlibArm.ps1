@@ -23,11 +23,31 @@ foreach ($name in $requiredFiles) {
     }
 }
 
-$dumpbin = Get-Command dumpbin.exe -ErrorAction SilentlyContinue
-if ($null -ne $dumpbin) {
-    $headers = & $dumpbin.Source /headers (Join-Path $OutputRoot "Telegram.Td.dll")
-    if ($LASTEXITCODE -ne 0 -or -not ($headers -match "ARM")) {
-        throw "Telegram.Td.dll does not report an ARM image."
+function Test-ArmPe {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -lt 0x40 -or $bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) {
+        return $false
+    }
+
+    $peOffset = [System.BitConverter]::ToInt32($bytes, 0x3c)
+    if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length) {
+        return $false
+    }
+
+    $signature = [System.BitConverter]::ToUInt32($bytes, $peOffset)
+    $machine = [System.BitConverter]::ToUInt16($bytes, $peOffset + 4)
+    return $signature -eq 0x00004550 -and $machine -eq 0x01c4
+}
+
+foreach ($name in @("Telegram.Td.dll", "libcrypto-3-arm.dll", "libssl-3-arm.dll", "z.dll")) {
+    $path = Join-Path $OutputRoot $name
+    if (-not (Test-ArmPe -Path $path)) {
+        throw "$name does not contain an ARM PE image."
     }
 }
 
