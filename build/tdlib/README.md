@@ -95,10 +95,10 @@ Device installation, fresh login, push, and Live Tile validation remain
 outstanding.
 
 The experimental project explicitly excludes the portable
-`System.Numerics.Vectors` packages, selects the matching UWP reference
+`System.Numerics.Vectors` packages and selects the matching UWP reference
 assemblies from `Microsoft.NETCore.UniversalWindowsPlatform` 6.2.10 for
-compile and native interop generation, and leaves those framework assemblies
-out of the APPX so the device-provided UWP framework supplies them. This
-avoids packaging the portable `4.1.1.0`/`4.0.1.0` pair, which caused a
-pre-managed-startup assembly binding crash (`0x80131040`); the selected UWP
-pair is `4.1.4.0`/`4.0.4.0`.
+compile and native interop generation. The final ARM package includes the
+corresponding ARM AOT runtime pair (`4.1.4.0` and `4.0.4.0`) through explicit
+APPX payload items. This avoids both the portable `4.1.1.0`/`4.0.1.0` pair
+and an app/device split where the native image requests `4.1.4.0` but the
+device resolves another manifest (`0x80131040`).
