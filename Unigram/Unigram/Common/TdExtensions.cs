@@ -203,7 +203,7 @@ namespace Unigram.Common
         public static string GetUsername(this User user)
         {
 #if MODERN_TDLIB
-            return user.Usernames?.EditableUsername ?? string.Empty;
+            return user.Usernames?.ActiveUsernames?.FirstOrDefault() ?? string.Empty;
 #else
             return user.Username;
 #endif
@@ -212,7 +212,7 @@ namespace Unigram.Common
         public static string GetUsername(this Supergroup supergroup)
         {
 #if MODERN_TDLIB
-            return supergroup.Usernames?.EditableUsername ?? string.Empty;
+            return supergroup.Usernames?.ActiveUsernames?.FirstOrDefault() ?? string.Empty;
 #else
             return supergroup.Username;
 #endif
@@ -230,7 +230,7 @@ namespace Unigram.Common
         public static bool GetCanSendMediaMessages(this ChatPermissions permissions)
         {
 #if MODERN_TDLIB
-            return permissions.CanSendAudios || permissions.CanSendDocuments || permissions.CanSendPhotos || permissions.CanSendVideos || permissions.CanSendVideoNotes || permissions.CanSendVoiceNotes || permissions.CanSendOtherMessages;
+            return permissions.CanSendAudios || permissions.CanSendDocuments || permissions.CanSendPhotos || permissions.CanSendVideos || permissions.CanSendVideoNotes || permissions.CanSendVoiceNotes;
 #else
             return permissions.CanSendMediaMessages;
 #endif
@@ -2669,7 +2669,11 @@ namespace Telegram.Td.Api
         public MessageChatEvent(ChatEvent chatEvent)
         {
             Action = chatEvent.Action;
+#if MODERN_TDLIB
+            UserId = (chatEvent.MemberId as MessageSenderUser)?.UserId ?? 0;
+#else
             UserId = chatEvent.UserId;
+#endif
             Date = chatEvent.Date;
             Id = chatEvent.Id;
         }

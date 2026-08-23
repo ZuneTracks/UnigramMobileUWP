@@ -27,7 +27,11 @@ namespace Unigram.ViewModels
 
         private long _minEventId = long.MaxValue;
 
+#if MODERN_TDLIB
+        private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, false, true, true, true, true, true, true);
+#else
         private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, true, true, true, true);
+#endif
         public ChatEventLogFilters Filters
         {
             get => _filters;
@@ -234,7 +238,11 @@ namespace Unigram.ViewModels
 
         private Message CreateMessage(long chatId, bool isChannel, ChatEvent chatEvent, bool child = false)
         {
+#if MODERN_TDLIB
+            MessageSender sender = chatEvent.MemberId;
+#else
             MessageSender sender = new MessageSenderUser(chatEvent.UserId);
+#endif
 
             if (child)
             {
@@ -784,7 +792,7 @@ namespace Unigram.ViewModels
         private static ChatMemberStatusAdministrator CreateEmptyAdministratorStatus()
         {
 #if MODERN_TDLIB
-            return new ChatMemberStatusAdministrator(string.Empty, false, false, false, false, false, false, false, false, false, false, false, false);
+            return new ChatMemberStatusAdministrator(false, new ChatAdministratorRights(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false));
 #else
             return new ChatMemberStatusAdministrator();
 #endif
@@ -793,7 +801,7 @@ namespace Unigram.ViewModels
         private static ChatPermissions CreateEmptyPermissions()
         {
 #if MODERN_TDLIB
-            return new ChatPermissions(false, false, false, false, false, false, false, false);
+            return new ChatPermissions(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 #else
             return new ChatPermissions();
 #endif

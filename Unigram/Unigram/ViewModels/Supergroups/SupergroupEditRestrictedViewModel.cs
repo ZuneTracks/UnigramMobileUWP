@@ -331,8 +331,18 @@ namespace Unigram.ViewModels.Supergroups
                     CanAddLinkPreviews = _canAddWebPagePreviews,
                     CanSendPolls = _canSendPolls,
                     CanSendOtherMessages = _canSendOtherMessages,
+#if MODERN_TDLIB
+                    CanSendAudios = _canSendMediaMessages,
+                    CanSendDocuments = _canSendMediaMessages,
                     CanSendPhotos = _canSendMediaMessages,
+                    CanSendVideos = _canSendMediaMessages,
+                    CanSendVideoNotes = _canSendMediaMessages,
+                    CanSendVoiceNotes = _canSendMediaMessages,
                     CanSendBasicMessages = _canSendMessages,
+#else
+                    CanSendMediaMessages = _canSendMediaMessages,
+                    CanSendBasicMessages = _canSendMessages,
+#endif
                 }
             };
 
