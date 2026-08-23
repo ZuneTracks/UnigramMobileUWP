@@ -16,9 +16,19 @@ namespace Unigram.Services
             return new ToggleMessageSenderIsBlocked(sender, blocked);
         }
 
+        public static Function CreateAddProxy(string server, int port, bool enabled, ProxyType type)
+        {
+            return new AddProxy(server, port, enabled, type);
+        }
+
         public static MessageSendOptions CreateMessageSendOptions(bool disableNotification, bool fromBackground, MessageSchedulingState schedulingState)
         {
             return new MessageSendOptions(disableNotification, fromBackground, schedulingState);
+        }
+
+        public static MessageContent CreateMessageText(FormattedText text, WebPage webPage)
+        {
+            return new MessageText(text, webPage);
         }
 
         public static Function GetInstalledStickerSets(bool masks)
@@ -54,6 +64,36 @@ namespace Unigram.Services
         public static Function SearchStickers(string query, int limit)
         {
             return new SearchStickers(query, limit);
+        }
+
+        public static Function CreateSearchChats(string query, int limit)
+        {
+            return new SearchChats(query, limit);
+        }
+
+        public static Function CreateSearchChatsOnServer(string query, int limit)
+        {
+            return new SearchChatsOnServer(query, limit);
+        }
+
+        public static Function CreateSearchPublicChats(string query)
+        {
+            return new SearchPublicChats(query);
+        }
+
+        public static Function CreateSearchMessages(ChatList chatList, string query, SearchMessagesFilter filter, int minDate, int maxDate)
+        {
+            return new SearchMessages(new long[0], query, int.MaxValue, 0, 0, 100, filter, minDate, maxDate);
+        }
+
+        public static Function CreateViewMessages(long chatId, long threadId, IList<long> messageIds, bool forceRead)
+        {
+            return new ViewMessages(chatId, threadId, messageIds, forceRead);
+        }
+
+        public static Function CreateSearchEmojis(string query, string inputLanguage)
+        {
+            return new SearchEmojis(query, false, new[] { inputLanguage });
         }
 
         public static StickerSetInfo CreateStickerSetInfo(long id, string title, string name, Thumbnail thumbnail, IList<ClosedVectorPath> thumbnailOutline, bool isOwned, bool isInstalled, bool isArchived, bool isOfficial, bool isAnimated, bool isMasks, bool isViewed, int size, IList<Sticker> covers)

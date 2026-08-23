@@ -577,7 +577,7 @@ namespace Unigram.Controls.Chats
                     }
                     else
                     {
-                        var response = await _protoService.SendAsync(new SearchEmojis(_query, false, new[] { _inputLanguage }));
+                        var response = await _protoService.SendAsync(ModernTdlibCompatibility.CreateSearchEmojis(_query, _inputLanguage));
                         if (response is Emojis emojis)
                         {
                             var results = emojis.EmojisValue.Reverse();

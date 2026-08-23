@@ -118,7 +118,7 @@ namespace Unigram.Views
 
             if (messages.Count > 0 && _windowContext.ActivationMode == CoreWindowActivationMode.ActivatedInForeground)
             {
-                ViewModel.ProtoService.Send(new ViewMessages(chat.Id, ViewModel.ThreadId, messages, false));
+                ViewModel.ProtoService.Send(ModernTdlibCompatibility.CreateViewMessages(chat.Id, ViewModel.ThreadId, messages, false));
             }
 
             if (animations.Count > 0 && !intermediate)

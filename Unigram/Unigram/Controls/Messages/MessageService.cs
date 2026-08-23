@@ -65,6 +65,7 @@ namespace Unigram.Controls.Messages
                 case MessageChatSetTtl chatSetTtl:
                     return UpdateChatSetTtl(message, chatSetTtl, active);
 #endif
+#if !MODERN_TDLIB
                 case MessageChatUpgradeFrom chatUpgradeFrom:
                     return UpdateChatUpgradeFrom(message, chatUpgradeFrom, active);
                 case MessageChatUpgradeTo chatUpgradeTo:
@@ -87,6 +88,7 @@ namespace Unigram.Controls.Messages
                     return UpdateScreenshotTaken(message, screenshotTaken, active);
                 case MessageSupergroupChatCreate supergroupChatCreate:
                     return UpdateSupergroupChatCreate(message, supergroupChatCreate, active);
+#endif
 #if !MODERN_TDLIB
                 case MessageWebsiteConnected websiteConnected:
                     return UpdateWebsiteConnected(message, websiteConnected, active);

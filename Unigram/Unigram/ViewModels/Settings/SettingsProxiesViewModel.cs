@@ -149,7 +149,7 @@ namespace Unigram.ViewModels.Settings
                 return;
             }
 
-            var response = await ProtoService.SendAsync(new AddProxy(dialog.Server, dialog.Port, false, dialog.Type));
+            var response = await ProtoService.SendAsync(ModernTdlibCompatibility.CreateAddProxy(dialog.Server, dialog.Port, false, dialog.Type));
             if (response is Proxy proxy)
             {
                 var connection = new ProxyViewModel(proxy);

@@ -922,7 +922,7 @@ namespace Unigram.ViewModels
                 var message = $"{Strings.Resources.BotInfoTitle}{Environment.NewLine}{fullInfo.Description}";
                 var text = new FormattedText(message, entities);
 
-                Items.Insert(0, _messageFactory.Create(this, new Message(0, new MessageSenderUser(user.Id), chat.Id, null, null, false, false, false, false, false, true, false, false, false, false, false, false, false, false, 0, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, new MessageText(text, null), null)));
+                Items.Insert(0, _messageFactory.Create(this, new Message(0, new MessageSenderUser(user.Id), chat.Id, null, null, false, false, false, false, false, true, false, false, false, false, false, false, false, false, 0, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, ModernTdlibCompatibility.CreateMessageText(text, null), null)));
                 return;
             }
 

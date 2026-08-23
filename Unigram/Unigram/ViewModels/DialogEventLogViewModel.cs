@@ -352,7 +352,7 @@ namespace Unigram.ViewModels
                         break;
                     case ChatEventMemberJoined memberJoined:
                         message = GetMessage(_chat.Id, channel, item);
-                        message.Content = new MessageChatAddMembers(new long[] { item.MemberId is MessageSenderUser member ? member.UserId : 0 });
+                        message.Content = new MessageChatAddMembers(new long[] { item.MemberId is MessageSenderUser senderUser ? senderUser.UserId : 0 });
                         break;
                     case ChatEventTitleChanged titleChanged:
                         message = GetMessage(_chat.Id, channel, item);
@@ -382,7 +382,7 @@ namespace Unigram.ViewModels
                 var text = new FormattedText(descriptionChanged.NewDescription, new TextEntity[0]);
                 var webPage = string.IsNullOrEmpty(descriptionChanged.OldDescription) ? null : new WebPage { SiteName = Strings.Resources.EventLogPreviousGroupDescription, Description = new FormattedText { Text = descriptionChanged.OldDescription } };
 
-                return new MessageText(text, webPage);
+                return ModernTdlibCompatibility.CreateMessageText(text, webPage);
             }
             else if (item.Action is ChatEventUsernameChanged usernameChanged)
             {
@@ -391,7 +391,7 @@ namespace Unigram.ViewModels
                 var text = new FormattedText(link, new[] { new TextEntity(0, link.Length, new TextEntityTypeUrl()) });
                 var webPage = string.IsNullOrEmpty(usernameChanged.OldUsername) ? null : new WebPage { SiteName = Strings.Resources.EventLogPreviousLink, Description = new FormattedText { Text = MeUrlPrefixConverter.Convert(CacheService, usernameChanged.OldUsername) } };
 
-                return new MessageText(text, webPage);
+                return ModernTdlibCompatibility.CreateMessageText(text, webPage);
             }
             else if (item.Action is ChatEventPermissionsChanged permissionChanged)
             {
@@ -464,7 +464,7 @@ namespace Unigram.ViewModels
 
                 text = rights.ToString();
 
-                return new MessageText(new FormattedText(text, entities), null);
+                return ModernTdlibCompatibility.CreateMessageText(new FormattedText(text, entities), null);
             }
             else if (item.Action is ChatEventMemberRestricted memberRestricted)
             {
@@ -639,7 +639,7 @@ namespace Unigram.ViewModels
                     text = String.Format(str, GetUserName(whoUser, entities, str.IndexOf("{0}")));
                 }
 
-                return new MessageText(new FormattedText(text, entities), null);
+                return ModernTdlibCompatibility.CreateMessageText(new FormattedText(text, entities), null);
             }
             else if (item.Action is ChatEventMemberPromoted memberPromoted)
             {
@@ -655,7 +655,7 @@ namespace Unigram.ViewModels
 
                 if (memberPromoted.NewStatus is ChatMemberStatusCreator)
                 {
-                    return new MessageText(new FormattedText(builder.ToString(), entities), null);
+                    return ModernTdlibCompatibility.CreateMessageText(new FormattedText(builder.ToString(), entities), null);
                 }
 
                 ChatMemberStatusAdministrator o = null;
@@ -755,7 +755,7 @@ namespace Unigram.ViewModels
                     AppendChange(ModernTdlibCompatibility.GetAdministratorCanPinMessages(n), Strings.Resources.EventLogPromotedPinMessages);
                 }
 
-                return new MessageText(new FormattedText(builder.ToString(), entities), null);
+                return ModernTdlibCompatibility.CreateMessageText(new FormattedText(builder.ToString(), entities), null);
             }
             else if (item.Action is ChatEventMessageDeleted messageDeleted)
             {

@@ -66,9 +66,23 @@ namespace Unigram.Services
 #endif
         }
 
+        public static Function CreateAddProxy(string server, int port, bool enabled, ProxyType type)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.AddProxy(new Telegram.Td.Api.Proxy(server, port, type), enabled, string.Empty);
+#else
+            return new Telegram.Td.Api.AddProxy(server, port, enabled, type);
+#endif
+        }
+
         public static MessageSendOptions CreateMessageSendOptions(bool disableNotification, bool fromBackground, MessageSchedulingState schedulingState)
         {
             return new MessageSendOptions(null, disableNotification, fromBackground, false, false, 0, false, schedulingState, 0, 0, false);
+        }
+
+        public static MessageContent CreateMessageText(FormattedText text, WebPage webPage)
+        {
+            return new MessageText(text, webPage, null);
         }
 
         public static StickerType GetStickerType(bool masks)
@@ -136,6 +150,60 @@ namespace Unigram.Services
             return new Telegram.Td.Api.SearchStickers(new StickerTypeRegular(), string.Empty, query, new List<string>(), 0, limit);
 #else
             return new Telegram.Td.Api.SearchStickers(query, limit);
+#endif
+        }
+
+        public static Function CreateSearchChats(string query, int limit)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchChats(query, null, limit);
+#else
+            return new Telegram.Td.Api.SearchChats(query, limit);
+#endif
+        }
+
+        public static Function CreateSearchChatsOnServer(string query, int limit)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchChatsOnServer(query, null, limit);
+#else
+            return new Telegram.Td.Api.SearchChatsOnServer(query, limit);
+#endif
+        }
+
+        public static Function CreateSearchPublicChats(string query)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchPublicChats(query, null);
+#else
+            return new Telegram.Td.Api.SearchPublicChats(query);
+#endif
+        }
+
+        public static Function CreateSearchMessages(ChatList chatList, string query, SearchMessagesFilter filter, int minDate, int maxDate)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchMessages(chatList, query, string.Empty, 100, filter, null, minDate, maxDate);
+#else
+            return new Telegram.Td.Api.SearchMessages(new long[0], query, int.MaxValue, 0, 0, 100, filter, minDate, maxDate);
+#endif
+        }
+
+        public static Function CreateViewMessages(long chatId, long threadId, IList<long> messageIds, bool forceRead)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.ViewMessages(chatId, messageIds, null, forceRead);
+#else
+            return new Telegram.Td.Api.ViewMessages(chatId, threadId, messageIds, forceRead);
+#endif
+        }
+
+        public static Function CreateSearchEmojis(string query, string inputLanguage)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchEmojis(query, new[] { inputLanguage });
+#else
+            return new Telegram.Td.Api.SearchEmojis(query, false, new[] { inputLanguage });
 #endif
         }
 
