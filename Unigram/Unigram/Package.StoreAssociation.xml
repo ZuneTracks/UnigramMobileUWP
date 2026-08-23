@@ -361,7 +361,7 @@
     <Language Code="zu-za" InMinimumRequirementSet="true" />
   </SupportedLocales>
   <ProductReservedInfo>
-    <MainPackageIdentityName>49197Wirdschon.UnigramMobile</MainPackageIdentityName>
+    <MainPackageIdentityName>49197Wirdschon.UnigramMobileTdlibExperimental</MainPackageIdentityName>
     <ReservedNames>
       <ReservedName>Unigram Mobile</ReservedName>
       <ReservedName>Unigram Mobile Messenger</ReservedName>
