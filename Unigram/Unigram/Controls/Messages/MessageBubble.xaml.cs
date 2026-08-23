@@ -952,7 +952,7 @@ namespace Unigram.Controls.Messages
                 }
                 else if (content is MessageSticker sticker)
                 {
-                    if (sticker.Sticker.IsAnimated)
+                    if (sticker.Sticker.GetIsAnimated())
                     {
                         Media.Child = new AnimatedStickerContent(message);
                     }

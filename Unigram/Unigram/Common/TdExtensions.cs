@@ -646,6 +646,33 @@ namespace Unigram.Common
 #endif
             }
 
+            public static bool GetIsAnimated(this Sticker sticker)
+            {
+#if MODERN_TDLIB
+                return sticker?.Format is StickerFormatTgs || sticker?.Format is StickerFormatWebm;
+#else
+                return sticker?.IsAnimated == true;
+#endif
+            }
+
+            public static bool GetIsAnimated(this StickerSetInfo stickerSet)
+            {
+#if MODERN_TDLIB
+                return stickerSet?.Covers?.Any(sticker => sticker.GetIsAnimated()) == true;
+#else
+                return stickerSet?.IsAnimated == true;
+#endif
+            }
+
+            public static bool GetIsAnimated(this StickerSet stickerSet)
+            {
+#if MODERN_TDLIB
+                return stickerSet?.Stickers?.Any(sticker => sticker.GetIsAnimated()) == true;
+#else
+                return stickerSet?.IsAnimated == true;
+#endif
+            }
+
             public static string GetText(this PollOption option)
             {
 #if MODERN_TDLIB
@@ -996,9 +1023,9 @@ namespace Unigram.Common
             switch (content)
             {
                 case MessageSticker sticker:
-                    return sticker.Sticker.IsAnimated ? sticker.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
+                    return sticker.Sticker.GetIsAnimated() ? sticker.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
                 case MessageText text:
-                    return text.WebPage?.Sticker?.IsAnimated ?? false ? text.WebPage.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
+                    return text.WebPage?.Sticker?.GetIsAnimated() == true ? text.WebPage.Sticker.StickerValue.Local.IsDownloadingCompleted : false;
                 case MessageDice dice:
                     var state = dice.InitialState;
                     if (state is DiceStickersRegular regular)
@@ -1076,9 +1103,9 @@ namespace Unigram.Common
             switch (message.Content)
             {
                 case MessageSticker sticker:
-                    return sticker.Sticker.IsAnimated ? sticker.Sticker.StickerValue : null;
+                    return sticker.Sticker.GetIsAnimated() ? sticker.Sticker.StickerValue : null;
                 case MessageText text:
-                    return text.WebPage?.Sticker?.IsAnimated ?? false ? text.WebPage?.Sticker?.StickerValue : null;
+                    return text.WebPage?.Sticker?.GetIsAnimated() == true ? text.WebPage?.Sticker?.StickerValue : null;
                 default:
                     return null;
             }

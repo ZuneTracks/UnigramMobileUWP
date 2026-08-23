@@ -4407,7 +4407,7 @@ namespace Unigram.Views
                     {
                         ViewVisibleMessages(false);
                     }
-                    else if (content is MessageSticker sticker && sticker.Sticker.IsAnimated && sticker.Sticker.StickerValue.Id == file.Id && file.Local.IsDownloadingCompleted)
+                    else if (content is MessageSticker sticker && sticker.Sticker.GetIsAnimated() && sticker.Sticker.StickerValue.Id == file.Id && file.Local.IsDownloadingCompleted)
                     {
                         ViewVisibleMessages(false);
                     }
@@ -4421,7 +4421,7 @@ namespace Unigram.Views
                         {
                             ViewVisibleMessages(false);
                         }
-                        else if (text.WebPage.Sticker?.StickerValue.Id == file.Id && text.WebPage.Sticker.IsAnimated)
+                        else if (text.WebPage.Sticker?.StickerValue.Id == file.Id && text.WebPage.Sticker.GetIsAnimated())
                         {
                             ViewVisibleMessages(false);
                         }

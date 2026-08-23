@@ -91,7 +91,7 @@ namespace Unigram.Controls.Messages.Content
                 }
                 else if (webPage.Sticker != null)
                 {
-                    if (webPage.Sticker.IsAnimated)
+                    if (webPage.Sticker.GetIsAnimated())
                     {
                         Media.Child = new AnimatedStickerContent(message);
                     }

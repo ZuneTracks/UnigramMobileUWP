@@ -676,7 +676,7 @@ namespace Unigram.ViewModels.Drawers
             || _info.Covers?.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm) == true;
         public bool IsMasks => (_set?.StickerType ?? _info.StickerType) is StickerTypeMask;
 #else
-        public bool IsAnimated => _set?.IsAnimated ?? _info.IsAnimated;
+        public bool IsAnimated => _set?.GetIsAnimated() ?? _info.GetIsAnimated();
         public bool IsMasks => _set?.IsMasks ?? _info.IsMasks;
 #endif
         public bool IsOfficial => _set?.IsOfficial ?? _info.IsOfficial;
@@ -746,7 +746,7 @@ namespace Unigram.ViewModels.Drawers
         public bool IsMask => _sticker?.FullType is StickerFullTypeMask;
 #else
         public MaskPosition MaskPosition => _sticker?.MaskPosition;
-        public bool IsAnimated => _sticker?.IsAnimated ?? false;
+        public bool IsAnimated => _sticker?.GetIsAnimated() ?? false;
         public bool IsMask => _sticker?.IsMask ?? false;
 #endif
         public string Emoji => _sticker?.Emoji;
