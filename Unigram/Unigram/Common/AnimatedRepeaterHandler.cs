@@ -124,11 +124,23 @@ namespace Unigram.Common
                 {
                     animations.Add((container, (T)(object)setViewModel));
                 }
-                else if (item is Sticker sticker && sticker.IsAnimated)
+                else if (item is Sticker sticker
+#if MODERN_TDLIB
+                    && (sticker.Format is StickerFormatTgs || sticker.Format is StickerFormatWebm)
+#else
+                    && sticker.IsAnimated
+#endif
+                    )
                 {
                     animations.Add((container, (T)(object)sticker));
                 }
-                else if (item is StickerSetInfo set && set.IsAnimated)
+                else if (item is StickerSetInfo set
+#if MODERN_TDLIB
+                    && set.Covers.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm)
+#else
+                    && set.IsAnimated
+#endif
+                    )
                 {
                     animations.Add((container, (T)(object)set));
                 }
