@@ -435,14 +435,10 @@ namespace Unigram.Common
 
         public static bool IsInstantGallery(this WebPage webPage)
         {
-#if MODERN_TDLIB
-            return webPage.InstantViewVersion != 0 && webPage.Type is LinkPreviewTypeAlbum;
-#else
             return webPage.InstantViewVersion != 0 &&
                 (string.Equals(webPage.SiteName, "twitter", StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(webPage.SiteName, "instagram", StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(webPage), "telegram_album", StringComparison.OrdinalIgnoreCase));
-#endif
         }
 
         public static InputThumbnail ToInputThumbnail(this PhotoSize photo)

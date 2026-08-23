@@ -372,7 +372,7 @@ namespace Unigram.ViewModels
 
                 foreach (var chat in chats)
                 {
-                    var response = await ProtoService.SendAsync(new SendMessage(chat.Id, 0, 0, ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null), null, new InputMessageText(formatted, false, false)));
+                    var response = await ProtoService.SendAsync(new SendMessage(chat.Id, 0, 0, ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null), null, ModernTdlibCompatibility.CreateInputMessageText(formatted, false, false)));
                 }
             }
 
@@ -415,7 +415,7 @@ namespace Unigram.ViewModels
 
                 foreach (var chat in chats)
                 {
-                    var response = await ProtoService.SendAsync(new SendMessage(chat.Id, 0, 0, ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null), null, new InputMessageText(formatted, false, false)));
+                    var response = await ProtoService.SendAsync(new SendMessage(chat.Id, 0, 0, ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null), null, ModernTdlibCompatibility.CreateInputMessageText(formatted, false, false)));
                 }
 
                 //NavigationService.GoBack();
