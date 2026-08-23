@@ -533,7 +533,7 @@ namespace Unigram.Controls.Messages
                 ThumbRoot.Visibility = Visibility.Collapsed;
 
             TitleLabel.Text = GetFromLabel(message, title);
-            ServiceLabel.Text = $"\uD83D\uDCCA {poll.Poll.Question.Replace("\r\n", "\n").Replace('\n', ' ')}";
+            ServiceLabel.Text = $"\uD83D\uDCCA {ModernTdlibCompatibility.GetPollQuestion(poll.Poll).Replace("\r\n", "\n").Replace('\n', ' ')}";
             MessageLabel.Text = string.Empty;
 
             return true;

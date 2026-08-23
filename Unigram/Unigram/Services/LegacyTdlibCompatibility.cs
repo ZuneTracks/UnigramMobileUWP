@@ -31,6 +31,11 @@ namespace Unigram.Services
             return new MessageText(text, webPage);
         }
 
+        public static string GetPollQuestion(Poll poll)
+        {
+            return poll?.Question ?? string.Empty;
+        }
+
         public static Function GetInstalledStickerSets(bool masks)
         {
             return new GetInstalledStickerSets(masks);

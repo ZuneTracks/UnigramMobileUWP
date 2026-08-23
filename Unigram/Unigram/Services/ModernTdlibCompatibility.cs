@@ -85,6 +85,11 @@ namespace Unigram.Services
             return new MessageText(text, webPage, null);
         }
 
+        public static string GetPollQuestion(Poll poll)
+        {
+            return poll?.Question?.Text ?? string.Empty;
+        }
+
         public static StickerType GetStickerType(bool masks)
         {
 #if MODERN_TDLIB

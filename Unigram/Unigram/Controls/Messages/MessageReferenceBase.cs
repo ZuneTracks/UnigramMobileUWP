@@ -439,7 +439,7 @@ namespace Unigram.Controls.Messages
             HideThumbnail();
 
             SetTitle(GetFromLabel(message, title));
-            SetService($"\uD83D\uDCCA {poll.Poll.Question.Replace("\r\n", "\n").Replace('\n', ' ')}");
+            SetService($"\uD83D\uDCCA {ModernTdlibCompatibility.GetPollQuestion(poll.Poll).Replace("\r\n", "\n").Replace('\n', ' ')}");
             SetMessage(string.Empty);
 
             return true;
