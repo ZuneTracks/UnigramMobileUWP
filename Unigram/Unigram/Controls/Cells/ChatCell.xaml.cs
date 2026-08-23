@@ -765,7 +765,7 @@ namespace Unigram.Controls.Cells
             }
             else if (message.Content is MessageInvoice invoice)
             {
-                return result + invoice.Title;
+                return result + invoice.GetTitle();
             }
             else if (message.Content is MessageContact)
             {
@@ -773,7 +773,7 @@ namespace Unigram.Controls.Cells
             }
             else if (message.Content is MessageLocation location)
             {
-                return result + (location.LivePeriod > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
+                return result + (location.GetLivePeriod() > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
             }
             else if (message.Content is MessageVenue vanue)
             {

@@ -1198,7 +1198,7 @@ namespace Unigram.ViewModels
                                 return;
                             }
 
-                            await SendMessageAsync(chat, 0, new InputMessageLocation(location, 0, 0, 0), null);
+                            await SendMessageAsync(chat, 0, ModernTdlibCompatibility.CreateInputMessageLocation(location), null);
                         }
                     }
                 }

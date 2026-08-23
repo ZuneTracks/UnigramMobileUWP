@@ -58,7 +58,7 @@ namespace Unigram.ViewModels
             }
 
             var reply = GetReply(true);
-            var input = new InputMessageSticker(new InputFileId(sticker.StickerValue.Id), sticker.Thumbnail?.ToInput(), sticker.Width, sticker.Height, emoji ?? string.Empty);
+            var input = ModernTdlibCompatibility.CreateInputMessageSticker(new InputFileId(sticker.StickerValue.Id), sticker.Thumbnail?.ToInput(), sticker.Width, sticker.Height, emoji ?? string.Empty);
 
             await SendMessageAsync(chat, reply, input, options);
         }
@@ -116,7 +116,7 @@ namespace Unigram.ViewModels
             }
 
             var reply = GetReply(true);
-            var input = new InputMessageAnimation(new InputFileId(animation.AnimationValue.Id), animation.Thumbnail?.ToInput(), new int[0], animation.Duration, animation.Width, animation.Height, null);
+            var input = ModernTdlibCompatibility.CreateInputMessageAnimation(new InputFileId(animation.AnimationValue.Id), animation.Thumbnail?.ToInput(), animation.Duration, animation.Width, animation.Height, null);
 
             await SendMessageAsync(chat, reply, input, options);
         }
@@ -413,7 +413,7 @@ namespace Unigram.ViewModels
             }
 
             var reply = GetReply(true);
-            var input = new InputMessageVoiceNote(await file.ToGeneratedAsync(), duration, new byte[0], caption);
+            var input = ModernTdlibCompatibility.CreateInputMessageVoiceNote(await file.ToGeneratedAsync(), duration, caption);
 
             await SendMessageAsync(chat, reply, input, options);
         }
@@ -824,7 +824,7 @@ namespace Unigram.ViewModels
             }
 
             var reply = GetReply(true);
-            var input = new InputMessagePoll(dialog.Question, dialog.Options, dialog.IsAnonymous, dialog.Type, 0, 0, false);
+            var input = ModernTdlibCompatibility.CreateInputMessagePoll(dialog.Question, dialog.Options, dialog.IsAnonymous, dialog.Type);
 
             await SendMessageAsync(chat, reply, input, options);
         }

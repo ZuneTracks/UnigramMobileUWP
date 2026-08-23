@@ -320,7 +320,7 @@ namespace Unigram.Controls.Messages
             HideThumbnail();
 
             SetTitle(GetFromLabel(message, title));
-            SetService(invoice.Title);
+            SetService(invoice.GetTitle());
             SetMessage(string.Empty);
 
             return true;
@@ -333,7 +333,7 @@ namespace Unigram.Controls.Messages
             HideThumbnail();
 
             SetTitle(GetFromLabel(message, title));
-            SetService(location.LivePeriod > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
+            SetService(location.GetLivePeriod() > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
             SetMessage(string.Empty);
 
             return true;

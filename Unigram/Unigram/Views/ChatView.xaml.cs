@@ -2377,7 +2377,7 @@ namespace Unigram.Views
             }
             else if (message.Content is MessageInvoice invoice)
             {
-                return invoice.Photo != null;
+                return invoice.GetPhoto() != null;
             }
             else if (message.Content is MessageText text)
             {

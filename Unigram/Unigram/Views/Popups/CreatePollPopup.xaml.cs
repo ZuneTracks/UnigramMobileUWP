@@ -7,6 +7,7 @@ using Telegram.Td.Api;
 using Unigram.Common;
 using Unigram.Controls;
 using Unigram.Navigation;
+using Unigram.Services;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -84,10 +85,10 @@ namespace Unigram.Views.Popups
             {
                 if (Quiz.IsOn)
                 {
-                    return new PollTypeQuiz(Items.IndexOf(Items.FirstOrDefault(x => x.IsChecked)), QuizExplanation.GetFormattedText());
+                    return ModernTdlibCompatibility.CreatePollTypeQuiz(Items.IndexOf(Items.FirstOrDefault(x => x.IsChecked)), QuizExplanation.GetFormattedText());
                 }
 
-                return new PollTypeRegular(Multiple.IsOn);
+                return ModernTdlibCompatibility.CreatePollTypeRegular(Multiple.IsOn);
             }
         }
 

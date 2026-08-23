@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Telegram.Td.Api;
 using Unigram.Common;
 using Unigram.Logs;
@@ -26,7 +27,12 @@ namespace Unigram.Services
         public static StickerType GetStickerType(bool masks)
         {
 #if MODERN_TDLIB
-            return masks ? new StickerTypeMask() : new StickerTypeRegular();
+            if (masks)
+            {
+                return new StickerTypeMask();
+            }
+
+            return new StickerTypeRegular();
 #else
             return null;
 #endif
@@ -118,6 +124,139 @@ namespace Unigram.Services
             return administrator.Rights?.CanChangeInfo == true;
 #else
             return administrator.CanChangeInfo;
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageDocument(InputFile file, InputThumbnail thumbnail, bool disableContentTypeDetection, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            return new InputMessageDocument(new InputDocument(file, thumbnail, disableContentTypeDetection), caption);
+#else
+            return new InputMessageDocument(file, thumbnail, disableContentTypeDetection, caption);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessagePhoto(InputFile file, InputThumbnail thumbnail, int width, int height, FormattedText caption, int ttl)
+        {
+#if MODERN_TDLIB
+            var photo = new InputPhoto(file, thumbnail, null, new int[0], width, height);
+            return new InputMessagePhoto(photo, caption, false, ttl > 0 ? new MessageSelfDestructTypeTimer(ttl) : null, false);
+#else
+            return new InputMessagePhoto(file, thumbnail, new int[0], width, height, caption, ttl);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageAnimation(InputFile file, InputThumbnail thumbnail, int duration, int width, int height, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            var animation = new InputAnimation(file, thumbnail, new int[0], duration, width, height);
+            return new InputMessageAnimation(animation, caption, false, false);
+#else
+            return new InputMessageAnimation(file, thumbnail, new int[0], duration, width, height, caption);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageVideo(InputFile file, InputThumbnail thumbnail, int duration, int width, int height, FormattedText caption, int ttl)
+        {
+#if MODERN_TDLIB
+            var video = new InputVideo(file, thumbnail, null, 0, new int[0], duration, width, height, true);
+            return new InputMessageVideo(video, caption, false, ttl > 0 ? new MessageSelfDestructTypeTimer(ttl) : null, false);
+#else
+            return new InputMessageVideo(file, thumbnail, new int[0], duration, width, height, true, caption, ttl);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageVideoNote(InputFile file, InputThumbnail thumbnail, int duration, int length)
+        {
+#if MODERN_TDLIB
+            return new InputMessageVideoNote(new InputVideoNote(file, thumbnail, duration, length), null);
+#else
+            return new InputMessageVideoNote(file, thumbnail, duration, length);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageSticker(InputFile file, InputThumbnail thumbnail, int width, int height, string emoji)
+        {
+#if MODERN_TDLIB
+            return new InputMessageSticker(new InputSticker(file, thumbnail, width, height), emoji);
+#else
+            return new InputMessageSticker(file, thumbnail, width, height, emoji);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageAudio(InputFile file, InputThumbnail thumbnail, int duration, string title, string performer, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            return new InputMessageAudio(new InputAudio(file, thumbnail, duration, title, performer), caption);
+#else
+            return new InputMessageAudio(file, thumbnail, duration, title, performer, caption);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageVoiceNote(InputFile file, int duration, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            return new InputMessageVoiceNote(new InputVoiceNote(file, duration, new byte[0]), caption, null);
+#else
+            return new InputMessageVoiceNote(file, duration, new byte[0], caption);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessagePoll(string question, IList<string> options, bool isAnonymous, PollType type)
+        {
+#if MODERN_TDLIB
+            var questionText = new FormattedText(question, new TextEntity[0]);
+            var pollOptions = options.Select(option => new InputPollOption(new FormattedText(option, new TextEntity[0]), null)).ToList();
+            InputPollType inputType;
+            var allowsMultipleAnswers = false;
+            if (type is PollTypeQuiz quiz)
+            {
+                inputType = new InputPollTypeQuiz(new List<int>(quiz.CorrectOptionIds), quiz.Explanation, null);
+            }
+            else
+            {
+                inputType = new InputPollTypeRegular(false);
+            }
+
+            return new InputMessagePoll(questionText, pollOptions, null, null, isAnonymous, allowsMultipleAnswers, false, false, new List<string>(), false, false, inputType, 0, 0, false);
+#else
+            return new InputMessagePoll(question, options, isAnonymous, type, 0, 0, false);
+#endif
+        }
+
+        public static PollType CreatePollTypeQuiz(int correctOptionId, FormattedText explanation)
+        {
+#if MODERN_TDLIB
+            return new PollTypeQuiz(new List<int> { correctOptionId }, explanation, null);
+#else
+            return new PollTypeQuiz(correctOptionId, explanation);
+#endif
+        }
+
+        public static PollType CreatePollTypeRegular(bool allowsMultipleAnswers)
+        {
+#if MODERN_TDLIB
+            return new PollTypeRegular();
+#else
+            return new PollTypeRegular(allowsMultipleAnswers);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageLocation(Location location)
+        {
+#if MODERN_TDLIB
+            return new InputMessageLocation(location);
+#else
+            return new InputMessageLocation(location, 0, 0, 0);
+#endif
+        }
+
+        public static MessageContent CreateMessagePhoto(Photo photo, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            return new MessagePhoto(photo, null, caption, false, false, false);
+#else
+            return new MessagePhoto(photo, caption, false);
 #endif
         }
 

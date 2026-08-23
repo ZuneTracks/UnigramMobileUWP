@@ -55,7 +55,7 @@ namespace Unigram.ViewModels
             }
             else if (content is MessageInvoice invoiceMessage)
             {
-                content = invoiceMessage.Photo;
+                content = invoiceMessage.GetPhoto();
             }
             else if (content is MessageLocation locationMessage)
             {
@@ -345,7 +345,7 @@ namespace Unigram.ViewModels
             var updated = message.Content as MessagePoll;
             if (updated.Poll.Type is PollTypeQuiz quiz)
             {
-                if (quiz.CorrectOptionId == ids[0])
+                if (quiz.GetCorrectOptionId() == ids[0])
                 {
                     Aggregator.Publish(new UpdateConfetti());
                 }

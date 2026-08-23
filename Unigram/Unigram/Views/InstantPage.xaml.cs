@@ -893,7 +893,7 @@ namespace Unigram.Views
             var galleryItem = new GalleryPhoto(ViewModel.ProtoService, block.Photo, block.Caption.ToPlainText());
             ViewModel.Gallery.Items.Add(galleryItem);
 
-            var message = GetMessage(new MessagePhoto(block.Photo, null, false));
+            var message = GetMessage(ModernTdlibCompatibility.CreateMessagePhoto(block.Photo, null));
             var element = new StackPanel { Style = Resources["BlockPhotoStyle"] as Style };
 
             var content = new PhotoContent(message);
@@ -1076,7 +1076,7 @@ namespace Unigram.Views
                     var galleryItem = new GalleryPhoto(ViewModel.ProtoService, photoBlock.Photo, block.Caption.ToPlainText());
                     ViewModel.Gallery.Items.Add(galleryItem);
 
-                    var message = GetMessage(new MessagePhoto(photoBlock.Photo, null, false));
+                    var message = GetMessage(ModernTdlibCompatibility.CreateMessagePhoto(photoBlock.Photo, null));
 
                     var content = new PhotoContent(message);
                     content.Tag = galleryItem;
