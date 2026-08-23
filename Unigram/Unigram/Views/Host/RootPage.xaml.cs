@@ -161,6 +161,13 @@ namespace Unigram.Views.Host
                     case AuthorizationStateWaitPassword waitPassword:
                         service.Navigate(typeof(SignInPasswordPage));
                         break;
+#if MODERN_TDLIB
+                    default:
+                        // TDLib can still be starting when the shell is created. Keep the
+                        // content frame usable until the first authorization update arrives.
+                        service.Navigate(typeof(IntroPage));
+                        break;
+#endif
                 }
 
                 //WindowContext.GetForCurrentView().Handle(session, new UpdateConnectionState(session.ProtoService.GetConnectionState()));
