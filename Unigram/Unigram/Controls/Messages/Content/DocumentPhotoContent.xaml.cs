@@ -1,6 +1,7 @@
 ﻿using System;
 using Telegram.Td.Api;
 using Unigram.Common;
+using Unigram.Services;
 using Unigram.ViewModels;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
@@ -181,7 +182,7 @@ namespace Unigram.Controls.Messages.Content
         {
             if (content is MessageText text && text.WebPage != null && !primary)
             {
-                return text.WebPage.Document != null && string.Equals(text.WebPage.Type, "telegram_background", StringComparison.OrdinalIgnoreCase);
+                return text.WebPage.Document != null && string.Equals(ModernTdlibCompatibility.GetWebPageTypeName(text.WebPage), "telegram_background", StringComparison.OrdinalIgnoreCase);
             }
 
             return false;
