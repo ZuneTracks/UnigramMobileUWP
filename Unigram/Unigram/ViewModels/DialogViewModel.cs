@@ -2567,7 +2567,7 @@ namespace Unigram.ViewModels
                     formattedText = formattedText.Substring(0, CacheService.Options.MessageTextLengthMax * 4);
                 }
 
-                draft = new DraftMessage(reply, 0, new InputMessageText(formattedText, false, false));
+                draft = new DraftMessage(reply, 0, ModernTdlibCompatibility.CreateInputMessageText(formattedText, false, false));
             }
 
             ProtoService.Send(new SetChatDraftMessage(_chat.Id, _threadId, draft));
@@ -2760,7 +2760,7 @@ namespace Unigram.ViewModels
                     Function function;
                     if (editing.Content is MessageText)
                     {
-                        function = new EditMessageText(chat.Id, editing.Id, null, new InputMessageText(formattedText, disablePreview, true));
+                        function = new EditMessageText(chat.Id, editing.Id, null, ModernTdlibCompatibility.CreateInputMessageText(formattedText, disablePreview, true));
                     }
                     else
                     {
@@ -2802,13 +2802,13 @@ namespace Unigram.ViewModels
                     {
                         foreach (var split in formattedText.Split(CacheService.Options.MessageTextLengthMax))
                         {
-                            var input = new InputMessageText(split, disablePreview, true);
+                            var input = ModernTdlibCompatibility.CreateInputMessageText(split, disablePreview, true);
                             await SendMessageAsync(chat, reply, input, options);
                         }
                     }
                     else if (text.Length > 0)
                     {
-                        var input = new InputMessageText(formattedText, disablePreview, true);
+                        var input = ModernTdlibCompatibility.CreateInputMessageText(formattedText, disablePreview, true);
                         await SendMessageAsync(chat, reply, input, options);
                     }
                     else

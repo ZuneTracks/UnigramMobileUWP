@@ -1439,7 +1439,7 @@ namespace Unigram.Views
                         return;
                     }
 
-                    protoService.Send(new GetWebPagePreview(new FormattedText(urls, new TextEntity[0])), result);
+                    protoService.Send(ModernTdlibCompatibility.CreateGetWebPagePreview(new FormattedText(urls, new TextEntity[0])), result);
                 }
                 else
                 {
@@ -1448,7 +1448,7 @@ namespace Unigram.Views
             }
             else
             {
-                protoService.Send(new GetWebPagePreview(new FormattedText(text.Format(), new TextEntity[0])), result);
+                protoService.Send(ModernTdlibCompatibility.CreateGetWebPagePreview(new FormattedText(text.Format(), new TextEntity[0])), result);
             }
         }
 

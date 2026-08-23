@@ -11,6 +11,58 @@ namespace Unigram.Services
             return webPage?.Type;
         }
 
+        public static TdlibParameters CreateTdlibParameters(bool useTestDc, string databaseDirectory, string filesDirectory, bool useFileDatabase, bool useChatInfoDatabase, bool useMessageDatabase, bool useSecretChats, int apiId, string apiHash, string systemLanguageCode, string deviceModel, string systemVersion, string applicationVersion, bool enableStorageOptimizer, bool ignoreFileNames)
+        {
+            return new TdlibParameters
+            {
+                UseTestDc = useTestDc,
+                DatabaseDirectory = databaseDirectory,
+                FilesDirectory = filesDirectory,
+                UseFileDatabase = useFileDatabase,
+                UseChatInfoDatabase = useChatInfoDatabase,
+                UseMessageDatabase = useMessageDatabase,
+                UseSecretChats = useSecretChats,
+                ApiId = apiId,
+                ApiHash = apiHash,
+                SystemLanguageCode = systemLanguageCode,
+                DeviceModel = deviceModel,
+                SystemVersion = systemVersion,
+                ApplicationVersion = applicationVersion,
+                EnableStorageOptimizer = enableStorageOptimizer,
+                IgnoreFileNames = ignoreFileNames
+            };
+        }
+
+        public static Function CreateSetTdlibParameters(TdlibParameters parameters)
+        {
+            return new SetTdlibParameters(parameters);
+        }
+
+        public static Function CreateCheckDatabaseEncryptionKey(IList<byte> encryptionKey)
+        {
+            return new CheckDatabaseEncryptionKey(encryptionKey);
+        }
+
+        public static Function CreateGetWebPagePreview(FormattedText text)
+        {
+            return new GetWebPagePreview(text);
+        }
+
+        public static InputMessageContent CreateInputMessageText(FormattedText text, bool disableWebPagePreview, bool clearDraft)
+        {
+            return new InputMessageText(text, disableWebPagePreview, clearDraft);
+        }
+
+        public static Function CreateAddLocalMessage(long chatId, MessageSender senderId, long replyToMessageId, bool disableNotification, InputMessageContent inputMessageContent)
+        {
+            return new AddLocalMessage(chatId, senderId, replyToMessageId, disableNotification, inputMessageContent);
+        }
+
+        public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
+        {
+            return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
+        }
+
         public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
         {
             return new ToggleMessageSenderIsBlocked(sender, blocked);

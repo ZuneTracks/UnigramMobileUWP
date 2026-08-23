@@ -219,23 +219,26 @@ namespace Unigram.Services
             _client = Client.Create(this);
             PushDiagnostics.Write("tdlib.client", "result=created;version=1.8.66;commit=022d602");
 
-            var parameters = new TdlibParameters
-            {
+            var parameters = ModernTdlibCompatibility.CreateTdlibParameters(
+                _settings.UseTestDC,
 #if MODERN_TDLIB
-                DatabaseDirectory = System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "tdlib-experimental", $"{_session}"),
+                System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "tdlib-experimental", $"{_session}"),
 #else
-                DatabaseDirectory = System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, $"{_session}"),
+                System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, $"{_session}"),
 #endif
-                UseSecretChats = true,
-                UseMessageDatabase = true,
-                ApiId = Constants.ApiId,
-                ApiHash = Constants.ApiHash,
-                ApplicationVersion = _deviceInfoService.ApplicationVersion,
-                SystemVersion = _deviceInfoService.SystemVersion,
-                SystemLanguageCode = _deviceInfoService.SystemLanguageCode,
-                DeviceModel = _deviceInfoService.DeviceModel,
-                UseTestDc = _settings.UseTestDC
-            };
+                _settings.FilesDirectory,
+                true,
+                true,
+                true,
+                true,
+                Constants.ApiId,
+                Constants.ApiHash,
+                _deviceInfoService.SystemLanguageCode,
+                _deviceInfoService.DeviceModel,
+                _deviceInfoService.SystemVersion,
+                _deviceInfoService.ApplicationVersion,
+                true,
+                false);
 
             if (_settings.FilesDirectory != null)
             {
@@ -347,8 +350,8 @@ namespace Unigram.Services
                 //_client.Send(new SetOption("online", new OptionValueBoolean(online)));
                 _client.Send(new SetOption("online", new OptionValueBoolean(false)));
                 _client.Send(new SetOption("notification_group_count_max", new OptionValueInteger(25)));
-                _client.Send(new SetTdlibParameters(parameters));
-                _client.Send(new CheckDatabaseEncryptionKey(new byte[0]));
+                _client.Send(ModernTdlibCompatibility.CreateSetTdlibParameters(parameters));
+                _client.Send(ModernTdlibCompatibility.CreateCheckDatabaseEncryptionKey(new byte[0]));
                 _client.Send(new GetApplicationConfig(), result => UpdateConfig(result));
 
                 _longRunningTask = _longRunningTask ?? Task.Factory.StartNew(Client.Run, TaskCreationOptions.LongRunning);
@@ -357,7 +360,7 @@ namespace Unigram.Services
 
         private void InitializeDiagnostics()
         {
-            Client.Execute(new SetLogStream(new LogStreamFile(System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "tdlib_log.txt"), 100 * 1024 * 1024, false)));
+            Client.Execute(ModernTdlibCompatibility.CreateSetLogStream(System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "tdlib_log.txt"), 100 * 1024 * 1024, false));
             Client.Execute(new SetLogVerbosityLevel(SettingsService.Current.VerbosityLevel));
 
             var tags = Client.Execute(new GetLogTags()) as LogTags;
@@ -412,12 +415,12 @@ namespace Unigram.Services
                     {
                         if (entity.Type is TextEntityTypeTextUrl textUrl || entity.Type is TextEntityTypeUrl)
                         {
-                            await SendAsync(new GetWebPagePreview(formattedText));
+                            await SendAsync(ModernTdlibCompatibility.CreateGetWebPagePreview(formattedText));
                             break;
                         }
                     }
 
-                    Send(new AddLocalMessage(chat.Id, new MessageSenderUser(777000), 0, false, new InputMessageText(formattedText, false, false)));
+                    Send(ModernTdlibCompatibility.CreateAddLocalMessage(chat.Id, new MessageSenderUser(777000), 0, false, ModernTdlibCompatibility.CreateInputMessageText(formattedText, false, false)));
                 }
             }
 
@@ -433,7 +436,7 @@ namespace Unigram.Services
                 var message = title + Environment.NewLine + string.Join(Environment.NewLine, update.Strings);
                 var formattedText = new FormattedText(message, new[] { new TextEntity { Offset = 0, Length = title.Length, Type = new TextEntityTypeBold() } });
 
-                Send(new AddLocalMessage(chat.Id, new MessageSenderUser(777000), 0, false, new InputMessageText(formattedText, true, false)));
+                Send(ModernTdlibCompatibility.CreateAddLocalMessage(chat.Id, new MessageSenderUser(777000), 0, false, ModernTdlibCompatibility.CreateInputMessageText(formattedText, true, false)));
             }
         }
 
