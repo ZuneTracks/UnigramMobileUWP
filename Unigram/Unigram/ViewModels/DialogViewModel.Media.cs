@@ -829,7 +829,7 @@ namespace Unigram.ViewModels
             }
 
             var reply = GetReply(true);
-            var input = ModernTdlibCompatibility.CreateInputMessagePoll(dialog.Question, dialog.Options, dialog.IsAnonymous, dialog.Type);
+            var input = ModernTdlibCompatibility.CreateInputMessagePoll(dialog.Question, dialog.Options, dialog.IsAnonymous, dialog.Type, dialog.AllowsMultipleAnswers);
 
             await SendMessageAsync(chat, reply, input, options);
         }

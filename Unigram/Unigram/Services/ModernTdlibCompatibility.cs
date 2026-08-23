@@ -244,20 +244,19 @@ namespace Unigram.Services
 #endif
         }
 
-        public static InputMessageContent CreateInputMessagePoll(string question, IList<string> options, bool isAnonymous, PollType type)
+        public static InputMessageContent CreateInputMessagePoll(string question, IList<string> options, bool isAnonymous, PollType type, bool allowsMultipleAnswers)
         {
 #if MODERN_TDLIB
             var questionText = new FormattedText(question, new TextEntity[0]);
             var pollOptions = options.Select(option => new InputPollOption(new FormattedText(option, new TextEntity[0]), null)).ToList();
             InputPollType inputType;
-            var allowsMultipleAnswers = false;
             if (type is PollTypeQuiz quiz)
             {
                 inputType = new InputPollTypeQuiz(new List<int>(quiz.CorrectOptionIds), quiz.Explanation, null);
             }
             else
             {
-                inputType = new InputPollTypeRegular(false);
+                inputType = new InputPollTypeRegular(allowsMultipleAnswers);
             }
 
             return new InputMessagePoll(questionText, pollOptions, null, null, isAnonymous, allowsMultipleAnswers, false, false, new List<string>(), false, false, inputType, 0, 0, false);

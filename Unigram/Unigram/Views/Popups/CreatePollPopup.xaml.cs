@@ -79,6 +79,8 @@ namespace Unigram.Views.Popups
             }
         }
 
+        public bool AllowsMultipleAnswers => !Quiz.IsOn && Multiple.IsOn;
+
         public PollType Type
         {
             get
