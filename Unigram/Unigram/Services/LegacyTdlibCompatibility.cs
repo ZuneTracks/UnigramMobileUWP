@@ -374,5 +374,90 @@ namespace Unigram.Services
                 CustomTitle = customTitle ?? string.Empty
             };
         }
+
+        public static Function CreateSetChatDraftMessage(long chatId, long topicId, DraftMessage draft)
+        {
+            return new SetChatDraftMessage(chatId, topicId, draft);
+        }
+
+        public static DraftMessage CreateDraftMessage(long replyToMessageId, int date, FormattedText text)
+        {
+            return new DraftMessage(replyToMessageId, date, new InputMessageText(text, false, false));
+        }
+
+        public static MessageText CreateMessageText(FormattedText text)
+        {
+            return new MessageText(text, null);
+        }
+
+        public static InputMessageContent CreateInputMessageText(FormattedText text, bool disablePreview, bool clearDraft)
+        {
+            return new InputMessageText(text, disablePreview, clearDraft);
+        }
+
+        public static MessageContent CreateMessageSticker(Sticker sticker)
+        {
+            return new MessageSticker(sticker);
+        }
+
+        public static MessageSchedulingState CreateMessageSchedulingStateSendAtDate(int sendDate)
+        {
+            return new MessageSchedulingStateSendAtDate(sendDate);
+        }
+
+        public static Function CreateGetChatMessageCount(long chatId, long topicId, SearchMessagesFilter filter, bool returnLocal)
+        {
+            return new GetChatMessageCount(chatId, filter, returnLocal);
+        }
+
+        public static Function CreateSendMessage(long chatId, long topicId, long replyToMessageId, MessageSendOptions options, ReplyMarkup replyMarkup, InputMessageContent content)
+        {
+            return new SendMessage(chatId, topicId, replyToMessageId, options, replyMarkup, content);
+        }
+
+        public static Function CreateSendMessageAlbum(long chatId, long topicId, long replyToMessageId, MessageSendOptions options, IList<InputMessageContent> contents)
+        {
+            return new SendMessageAlbum(chatId, topicId, replyToMessageId, options, contents);
+        }
+
+        public static Function CreateResendMessages(long chatId, IList<long> messageIds)
+        {
+            return new ResendMessages(chatId, messageIds);
+        }
+
+        public static Function CreateGetMessageLink(long chatId, long messageId, bool inMessageThread)
+        {
+            return new GetMessageLink(chatId, messageId, 0, false, inMessageThread);
+        }
+
+        public static Function CreateEditMessageCaption(long chatId, long messageId, ReplyMarkup replyMarkup, FormattedText caption)
+        {
+            return new EditMessageCaption(chatId, messageId, replyMarkup, caption);
+        }
+
+        public static Function CreateUploadFile(InputFile file, FileType type, int priority)
+        {
+            return new UploadFile(file, type, priority);
+        }
+
+        public static Function CreateCancelUploadFile(int fileId)
+        {
+            return new CancelUploadFile(fileId);
+        }
+
+        public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
+        {
+            return new Message(id, sender, chatId, sendingState, schedulingState, isOutgoing, false, false, false, false, true, false, false, false, false, false, false, false, isChannelPost, false, date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, content, null);
+        }
+
+        public static Message CreateMessage(long id, long senderId, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, int date, MessageContent content)
+        {
+            return new Message(id, senderId, chatId, sendingState, schedulingState, isOutgoing, false, false, false, false, false, false, date, 0, null, 0, 0, 0, 0, string.Empty, 0, 0, string.Empty, content, null);
+        }
+
+        public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, int date, MessageContent content)
+        {
+            return CreateMessage(id, sender, chatId, sendingState, schedulingState, isOutgoing, false, date, content);
+        }
     }
 }

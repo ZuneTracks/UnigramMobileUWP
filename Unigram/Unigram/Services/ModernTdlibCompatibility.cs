@@ -686,6 +686,141 @@ namespace Unigram.Services
 #endif
         }
 
+        public static Function CreateSetChatDraftMessage(long chatId, long topicId, DraftMessage draft)
+        {
+#if MODERN_TDLIB
+            return new SetChatDraftMessage(chatId, GetMessageTopic(topicId), draft);
+#else
+            return new SetChatDraftMessage(chatId, topicId, draft);
+#endif
+        }
+
+        public static DraftMessage CreateDraftMessage(long replyToMessageId, int date, FormattedText text)
+        {
+#if MODERN_TDLIB
+            var replyTo = replyToMessageId == 0
+                ? null
+                : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty);
+            return new DraftMessage(replyTo, date, new DraftMessageContentText(text, null), 0, null);
+#else
+            return new DraftMessage(replyToMessageId, date, new InputMessageText(text, false, false));
+#endif
+        }
+
+        public static MessageText CreateMessageText(FormattedText text)
+        {
+#if MODERN_TDLIB
+            return new MessageText(text, null, null);
+#else
+            return new MessageText(text, null);
+#endif
+        }
+
+        public static InputMessageContent CreateInputMessageText(FormattedText text, bool disablePreview, bool clearDraft)
+        {
+#if MODERN_TDLIB
+            return new InputMessageText(text, new LinkPreviewOptions(disablePreview, string.Empty, false, false, false), clearDraft);
+#else
+            return new InputMessageText(text, disablePreview, clearDraft);
+#endif
+        }
+
+        public static MessageContent CreateMessageSticker(Sticker sticker)
+        {
+#if MODERN_TDLIB
+            return new MessageSticker(sticker, false);
+#else
+            return new MessageSticker(sticker);
+#endif
+        }
+
+        public static MessageSchedulingState CreateMessageSchedulingStateSendAtDate(int sendDate)
+        {
+#if MODERN_TDLIB
+            return new MessageSchedulingStateSendAtDate(sendDate, 0);
+#else
+            return new MessageSchedulingStateSendAtDate(sendDate);
+#endif
+        }
+
+        public static Function CreateGetChatMessageCount(long chatId, long topicId, SearchMessagesFilter filter, bool returnLocal)
+        {
+#if MODERN_TDLIB
+            return new GetChatMessageCount(chatId, GetMessageTopic(topicId), filter, returnLocal);
+#else
+            return new GetChatMessageCount(chatId, filter, returnLocal);
+#endif
+        }
+
+        public static Function CreateSendMessage(long chatId, long topicId, long replyToMessageId, MessageSendOptions options, ReplyMarkup replyMarkup, InputMessageContent content)
+        {
+#if MODERN_TDLIB
+            var replyTo = replyToMessageId == 0
+                ? null
+                : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty);
+            return new SendMessage(chatId, GetMessageTopic(topicId), replyTo, options, replyMarkup, content);
+#else
+            return new SendMessage(chatId, topicId, replyToMessageId, options, replyMarkup, content);
+#endif
+        }
+
+        public static Function CreateSendMessageAlbum(long chatId, long topicId, long replyToMessageId, MessageSendOptions options, IList<InputMessageContent> contents)
+        {
+#if MODERN_TDLIB
+            var replyTo = replyToMessageId == 0
+                ? null
+                : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty);
+            return new SendMessageAlbum(chatId, GetMessageTopic(topicId), replyTo, options, contents);
+#else
+            return new SendMessageAlbum(chatId, topicId, replyToMessageId, options, contents);
+#endif
+        }
+
+        public static Function CreateResendMessages(long chatId, IList<long> messageIds)
+        {
+#if MODERN_TDLIB
+            return new ResendMessages(chatId, messageIds, null, 0);
+#else
+            return new ResendMessages(chatId, messageIds);
+#endif
+        }
+
+        public static Function CreateGetMessageLink(long chatId, long messageId, bool inMessageThread)
+        {
+#if MODERN_TDLIB
+            return new GetMessageLink(chatId, messageId, 0, 0, string.Empty, false, inMessageThread);
+#else
+            return new GetMessageLink(chatId, messageId, 0, false, inMessageThread);
+#endif
+        }
+
+        public static Function CreateEditMessageCaption(long chatId, long messageId, ReplyMarkup replyMarkup, FormattedText caption)
+        {
+#if MODERN_TDLIB
+            return new EditMessageCaption(chatId, messageId, replyMarkup, caption, false);
+#else
+            return new EditMessageCaption(chatId, messageId, replyMarkup, caption);
+#endif
+        }
+
+        public static Function CreateUploadFile(InputFile file, FileType type, int priority)
+        {
+#if MODERN_TDLIB
+            return new PreliminaryUploadFile(file, type, priority);
+#else
+            return new UploadFile(file, type, priority);
+#endif
+        }
+
+        public static Function CreateCancelUploadFile(int fileId)
+        {
+#if MODERN_TDLIB
+            return new CancelPreliminaryUploadFile(fileId);
+#else
+            return new CancelUploadFile(fileId);
+#endif
+        }
+
         public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
         {
             return new Message(
@@ -732,6 +867,16 @@ namespace Unigram.Services
                 content,
                 null,
                 0);
+        }
+
+        public static Message CreateMessage(long id, long senderId, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, int date, MessageContent content)
+        {
+            return CreateMessage(id, new MessageSenderUser(senderId), chatId, sendingState, schedulingState, isOutgoing, false, date, content);
+        }
+
+        public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, int date, MessageContent content)
+        {
+            return CreateMessage(id, sender, chatId, sendingState, schedulingState, isOutgoing, false, date, content);
         }
     }
 
