@@ -6,6 +6,14 @@ using System.Linq;
 using System.Text;
 using Telegram.Td.Api;
 using Unigram.Common;
+
+#if MODERN_TDLIB
+using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;
+using MessageForwardOriginChat = Telegram.Td.Api.MessageOriginChat;
+using MessageForwardOriginChannel = Telegram.Td.Api.MessageOriginChannel;
+using MessageForwardOriginHiddenUser = Telegram.Td.Api.MessageOriginHiddenUser;
+using MessageForwardOriginMessageImport = Telegram.Td.Api.MessageOriginHiddenUser;
+#endif
 using Unigram.Controls.Messages.Content;
 using Unigram.Converters;
 using Unigram.Services;

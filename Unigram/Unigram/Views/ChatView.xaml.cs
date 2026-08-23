@@ -11,6 +11,14 @@ using System.Windows.Input;
 using Telegram.Td;
 using Telegram.Td.Api;
 using Unigram.Common;
+
+#if MODERN_TDLIB
+using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;
+using MessageForwardOriginChat = Telegram.Td.Api.MessageOriginChat;
+using MessageForwardOriginChannel = Telegram.Td.Api.MessageOriginChannel;
+using MessageForwardOriginHiddenUser = Telegram.Td.Api.MessageOriginHiddenUser;
+using MessageForwardOriginMessageImport = Telegram.Td.Api.MessageOriginHiddenUser;
+#endif
 using Unigram.Common.Chats;
 using Unigram.Controls;
 using Unigram.Controls.Cells;
@@ -1834,7 +1842,7 @@ namespace Unigram.Views
             {
                 if (message.ForwardInfo?.Origin is MessageForwardOriginUser || message.ForwardInfo?.Origin is MessageForwardOriginChat)
                 {
-                    ViewModel.NavigationService.NavigateToChat(message.ForwardInfo.FromChatId, message.ForwardInfo.FromMessageId);
+                    ViewModel.NavigationService.NavigateToChat(message.ForwardInfo.GetForwardFromChatId(), message.ForwardInfo.GetForwardFromMessageId());
                 }
                 else if (message.ForwardInfo?.Origin is MessageForwardOriginChannel fromChannel)
                 {
