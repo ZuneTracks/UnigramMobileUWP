@@ -54,7 +54,16 @@ namespace Unigram
         /// </summary>
         public App()
         {
-            Locator.Configure(/*session*/);
+            Logs.PushDiagnostics.Write("startup.app", "stage=configure");
+            try
+            {
+                Locator.Configure(/*session*/);
+            }
+            catch (Exception ex)
+            {
+                Logs.PushDiagnostics.WriteException("startup.configure", ex);
+                throw;
+            }
 
             if (SettingsService.Current.Appearance.RequestedTheme != ElementTheme.Default)
             {

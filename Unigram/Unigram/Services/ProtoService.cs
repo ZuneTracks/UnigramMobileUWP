@@ -216,7 +216,17 @@ namespace Unigram.Services
 
         private void Initialize(bool online = true)
         {
-            _client = Client.Create(this);
+            PushDiagnostics.Write("tdlib.client", "stage=create");
+            try
+            {
+                _client = Client.Create(this);
+            }
+            catch (Exception ex)
+            {
+                PushDiagnostics.WriteException("tdlib.client", ex);
+                throw;
+            }
+
             PushDiagnostics.Write("tdlib.client", "result=created;version=1.8.66;commit=022d602");
 
             var parameters = ModernTdlibCompatibility.CreateTdlibParameters(
