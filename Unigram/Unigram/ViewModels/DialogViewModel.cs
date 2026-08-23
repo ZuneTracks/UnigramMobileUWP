@@ -1701,7 +1701,7 @@ namespace Unigram.ViewModels
                 }
                 else if (content is MessageInvoice invoiceMessage)
                 {
-                    content = invoiceMessage.Photo;
+                    content = invoiceMessage.GetPhoto();
                 }
                 else if (content is MessageLocation locationMessage)
                 {

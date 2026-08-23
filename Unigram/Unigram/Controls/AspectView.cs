@@ -80,7 +80,7 @@ namespace Unigram.Controls
             }
             else if (constraint is MessageInvoice invoiceMessage)
             {
-                constraint = invoiceMessage.Photo;
+                constraint = invoiceMessage.GetPhoto();
             }
             else if (constraint is MessageGame gameMessage)
             {

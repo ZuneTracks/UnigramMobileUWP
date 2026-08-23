@@ -404,7 +404,7 @@ namespace Unigram.Controls.Messages
                 ThumbRoot.Visibility = Visibility.Collapsed;
 
             TitleLabel.Text = GetFromLabel(message, title);
-            ServiceLabel.Text = invoice.Title;
+            ServiceLabel.Text = invoice.GetTitle();
             MessageLabel.Text = string.Empty;
 
             return true;
@@ -418,7 +418,7 @@ namespace Unigram.Controls.Messages
                 ThumbRoot.Visibility = Visibility.Collapsed;
 
             TitleLabel.Text = GetFromLabel(message, title);
-            ServiceLabel.Text = location.LivePeriod > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation;
+            ServiceLabel.Text = location.GetLivePeriod() > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation;
             MessageLabel.Text = string.Empty;
 
             return true;
@@ -889,7 +889,7 @@ namespace Unigram.Controls.Messages
             }
             else if (message.Content is MessageInvoice invoice)
             {
-                return invoice.Title;
+                return invoice.GetTitle();
             }
             else if (message.Content is MessageContact)
             {
@@ -897,7 +897,7 @@ namespace Unigram.Controls.Messages
             }
             else if (message.Content is MessageLocation location)
             {
-                return (location.LivePeriod > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
+                return (location.GetLivePeriod() > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation);
             }
             else if (message.Content is MessageVenue vanue)
             {

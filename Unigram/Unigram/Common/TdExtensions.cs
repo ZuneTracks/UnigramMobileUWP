@@ -590,7 +590,7 @@ namespace Unigram.Common
                 case MessageGame game:
                     return game.Game.Photo;
                 case MessageInvoice invoice:
-                    return invoice.Photo;
+                    return invoice.GetPhoto();
                 case MessagePhoto photo:
                     return photo.Photo;
                 case MessageText text:
@@ -601,6 +601,87 @@ namespace Unigram.Common
                     return null;
             }
         }
+
+            public static Photo GetPhoto(this MessageInvoice invoice)
+            {
+#if MODERN_TDLIB
+                return invoice.ProductInfo?.Photo;
+#else
+                return invoice.Photo;
+#endif
+            }
+
+            public static string GetTitle(this MessageInvoice invoice)
+            {
+#if MODERN_TDLIB
+                return invoice.ProductInfo?.Title;
+#else
+                return invoice.Title;
+#endif
+            }
+
+            public static string GetDescription(this MessageInvoice invoice)
+            {
+#if MODERN_TDLIB
+                return invoice.ProductInfo?.Description?.Text;
+#else
+                return invoice.Description;
+#endif
+            }
+
+            public static int GetLivePeriod(this MessageLocation location)
+            {
+#if MODERN_TDLIB
+                return 0;
+#else
+                return location.LivePeriod;
+#endif
+            }
+
+            public static string GetText(this PollOption option)
+            {
+#if MODERN_TDLIB
+                return option.Text?.Text;
+#else
+                return option.Text;
+#endif
+            }
+
+            public static string GetQuestionText(this Poll poll)
+            {
+#if MODERN_TDLIB
+                return poll.Question?.Text;
+#else
+                return poll.Question;
+#endif
+            }
+
+            public static int GetCorrectOptionId(this PollTypeQuiz quiz)
+            {
+#if MODERN_TDLIB
+                return quiz.CorrectOptionIds.Count > 0 ? quiz.CorrectOptionIds[0] : -1;
+#else
+                return quiz.CorrectOptionId;
+#endif
+            }
+
+            public static bool GetAllowsMultipleAnswers(this Poll poll)
+            {
+#if MODERN_TDLIB
+                return poll.AllowsMultipleAnswers;
+#else
+                return poll.Type is PollTypeRegular regular && regular.AllowMultipleAnswers;
+#endif
+            }
+
+            public static IList<long> GetRecentVoterUserIds(this Poll poll)
+            {
+#if MODERN_TDLIB
+                return poll.RecentVoterIds.OfType<MessageSenderUser>().Select(x => x.UserId).ToList();
+#else
+                return poll.RecentVoterUserIds;
+#endif
+            }
 
         public static (File File, string FileName) GetFileAndName(this Message message, bool allowPhoto)
         {
@@ -2225,9 +2306,9 @@ namespace Unigram.Common
 
         public static bool UpdateFile(this MessageInvoice invoice, File file)
         {
-            if (invoice.Photo != null)
+            if (invoice.GetPhoto() != null)
             {
-                return invoice.Photo.UpdateFile(file);
+                return invoice.GetPhoto().UpdateFile(file);
             }
 
             return false;

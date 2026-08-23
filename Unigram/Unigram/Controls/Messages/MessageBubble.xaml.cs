@@ -758,7 +758,7 @@ namespace Unigram.Controls.Messages
                     FooterToNormal();
                     bottom = 4;
                 }
-                else if (content is MessageCall || (content is MessageLocation location && location.LivePeriod > 0 && BindConvert.Current.DateTime(message.Date + location.LivePeriod) > DateTime.Now))
+                else if (content is MessageCall || (content is MessageLocation location && location.GetLivePeriod() > 0 && BindConvert.Current.DateTime(message.Date + location.GetLivePeriod()) > DateTime.Now))
                 {
                     FooterToHidden();
                 }
@@ -816,7 +816,7 @@ namespace Unigram.Controls.Messages
             }
             else if (content is MessageInvoice invoice)
             {
-                var caption = invoice.Photo == null;
+                var caption = invoice.GetPhoto() == null;
 
                 Media.Margin = new Thickness(0);
                 _placeholder = caption;
@@ -921,7 +921,7 @@ namespace Unigram.Controls.Messages
                 }
                 else if (content is MessageInvoice invoice)
                 {
-                    if (invoice.Photo == null)
+                    if (invoice.GetPhoto() == null)
                     {
                         Media.Child = new InvoiceContent(message);
                     }
@@ -1861,7 +1861,7 @@ namespace Unigram.Controls.Messages
             }
             else if (constraint is MessageInvoice invoiceMessage)
             {
-                constraint = invoiceMessage.Photo;
+                constraint = invoiceMessage.GetPhoto();
             }
             else if (constraint is MessageLocation locationMessage)
             {
@@ -2034,7 +2034,7 @@ namespace Unigram.Controls.Messages
                 case MessageAlbum album:
                     return album.IsMedia;
                 case MessageInvoice invoice:
-                    return width && invoice.Photo != null;
+                    return width && invoice.GetPhoto() != null;
                 default:
                     return false;
             }

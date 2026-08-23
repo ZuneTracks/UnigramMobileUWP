@@ -285,7 +285,7 @@ namespace Unigram.Common
             }
             else if (message.Content is MessageInvoice invoice)
             {
-                return Strings.Resources.PaymentInvoice + ", " + invoice.Title + ", ";
+                return Strings.Resources.PaymentInvoice + ", " + invoice.GetTitle() + ", ";
             }
             else if (message.Content is MessageContact)
             {
@@ -293,7 +293,7 @@ namespace Unigram.Common
             }
             else if (message.Content is MessageLocation location)
             {
-                return (location.LivePeriod > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation) + ", ";
+                return (location.GetLivePeriod() > 0 ? Strings.Resources.AttachLiveLocation : Strings.Resources.AttachLocation) + ", ";
             }
             else if (message.Content is MessageVenue)
             {

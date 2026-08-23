@@ -913,7 +913,7 @@ namespace Unigram.Controls.Messages
 
             if (invoice != null)
             {
-                content = string.Format(Strings.Resources.PaymentSuccessfullyPaid, Locale.FormatCurrency(paymentSuccessful.TotalAmount, paymentSuccessful.Currency), message.ProtoService.GetTitle(chat), invoice.Title);
+                content = string.Format(Strings.Resources.PaymentSuccessfullyPaid, Locale.FormatCurrency(paymentSuccessful.TotalAmount, paymentSuccessful.Currency), message.ProtoService.GetTitle(chat), invoice.GetTitle());
             }
             else
             {
@@ -967,7 +967,7 @@ namespace Unigram.Controls.Messages
                 }
                 else if (reply.Content is MessageLocation location)
                 {
-                    if (location.LivePeriod > 0)
+                    if (location.GetLivePeriod() > 0)
                     {
                         content = ReplaceWithLink(Strings.Resources.ActionPinnedGeoLive, "un1", sender, ref entities);
                     }
