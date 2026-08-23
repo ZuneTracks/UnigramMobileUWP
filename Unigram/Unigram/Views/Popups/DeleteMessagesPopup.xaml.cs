@@ -24,23 +24,24 @@ namespace Unigram.Views.Popups
                 return;
             }
 
-            var chat = cacheService.GetChat(first.ChatId);
+            var chat = protoService.GetChat(first.ChatId);
             if (chat == null)
             {
                 return;
             }
 
-            var user = cacheService.GetUser(chat);
+            var user = protoService.GetUser(chat);
 
             var sameUser = messages.All(x => x.SenderId.IsEqual(first.SenderId));
-            if (sameUser && !first.IsOutgoing && chat.Type is ChatTypeSupergroup supergroup && !supergroup.IsChannel)
+            var supergroup = chat.Type as ChatTypeSupergroup;
+            if (sameUser && !first.IsOutgoing && supergroup != null && !supergroup.IsChannel)
             {
                 RevokeCheck.Visibility = Visibility.Collapsed;
                 BanUserCheck.Visibility = Visibility.Visible;
                 ReportSpamCheck.Visibility = Visibility.Visible;
                 DeleteAllCheck.Visibility = Visibility.Visible;
 
-                var sender = cacheService.GetMessageSender(first.SenderId);
+                var sender = protoService.GetMessageSender(first.SenderId);
                 if (sender is User senderUser)
                 {
                     DeleteAllCheck.Content = string.Format(Strings.Resources.DeleteAllFrom, senderUser.GetFullName());
