@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Telegram.Td.Api;
 using Unigram.Common;
+using Unigram.Services;
 using Unigram.ViewModels;
 using Unigram.ViewModels.Settings;
 using Windows.Foundation;
@@ -1781,7 +1782,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanPinMessages;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPinMessages(administrator);
         }
 
         public static bool CanDeleteMessages(this Supergroup supergroup)
@@ -1791,7 +1792,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanDeleteMessages;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanDeleteMessages(administrator);
         }
 
         public static bool CanPinMessages(this BasicGroup basicGroup)
@@ -1801,7 +1802,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanPinMessages;
+            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPinMessages(administrator);
         }
 
         public static bool CanDeleteMessages(this BasicGroup basicGroup)
@@ -1811,7 +1812,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanDeleteMessages;
+            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanDeleteMessages(administrator);
         }
 
         public static bool CanChangeInfo(this Supergroup supergroup)
@@ -1821,7 +1822,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanChangeInfo;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanChangeInfo(administrator);
         }
 
         public static bool CanPostMessages(this Supergroup supergroup)
@@ -1833,7 +1834,7 @@ namespace Unigram.Common
 
             if (supergroup.IsChannel)
             {
-                return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanPostMessages;
+                return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPostMessages(administrator);
             }
             else
             {
@@ -1848,7 +1849,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanRestrictMembers;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanRestrictMembers(administrator);
         }
 
         public static bool CanPromoteMembers(this Supergroup supergroup)
@@ -1858,7 +1859,7 @@ namespace Unigram.Common
                 return false;
             }
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanPromoteMembers;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanPromoteMembers(administrator);
         }
 
         public static bool CanPromoteMembers(this BasicGroup basicGroup)
@@ -1888,7 +1889,7 @@ namespace Unigram.Common
             //    return true;
             //}
 
-            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanInviteUsers;
+            return supergroup.Status is ChatMemberStatusCreator || supergroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanInviteUsers(administrator);
         }
 
         public static bool CanInviteUsers(this BasicGroup basicGroup)
@@ -1903,7 +1904,7 @@ namespace Unigram.Common
             //    return true;
             //}
 
-            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && administrator.CanInviteUsers;
+            return basicGroup.Status is ChatMemberStatusCreator || basicGroup.Status is ChatMemberStatusAdministrator administrator && ModernTdlibCompatibility.GetAdministratorCanInviteUsers(administrator);
         }
 
         public static bool CanPostMessages(this BasicGroup basicGroup)

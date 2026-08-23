@@ -112,6 +112,149 @@ namespace Unigram.Services
 #endif
         }
 
+        public static bool GetAdministratorCanChangeInfo(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanChangeInfo == true;
+#else
+            return administrator.CanChangeInfo;
+#endif
+        }
+
+        public static bool GetAdministratorCanDeleteMessages(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanDeleteMessages == true;
+#else
+            return administrator.CanDeleteMessages;
+#endif
+        }
+
+        public static bool GetAdministratorCanEditMessages(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanEditMessages == true;
+#else
+            return administrator.CanEditMessages;
+#endif
+        }
+
+        public static bool GetAdministratorCanInviteUsers(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanInviteUsers == true;
+#else
+            return administrator.CanInviteUsers;
+#endif
+        }
+
+        public static bool GetAdministratorCanPinMessages(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanPinMessages == true;
+#else
+            return administrator.CanPinMessages;
+#endif
+        }
+
+        public static bool GetAdministratorCanPostMessages(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanPostMessages == true;
+#else
+            return administrator.CanPostMessages;
+#endif
+        }
+
+        public static bool GetAdministratorCanPromoteMembers(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanPromoteMembers == true;
+#else
+            return administrator.CanPromoteMembers;
+#endif
+        }
+
+        public static bool GetAdministratorCanRestrictMembers(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.CanRestrictMembers == true;
+#else
+            return administrator.CanRestrictMembers;
+#endif
+        }
+
+        public static bool GetAdministratorIsAnonymous(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return administrator.Rights?.IsAnonymous == true;
+#else
+            return administrator.IsAnonymous;
+#endif
+        }
+
+        public static string GetAdministratorCustomTitle(ChatMemberStatusAdministrator administrator)
+        {
+#if MODERN_TDLIB
+            return string.Empty;
+#else
+            return administrator.CustomTitle;
+#endif
+        }
+
+        public static string GetAdministratorCustomTitle(ChatAdministrator administrator)
+        {
+            return administrator.CustomTitle;
+        }
+
+        public static string GetCreatorCustomTitle(ChatMemberStatusCreator creator)
+        {
+#if MODERN_TDLIB
+            return string.Empty;
+#else
+            return creator.CustomTitle;
+#endif
+        }
+
+        public static ChatMemberStatus CreateAdministratorStatus(bool canBeEdited, bool canChangeInfo, bool canDeleteMessages, bool canEditMessages, bool canInviteUsers, bool canPinMessages, bool canPostMessages, bool canPromoteMembers, bool canRestrictMembers, bool isAnonymous, string customTitle)
+        {
+#if MODERN_TDLIB
+            var rights = new ChatAdministratorRights(
+                true,
+                canChangeInfo,
+                canPostMessages,
+                canEditMessages,
+                canDeleteMessages,
+                canInviteUsers,
+                canRestrictMembers,
+                canPinMessages,
+                false,
+                canPromoteMembers,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                isAnonymous);
+            return new ChatMemberStatusAdministrator(canBeEdited, rights);
+#else
+            return new ChatMemberStatusAdministrator
+            {
+                IsAnonymous = isAnonymous,
+                CanChangeInfo = canChangeInfo,
+                CanDeleteMessages = canDeleteMessages,
+                CanEditMessages = canEditMessages,
+                CanInviteUsers = canInviteUsers,
+                CanPinMessages = canPinMessages,
+                CanPostMessages = canPostMessages,
+                CanPromoteMembers = canPromoteMembers,
+                CanRestrictMembers = canRestrictMembers,
+                CustomTitle = customTitle ?? string.Empty
+            };
+#endif
+        }
+
         public static ChatPermissions CreateChatPermissions(bool allowed)
         {
 #if MODERN_TDLIB

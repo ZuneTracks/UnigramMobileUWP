@@ -619,7 +619,7 @@ namespace Unigram.ViewModels
                 var admin = value.FirstOrDefault(x => x.UserId == userId);
                 if (admin != null)
                 {
-                    if (string.IsNullOrEmpty(admin.CustomTitle))
+                    if (string.IsNullOrEmpty(ModernTdlibCompatibility.GetAdministratorCustomTitle(admin)))
                     {
                         if (admin.IsOwner)
                         {
@@ -629,7 +629,7 @@ namespace Unigram.ViewModels
                         return Strings.Resources.ChannelAdmin;
                     }
 
-                    return admin.CustomTitle;
+                    return ModernTdlibCompatibility.GetAdministratorCustomTitle(admin);
                 }
             }
 

@@ -656,7 +656,7 @@ namespace Unigram.ViewModels
                     n = new ChatMemberStatusAdministrator();
                 }
 
-                if (!string.Equals(o.CustomTitle, n.CustomTitle))
+                if (!string.Equals(ModernTdlibCompatibility.GetAdministratorCustomTitle(o), ModernTdlibCompatibility.GetAdministratorCustomTitle(n)))
                 {
                     if (!added)
                     {
@@ -664,7 +664,7 @@ namespace Unigram.ViewModels
                         added = true;
                     }
 
-                    if (string.IsNullOrEmpty(n.CustomTitle))
+                    if (string.IsNullOrEmpty(ModernTdlibCompatibility.GetAdministratorCustomTitle(n)))
                     {
                         builder.Append('\n').Append('-').Append(' ');
                         builder.Append(Strings.Resources.EventLogPromotedRemovedTitle);
@@ -672,7 +672,7 @@ namespace Unigram.ViewModels
                     else
                     {
                         builder.Append('\n').Append('+').Append(' ');
-                        builder.AppendFormat(Strings.Resources.EventLogPromotedTitle, n.CustomTitle);
+                        builder.AppendFormat(Strings.Resources.EventLogPromotedTitle, ModernTdlibCompatibility.GetAdministratorCustomTitle(n));
                     }
                 }
 
@@ -688,51 +688,48 @@ namespace Unigram.ViewModels
                     builder.Append(label);
                 }
 
-                if (o.CanChangeInfo != n.CanChangeInfo)
+                if (ModernTdlibCompatibility.GetAdministratorCanChangeInfo(o) != ModernTdlibCompatibility.GetAdministratorCanChangeInfo(n))
                 {
-                    AppendChange(n.CanChangeInfo, channel ? Strings.Resources.EventLogPromotedChangeChannelInfo : Strings.Resources.EventLogPromotedChangeGroupInfo);
+                    AppendChange(ModernTdlibCompatibility.GetAdministratorCanChangeInfo(n), channel ? Strings.Resources.EventLogPromotedChangeChannelInfo : Strings.Resources.EventLogPromotedChangeGroupInfo);
                 }
 
                 if (channel)
                 {
-                    if (o.CanPostMessages != n.CanPostMessages)
+                    if (ModernTdlibCompatibility.GetAdministratorCanPostMessages(o) != ModernTdlibCompatibility.GetAdministratorCanPostMessages(n))
                     {
-                        AppendChange(n.CanPostMessages, Strings.Resources.EventLogPromotedPostMessages);
+                        AppendChange(ModernTdlibCompatibility.GetAdministratorCanPostMessages(n), Strings.Resources.EventLogPromotedPostMessages);
                     }
-                    if (o.CanEditMessages != n.CanEditMessages)
+                    if (ModernTdlibCompatibility.GetAdministratorCanEditMessages(o) != ModernTdlibCompatibility.GetAdministratorCanEditMessages(n))
                     {
-                        AppendChange(n.CanEditMessages, Strings.Resources.EventLogPromotedEditMessages);
-                    }
-                }
-                if (o.CanDeleteMessages != n.CanDeleteMessages)
-                {
-                    AppendChange(n.CanDeleteMessages, Strings.Resources.EventLogPromotedDeleteMessages);
-                }
-                if (o.CanPromoteMembers != n.CanPromoteMembers)
-                {
-                    AppendChange(n.CanPromoteMembers, Strings.Resources.EventLogPromotedAddAdmins);
-                }
-                if (!channel)
-                {
-                    if (o.IsAnonymous != n.IsAnonymous)
-                    {
-                        AppendChange(n.IsAnonymous, Strings.Resources.EventLogPromotedSendAnonymously);
-                    }
-                    if (o.CanRestrictMembers != n.CanRestrictMembers)
-                    {
-                        AppendChange(n.CanRestrictMembers, Strings.Resources.EventLogPromotedBanUsers);
+                        AppendChange(ModernTdlibCompatibility.GetAdministratorCanEditMessages(n), Strings.Resources.EventLogPromotedEditMessages);
                     }
                 }
-                if (o.CanInviteUsers != n.CanInviteUsers)
+                if (ModernTdlibCompatibility.GetAdministratorCanDeleteMessages(o) != ModernTdlibCompatibility.GetAdministratorCanDeleteMessages(n))
                 {
-                    AppendChange(n.CanInviteUsers, Strings.Resources.EventLogPromotedAddUsers);
+                    AppendChange(ModernTdlibCompatibility.GetAdministratorCanDeleteMessages(n), Strings.Resources.EventLogPromotedDeleteMessages);
+                }
+                if (ModernTdlibCompatibility.GetAdministratorCanPromoteMembers(o) != ModernTdlibCompatibility.GetAdministratorCanPromoteMembers(n))
+                {
+                    AppendChange(ModernTdlibCompatibility.GetAdministratorCanPromoteMembers(n), Strings.Resources.EventLogPromotedAddAdmins);
                 }
                 if (!channel)
                 {
-                    if (o.CanPinMessages != n.CanPinMessages)
+                    if (ModernTdlibCompatibility.GetAdministratorIsAnonymous(o) != ModernTdlibCompatibility.GetAdministratorIsAnonymous(n))
                     {
-                        AppendChange(n.CanPinMessages, Strings.Resources.EventLogPromotedPinMessages);
+                        AppendChange(ModernTdlibCompatibility.GetAdministratorIsAnonymous(n), Strings.Resources.EventLogPromotedSendAnonymously);
                     }
+                    if (ModernTdlibCompatibility.GetAdministratorCanRestrictMembers(o) != ModernTdlibCompatibility.GetAdministratorCanRestrictMembers(n))
+                    {
+                        AppendChange(ModernTdlibCompatibility.GetAdministratorCanRestrictMembers(n), Strings.Resources.EventLogPromotedBanUsers);
+                    }
+                }
+                if (ModernTdlibCompatibility.GetAdministratorCanInviteUsers(o) != ModernTdlibCompatibility.GetAdministratorCanInviteUsers(n))
+                {
+                    AppendChange(ModernTdlibCompatibility.GetAdministratorCanInviteUsers(n), Strings.Resources.EventLogPromotedAddUsers);
+                }
+                if (!channel && ModernTdlibCompatibility.GetAdministratorCanPinMessages(o) != ModernTdlibCompatibility.GetAdministratorCanPinMessages(n))
+                {
+                    AppendChange(ModernTdlibCompatibility.GetAdministratorCanPinMessages(n), Strings.Resources.EventLogPromotedPinMessages);
                 }
 
                 return new MessageText(new FormattedText(builder.ToString(), entities), null);
