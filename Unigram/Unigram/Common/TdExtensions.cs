@@ -13,6 +13,14 @@ using Unigram.ViewModels.Settings;
 using Windows.Foundation;
 using Windows.UI;
 using Windows.UI.Xaml.Media;
+
+#if MODERN_TDLIB
+using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;
+using MessageForwardOriginChat = Telegram.Td.Api.MessageOriginChat;
+using MessageForwardOriginChannel = Telegram.Td.Api.MessageOriginChannel;
+using MessageForwardOriginHiddenUser = Telegram.Td.Api.MessageOriginHiddenUser;
+using MessageForwardOriginMessageImport = Telegram.Td.Api.MessageOriginHiddenUser;
+#endif
 using Point = Windows.Foundation.Point;
 
 namespace Unigram.Common
@@ -1542,17 +1550,23 @@ namespace Unigram.Common
 
         public static bool IsSaved(this Message message, long savedMessagesId)
         {
+#if MODERN_TDLIB
+            if (message.ForwardInfo?.Origin is MessageOriginHiddenUser)
+            {
+                return message.ChatId == savedMessagesId;
+            }
+#endif
             if (message.ForwardInfo?.Origin is MessageForwardOriginUser fromUser)
             {
-                return message.ForwardInfo.FromChatId != 0;
+                return message.ForwardInfo.GetForwardFromChatId() != 0;
             }
             else if (message.ForwardInfo?.Origin is MessageForwardOriginChat fromChat)
             {
-                return message.ForwardInfo.FromChatId != 0;
+                return message.ForwardInfo.GetForwardFromChatId() != 0;
             }
             else if (message.ForwardInfo?.Origin is MessageForwardOriginChannel fromChannel)
             {
-                return message.ForwardInfo.FromChatId != 0;
+                return message.ForwardInfo.GetForwardFromChatId() != 0;
             }
             else if (message.ForwardInfo?.Origin is MessageForwardOriginMessageImport fromImport)
             {
@@ -1564,6 +1578,43 @@ namespace Unigram.Common
             }
 
             return false;
+        }
+
+        public static long GetForwardFromChatId(this MessageForwardInfo info)
+        {
+#if MODERN_TDLIB
+            if (info?.Origin is MessageOriginChannel channel)
+            {
+                return channel.ChatId;
+            }
+
+            if (info?.Origin is MessageOriginChat chat)
+            {
+                return chat.SenderChatId;
+            }
+
+            return 0;
+#else
+            return info?.FromChatId ?? 0;
+#endif
+        }
+
+        public static long GetForwardFromMessageId(this MessageForwardInfo info)
+        {
+#if MODERN_TDLIB
+            return (info?.Origin as MessageOriginChannel)?.MessageId ?? 0;
+#else
+            return info?.FromMessageId ?? 0;
+#endif
+        }
+
+        public static bool IsImportedForward(this MessageForwardInfo info)
+        {
+#if MODERN_TDLIB
+            return info?.Source != null;
+#else
+            return info?.Origin is MessageForwardOriginMessageImport;
+#endif
         }
 
         public static string GetFullName(this User user)

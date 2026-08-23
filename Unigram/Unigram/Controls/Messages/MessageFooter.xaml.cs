@@ -2,6 +2,14 @@
 using System.Numerics;
 using Telegram.Td.Api;
 using Unigram.Common;
+
+#if MODERN_TDLIB
+using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;
+using MessageForwardOriginChat = Telegram.Td.Api.MessageOriginChat;
+using MessageForwardOriginChannel = Telegram.Td.Api.MessageOriginChannel;
+using MessageForwardOriginHiddenUser = Telegram.Td.Api.MessageOriginHiddenUser;
+using MessageForwardOriginMessageImport = Telegram.Td.Api.MessageOriginHiddenUser;
+#endif
 using Unigram.Converters;
 using Unigram.ViewModels;
 using Windows.Foundation;
@@ -49,7 +57,7 @@ namespace Unigram.Controls.Messages
             {
                 DateLabel.Text = string.Empty;
             }
-            else if (message.ForwardInfo?.Origin is MessageForwardOriginMessageImport)
+            else if (message.ForwardInfo.IsImportedForward())
             {
                 var original = Utils.UnixTimestampToDateTime(message.ForwardInfo.Date);
                 var date = BindConvert.Current.ShortDate.Format(original);

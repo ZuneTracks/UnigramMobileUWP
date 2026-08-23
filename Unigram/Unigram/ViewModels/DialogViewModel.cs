@@ -4,6 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Td.Api;
+#if MODERN_TDLIB
+using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;
+using MessageForwardOriginChat = Telegram.Td.Api.MessageOriginChat;
+using MessageForwardOriginChannel = Telegram.Td.Api.MessageOriginChannel;
+using MessageForwardOriginHiddenUser = Telegram.Td.Api.MessageOriginHiddenUser;
+using MessageForwardOriginMessageImport = Telegram.Td.Api.MessageOriginHiddenUser;
+#endif
 using Unigram.Collections;
 using Unigram.Common;
 using Unigram.Common.Chats;
@@ -3896,15 +3903,15 @@ namespace Unigram.ViewModels
             {
                 if (message1.ForwardInfo?.Origin is MessageForwardOriginUser fromUser1 && message2.ForwardInfo?.Origin is MessageForwardOriginUser fromUser2)
                 {
-                    return fromUser1.SenderUserId == fromUser2.SenderUserId && message1.ForwardInfo.FromChatId == message2.ForwardInfo.FromChatId;
+                    return fromUser1.SenderUserId == fromUser2.SenderUserId && message1.ForwardInfo.GetForwardFromChatId() == message2.ForwardInfo.GetForwardFromChatId();
                 }
                 else if (message1.ForwardInfo?.Origin is MessageForwardOriginChat fromChat1 && message2.ForwardInfo?.Origin is MessageForwardOriginChat fromChat2)
                 {
-                    return fromChat1.SenderChatId == fromChat2.SenderChatId && message1.ForwardInfo.FromChatId == message2.ForwardInfo.FromChatId;
+                    return fromChat1.SenderChatId == fromChat2.SenderChatId && message1.ForwardInfo.GetForwardFromChatId() == message2.ForwardInfo.GetForwardFromChatId();
                 }
                 else if (message1.ForwardInfo?.Origin is MessageForwardOriginChannel fromChannel1 && message2.ForwardInfo?.Origin is MessageForwardOriginChannel fromChannel2)
                 {
-                    return fromChannel1.ChatId == fromChannel2.ChatId && message1.ForwardInfo.FromChatId == message2.ForwardInfo.FromChatId;
+                    return fromChannel1.ChatId == fromChannel2.ChatId && message1.ForwardInfo.GetForwardFromChatId() == message2.ForwardInfo.GetForwardFromChatId();
                 }
                 else if (message1.ForwardInfo?.Origin is MessageForwardOriginMessageImport fromImport1 && message2.ForwardInfo?.Origin is MessageForwardOriginMessageImport fromImport2)
                 {
