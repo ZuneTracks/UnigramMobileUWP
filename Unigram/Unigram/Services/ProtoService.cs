@@ -1756,7 +1756,11 @@ namespace Unigram.Services
             {
                 _secretChats[updateSecretChat.SecretChat.Id] = updateSecretChat.SecretChat;
             }
+#if MODERN_TDLIB
+            else if (update is UpdateDefaultBackground updateSelectedBackground)
+#else
             else if (update is UpdateSelectedBackground updateSelectedBackground)
+#endif
             {
                 if (updateSelectedBackground.ForDarkTheme)
                 {
