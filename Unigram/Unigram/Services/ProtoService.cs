@@ -360,7 +360,12 @@ namespace Unigram.Services
                 //_client.Send(new SetOption("online", new OptionValueBoolean(online)));
                 _client.Send(new SetOption("online", new OptionValueBoolean(false)));
                 _client.Send(new SetOption("notification_group_count_max", new OptionValueInteger(25)));
-                _client.Send(ModernTdlibCompatibility.CreateSetTdlibParameters(parameters));
+                _client.Send(ModernTdlibCompatibility.CreateSetTdlibParameters(parameters), result =>
+                {
+                    PushDiagnostics.Write("tdlib.parameters", result is Error error
+                        ? $"result=error;type={error.GetType().Name}"
+                        : "result=ok");
+                });
 #if !MODERN_TDLIB
                 _client.Send(ModernTdlibCompatibility.CreateCheckDatabaseEncryptionKey(new byte[0]));
 #endif

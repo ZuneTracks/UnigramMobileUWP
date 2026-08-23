@@ -213,13 +213,16 @@ namespace Unigram.Common
             {
                 switch (state)
                 {
+                    case AuthorizationStateWaitTdlibParameters waitTdlibParameters:
+                        service.Navigate(typeof(SignInPage));
+                        break;
                     case AuthorizationStateReady ready:
                         //App.Current.NavigationService.Navigate(typeof(Views.MainPage));
                         UseActivatedArgs(args, service);
                         break;
                     case AuthorizationStateWaitPhoneNumber waitPhoneNumber:
                     case AuthorizationStateWaitOtherDeviceConfirmation waitOtherDeviceConfirmation:
-                        service.Navigate(service.CurrentPageType != null ? typeof(SignInPage) : typeof(IntroPage));
+                        service.Navigate(typeof(SignInPage));
                         break;
                     case AuthorizationStateWaitCode waitCode:
                         service.Navigate(typeof(SignInSentCodePage));

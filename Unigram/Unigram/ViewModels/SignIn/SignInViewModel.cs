@@ -47,11 +47,23 @@ namespace Unigram.ViewModels.SignIn
             var authState = ProtoService.GetAuthorizationState();
             var waitState = authState is AuthorizationStateWaitPhoneNumber || authState is AuthorizationStateWaitCode || authState is AuthorizationStateWaitPassword;
 
-            if (waitState && mode != NavigationMode.Refresh)
+            if (authState is AuthorizationStateWaitTdlibParameters)
+            {
+                IsLoading = false;
+                Delegate?.UpdateQrCodeMode(QrCodeMode.Loading);
+            }
+            else if (waitState && (mode != NavigationMode.Refresh || authState is AuthorizationStateWaitPhoneNumber))
             {
                 IsLoading = false;
 
-                Delegate.UpdateQrCodeMode(QrCodeMode.Loading);
+                Delegate?.UpdateQrCodeMode(QrCodeMode.Primary);
+                ProtoService.Send(new RequestQrCodeAuthentication(), result =>
+                {
+                    if (result is Error)
+                    {
+                        BeginOnUIThread(() => Delegate?.UpdateQrCodeMode(QrCodeMode.Secondary));
+                    }
+                });
 
                 ProtoService.Send(new GetApplicationConfig(), result =>
                 {
@@ -64,16 +76,17 @@ namespace Unigram.ViewModels.SignIn
                         {
                             BeginOnUIThread(() => Delegate?.UpdateQrCodeMode(qrmode));
 
-                            if (qrmode == QrCodeMode.Primary)
-                            {
-                                ProtoService.Send(new RequestQrCodeAuthentication());
-                            }
-
                             return;
                         }
                     }
 
-                    BeginOnUIThread(() => Delegate?.UpdateQrCodeMode(QrCodeMode.Disabled));
+                    BeginOnUIThread(() =>
+                    {
+                        if (ProtoService.AuthorizationState is AuthorizationStateWaitPhoneNumber)
+                        {
+                            Delegate?.UpdateQrCodeMode(QrCodeMode.Secondary);
+                        }
+                    });
                 });
             }
             else if (authState is AuthorizationStateWaitOtherDeviceConfirmation waitOtherDeviceConfirmation)

@@ -26,6 +26,9 @@ namespace Unigram.Common
         {
             switch (update.AuthorizationState)
             {
+                case AuthorizationStateWaitTdlibParameters waitTdlibParameters:
+                    Navigate(typeof(SignInPage));
+                    break;
                 case AuthorizationStateReady ready:
                     Navigate(typeof(MainPage));
                     break;
@@ -53,7 +56,7 @@ namespace Unigram.Common
                         }
                         else
                         {
-                            Navigate(typeof(IntroPage));
+                            Navigate(typeof(SignInPage));
                         }
                     }
                     break;
