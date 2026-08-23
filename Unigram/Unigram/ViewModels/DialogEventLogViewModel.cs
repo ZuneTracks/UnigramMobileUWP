@@ -27,7 +27,7 @@ namespace Unigram.ViewModels
 
         private long _minEventId = long.MaxValue;
 
-        private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, true, true, true, true);
+        private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, false, true, true, true, true, true, true);
         public ChatEventLogFilters Filters
         {
             get => _filters;
@@ -144,7 +144,7 @@ namespace Unigram.ViewModels
                     var target = replied.FirstOrDefault();
                     if (target != null)
                     {
-                        replied.Insert(0, _messageFactory.Create(this, new Message(0, target.SenderId, target.ChatId, null, target.SchedulingState, target.IsOutgoing, false, false, false, false, true, false, false, false, false, false, false, target.IsChannelPost, false, target.Date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, new MessageHeaderDate(), null)));
+                        replied.Insert(0, _messageFactory.Create(this, ModernTdlibCompatibility.CreateMessage(0, target.SenderId, target.ChatId, target.SendingState, target.SchedulingState, target.IsOutgoing, target.IsChannelPost, target.Date, new MessageHeaderDate())));
                     }
 
                     Items.ReplaceWith(replied);
@@ -232,7 +232,7 @@ namespace Unigram.ViewModels
 
         private Message CreateMessage(long chatId, bool isChannel, ChatEvent chatEvent, bool child = false)
         {
-            MessageSender sender = new MessageSenderUser(chatEvent.UserId);
+            MessageSender sender = chatEvent.MemberId;
 
             if (child)
             {
@@ -254,7 +254,7 @@ namespace Unigram.ViewModels
                 }
             }
 
-            return new Message(chatEvent.Id, sender, chatId, null, null, false, false, false, false, false, false, false, false, false, false, false, false, isChannel, false, chatEvent.Date, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, null, null);
+            return ModernTdlibCompatibility.CreateMessage(chatEvent.Id, sender, chatId, null, null, false, isChannel, chatEvent.Date, null);
         }
 
         private MessageViewModel GetMessage(long chatId, bool isChannel, ChatEvent chatEvent, bool child = false)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Telegram.Td.Api;
 using Unigram.Common;
 using Unigram.Logs;
@@ -6,6 +7,57 @@ using Unigram.ViewModels;
 
 namespace Unigram.Services
 {
+    public static class ModernTdlibCompatibility
+    {
+        public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
+        {
+            return new Message(
+                id,
+                sender,
+                null,
+                chatId,
+                sendingState,
+                schedulingState,
+                isOutgoing,
+                false,
+                false,
+                false,
+                false,
+                isChannelPost,
+                false,
+                false,
+                false,
+                false,
+                date,
+                0,
+                null,
+                null,
+                null,
+                new List<UnreadReaction>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                0,
+                0,
+                0,
+                null,
+                0,
+                0,
+                string.Empty,
+                0,
+                string.Empty,
+                0,
+                0,
+                null,
+                string.Empty,
+                content,
+                null,
+                0);
+        }
+    }
+
     public interface IVoIPService : IHandle<UpdateCall>
     {
         string CurrentAudioInput { get; set; }
