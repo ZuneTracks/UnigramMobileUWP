@@ -14,13 +14,9 @@ using Unigram.Logs;
 using Unigram.Navigation;
 using Unigram.Services;
 using Unigram.Services.Updates;
-#if !MODERN_TDLIB
 using Unigram.ViewModels.Folders;
-#endif
 using Unigram.Views;
-#if !MODERN_TDLIB
 using Unigram.Views.Folders;
-#endif
 using Unigram.Views.Popups;
 using Windows.System;
 using Windows.UI.Xaml;

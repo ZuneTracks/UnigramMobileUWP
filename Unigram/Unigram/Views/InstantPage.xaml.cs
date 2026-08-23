@@ -643,7 +643,11 @@ namespace Unigram.Views
                     text = preformatted.Text;
                     break;
                 case PageBlockBlockQuote blockquote:
+#if MODERN_TDLIB
+                    text = caption ? blockquote.Credit : null;
+#else
                     text = caption ? blockquote.Credit : blockquote.Text;
+#endif
                     break;
                 case PageBlockPullQuote pullquote:
                     text = caption ? pullquote.Credit : pullquote.Text;
@@ -924,7 +928,11 @@ namespace Unigram.Views
             var galleryItem = new GalleryVideo(ViewModel.ProtoService, block.Video, block.Caption.ToPlainText());
             ViewModel.Gallery.Items.Add(galleryItem);
 
+#if MODERN_TDLIB
+            var message = GetMessage(new MessageVideo(block.Video, null, null, null, 0, null, false, false, false));
+#else
             var message = GetMessage(new MessageVideo(block.Video, null, false));
+#endif
             var element = new StackPanel { Style = Resources["BlockVideoStyle"] as Style };
 
             var content = new VideoContent(message);
@@ -957,7 +965,11 @@ namespace Unigram.Views
             var galleryItem = new GalleryAnimation(ViewModel.ProtoService, block.Animation, block.Caption.ToPlainText());
             ViewModel.Gallery.Items.Add(galleryItem);
 
+#if MODERN_TDLIB
+            var message = GetMessage(new MessageAnimation(block.Animation, null, false, false, false));
+#else
             var message = GetMessage(new MessageAnimation(block.Animation, null, false));
+#endif
             var element = new StackPanel { Style = Resources["BlockVideoStyle"] as Style };
 
             var content = new AnimationContent(message);
@@ -1096,7 +1108,11 @@ namespace Unigram.Views
                     var galleryItem = new GalleryVideo(ViewModel.ProtoService, videoBlock.Video, block.Caption.ToPlainText());
                     ViewModel.Gallery.Items.Add(galleryItem);
 
+#if MODERN_TDLIB
+                    var message = GetMessage(new MessageVideo(videoBlock.Video, null, null, null, 0, null, false, false, false));
+#else
                     var message = GetMessage(new MessageVideo(videoBlock.Video, null, false));
+#endif
 
                     var content = new VideoContent(message);
                     content.Tag = galleryItem;

@@ -337,7 +337,11 @@ namespace Unigram.ViewModels.Settings
         public RelayCommand SendCommand { get; }
         public async void SendExecute()
         {
+#if MODERN_TDLIB
+            await ProtoService.SendAsync(new SetScopeNotificationSettings(GetScope(), new ScopeNotificationSettings(_alert ? 0 : int.MaxValue, 0, _preview, false, false, 0, true, _disablePinnedMessage, _disableMention)));
+#else
             await ProtoService.SendAsync(new SetScopeNotificationSettings(GetScope(), new ScopeNotificationSettings(_alert ? 0 : int.MaxValue, string.Empty, _preview, _disablePinnedMessage, _disableMention)));
+#endif
         }
 
         public RelayCommand ExceptionsCommand { get; }

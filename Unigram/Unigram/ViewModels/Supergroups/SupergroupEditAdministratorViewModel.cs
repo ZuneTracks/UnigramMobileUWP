@@ -336,7 +336,11 @@ namespace Unigram.ViewModels.Supergroups
             ChatMemberStatus status;
             if (member.Status is ChatMemberStatusCreator creator)
             {
+#if MODERN_TDLIB
+                status = new ChatMemberStatusCreator(channel ? false : _isAnonymous, creator.IsMember);
+#else
                 status = new ChatMemberStatusCreator(_customTitle ?? string.Empty, channel ? false : _isAnonymous, creator.IsMember);
+#endif
             }
             else
             {

@@ -258,7 +258,7 @@ namespace Unigram.ViewModels.Supergroups
         {
             IsLoading = true;
 
-            var response = await ProtoService.SendAsync(new SearchStickerSet(shortName));
+            var response = await ProtoService.SendAsync(ModernTdlibCompatibility.SearchStickerSet(shortName));
             if (response is StickerSet stickerSet)
             {
                 IsLoading = false;

@@ -696,6 +696,15 @@ namespace Unigram.Common
 #endif
             }
 
+            public static IList<PageBlock> GetPageBlocks(this PageBlockEmbeddedPost value)
+            {
+#if MODERN_TDLIB
+                return value?.Blocks;
+#else
+                return value?.PageBlocks;
+#endif
+            }
+
             public static IList<PageBlock> GetPageBlocks(this PageBlockListItem value)
             {
 #if MODERN_TDLIB

@@ -192,7 +192,11 @@ namespace Unigram.Services
                         return;
                     }
 
+#if MODERN_TDLIB
+                    _protoService.Send(new DeleteAccount("Decline ToS update", string.Empty));
+#else
                     _protoService.Send(new DeleteAccount("Decline ToS update"));
+#endif
                 }
 
                 await Task.Delay(2000);
@@ -979,7 +983,9 @@ namespace Unigram.Services
             switch (update.AuthorizationState)
             {
                 case AuthorizationStateWaitTdlibParameters waitTdlibParameters:
+#if !MODERN_TDLIB
                 case AuthorizationStateWaitEncryptionKey waitEncryptionKey:
+#endif
                     break;
                 default:
                     _authorizationStateTask.TrySetResult(update.AuthorizationState);
@@ -1042,11 +1048,15 @@ namespace Unigram.Services
                     var formatted = Client.Execute(new ParseMarkdown(new FormattedText(messageText, new TextEntity[0]))) as FormattedText;
 
                     var replyToMsgId = data.ContainsKey("msg_id") ? long.Parse(data["msg_id"]) << 20 : 0;
+#if MODERN_TDLIB
+                    var response = await _protoService.SendAsync(ModernTdlibCompatibility.CreateSendMessage(chat.Id, replyToMsgId, ModernTdlibCompatibility.CreateMessageSendOptions(false, true, null), ModernTdlibCompatibility.CreateInputMessageText(formatted, false, false)));
+#else
                     var response = await _protoService.SendAsync(new SendMessage(chat.Id, 0, replyToMsgId, ModernTdlibCompatibility.CreateMessageSendOptions(false, true, null), null, ModernTdlibCompatibility.CreateInputMessageText(formatted, false, false)));
+#endif
 
                     if (chat.Type is ChatTypePrivate && chat.LastMessage != null)
                     {
-                        await _protoService.SendAsync(new ViewMessages(chat.Id, 0, new long[] { chat.LastMessage.Id }, true));
+                        await _protoService.SendAsync(ModernTdlibCompatibility.CreateViewMessages(chat.Id, 0, new long[] { chat.LastMessage.Id }, true));
                     }
                 }
                 else if (string.Equals(action, "markasread", StringComparison.OrdinalIgnoreCase))
@@ -1056,7 +1066,7 @@ namespace Unigram.Services
                         return;
                     }
 
-                    await _protoService.SendAsync(new ViewMessages(chat.Id, 0, new long[] { chat.LastMessage.Id }, true));
+                    await _protoService.SendAsync(ModernTdlibCompatibility.CreateViewMessages(chat.Id, 0, new long[] { chat.LastMessage.Id }, true));
                 }
             }
         }
@@ -1638,6 +1648,18 @@ namespace Unigram.Services
                 muteFor = scope.MuteFor;
             }
 
+#if MODERN_TDLIB
+            _protoService.Send(new SetChatNotificationSettings(chat.Id,
+                new ChatNotificationSettings(
+                    useDefault, muteFor,
+                    settings.UseDefaultSound, settings.SoundId,
+                    settings.UseDefaultShowPreview, settings.ShowPreview,
+                    settings.UseDefaultMuteStories, settings.MuteStories,
+                    settings.UseDefaultStorySound, settings.StorySoundId,
+                    settings.UseDefaultShowStoryPoster, settings.ShowStoryPoster,
+                    settings.UseDefaultDisablePinnedMessageNotifications, settings.DisablePinnedMessageNotifications,
+                    settings.UseDefaultDisableMentionNotifications, settings.DisableMentionNotifications)));
+#else
             _protoService.Send(new SetChatNotificationSettings(chat.Id,
                 new ChatNotificationSettings(
                     useDefault, muteFor,
@@ -1645,6 +1667,7 @@ namespace Unigram.Services
                     settings.UseDefaultShowPreview, settings.ShowPreview,
                     settings.UseDefaultDisablePinnedMessageNotifications, settings.DisablePinnedMessageNotifications,
                     settings.UseDefaultDisableMentionNotifications, settings.DisableMentionNotifications)));
+#endif
         }
     }
 }

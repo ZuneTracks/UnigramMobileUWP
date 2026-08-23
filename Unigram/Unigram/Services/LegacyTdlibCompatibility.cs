@@ -58,6 +58,11 @@ namespace Unigram.Services
             return new AddLocalMessage(chatId, senderId, replyToMessageId, disableNotification, inputMessageContent);
         }
 
+        public static Function CreateSendMessage(long chatId, long replyToMessageId, MessageSendOptions options, InputMessageContent content)
+        {
+            return new SendMessage(chatId, 0, replyToMessageId, options, null, content);
+        }
+
         public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
         {
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
@@ -350,6 +355,11 @@ namespace Unigram.Services
         public static Function SearchStickers(string query, int limit)
         {
             return new SearchStickers(query, limit);
+        }
+
+        public static Function SearchStickerSet(string name)
+        {
+            return new SearchStickerSet(name);
         }
 
         public static Function CreateSearchChats(string query, int limit)

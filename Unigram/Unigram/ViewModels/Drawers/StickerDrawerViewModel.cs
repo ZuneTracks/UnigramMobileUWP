@@ -140,7 +140,11 @@ namespace Unigram.ViewModels.Drawers
 
         public void Handle(UpdateInstalledStickerSets update)
         {
+#if MODERN_TDLIB
+            if (update.StickerType is StickerTypeMask)
+#else
             if (update.IsMasks)
+#endif
             {
                 return;
             }
@@ -911,7 +915,7 @@ namespace Unigram.ViewModels.Drawers
                     }
                     else
                     {
-                        var emojis = await _protoService.SendAsync(new SearchEmojis(_query, false, new[] { _inputLanguage })) as Emojis;
+                        var emojis = await _protoService.SendAsync(ModernTdlibCompatibility.CreateSearchEmojis(_query, _inputLanguage)) as Emojis;
                         if (emojis != null)
                         {
                             for (int i = 0; i < Math.Min(10, emojis.EmojisValue.Count); i++)

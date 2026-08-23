@@ -597,7 +597,7 @@ namespace Unigram.ViewModels
                 }
 
                 var dataPackage = new DataPackage();
-                dataPackage.SetText(user.Bio);
+                dataPackage.SetText(ModernTdlibCompatibility.GetUserFullInfoDescription(user, false));
                 ClipboardEx.TrySetContent(dataPackage);
             }
         }
@@ -885,8 +885,13 @@ namespace Unigram.ViewModels
             var confirm = await dialog.ShowQueuedAsync();
             if (confirm == ContentDialogResult.Primary)
             {
+#if MODERN_TDLIB
+                ProtoService.Send(new AddContact(user.Id, new Telegram.Td.Api.ImportedContact(user.PhoneNumber.ToString(), dialog.FirstName, dialog.LastName, null),
+                    fullInfo.NeedPhoneNumberPrivacyException ? dialog.SharePhoneNumber : true));
+#else
                 ProtoService.Send(new AddContact(new Contact(user.PhoneNumber, dialog.FirstName, dialog.LastName, string.Empty, user.Id),
                     fullInfo.NeedPhoneNumberPrivacyException ? dialog.SharePhoneNumber : true));
+#endif
             }
         }
 

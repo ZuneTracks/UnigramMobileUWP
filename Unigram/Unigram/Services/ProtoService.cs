@@ -1336,7 +1336,7 @@ namespace Unigram.Services
                 return null;
             }
 
-            var response = await SendAsync(new SearchStickerSet(name));
+            var response = await SendAsync(ModernTdlibCompatibility.SearchStickerSet(name));
             if (response is StickerSet set)
             {
                 _animatedSet[(int)type] = set;
@@ -1422,11 +1422,19 @@ namespace Unigram.Services
                     value.DefaultDisableNotification = updateChatDefaultDisableNotification.DefaultDisableNotification;
                 }
             }
+#if MODERN_TDLIB
+            else if (update is UpdateChatMessageSender updateChatDefaultMessageSenderId)
+#else
             else if (update is UpdateChatDefaultMessageSenderId updateChatDefaultMessageSenderId)
+#endif
             {
                 if (_chats.TryGetValue(updateChatDefaultMessageSenderId.ChatId, out Chat value))
                 {
+#if MODERN_TDLIB
+                    value.MessageSenderId = updateChatDefaultMessageSenderId.MessageSenderId;
+#else
                     value.DefaultMessageSenderId = updateChatDefaultMessageSenderId.DefaultMessageSenderId;
+#endif
                 }
             }
             else if (update is UpdateChatDraftMessage updateChatDraftMessage)
@@ -1646,7 +1654,11 @@ namespace Unigram.Services
             }
             else if (update is UpdateInstalledStickerSets updateInstalledStickerSets)
             {
+#if MODERN_TDLIB
+                if (updateInstalledStickerSets.StickerType is StickerTypeMask)
+#else
                 if (updateInstalledStickerSets.IsMasks)
+#endif
                 {
                     _installedMaskSets = updateInstalledStickerSets.StickerSetIds;
                 }

@@ -228,7 +228,7 @@ namespace Unigram.Services.Factories
                         Type = new FileTypeSticker(),
                         Delegate = (inputFile, caption) =>
 #if MODERN_TDLIB
-                            new InputMessageSticker(new InputSticker(inputFile, null, width, height), caption ?? string.Empty)
+                            new InputMessageSticker(new InputSticker(inputFile, null, width, height), caption?.Text ?? string.Empty)
 #else
                             new InputMessageSticker(inputFile, null, width, height, caption ?? string.Empty)
 #endif

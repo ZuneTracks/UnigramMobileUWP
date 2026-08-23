@@ -3058,7 +3058,11 @@ namespace Unigram.Views
 #endif
                 else
                 {
+#if MODERN_TDLIB
+                    ViewModel.Handle(new UpdateChatFilters { ChatFilters = ViewModel.CacheService.ChatFilters });
+#else
                     ViewModel.Handle(new UpdateChatFilters(ViewModel.CacheService.ChatFilters));
+#endif
                 }
             }
         }

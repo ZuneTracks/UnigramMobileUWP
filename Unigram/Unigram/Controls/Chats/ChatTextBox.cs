@@ -522,7 +522,11 @@ namespace Unigram.Controls.Chats
 
                     if (_members)
                     {
+#if MODERN_TDLIB
+                        var response = await _protoService.SendAsync(new SearchChatMembers(_chatId, _query, 20, new ChatMembersFilterMention(ModernTdlibCompatibility.GetMessageTopic(_threadId))));
+#else
                         var response = await _protoService.SendAsync(new SearchChatMembers(_chatId, _query, 20, new ChatMembersFilterMention(_threadId)));
+#endif
                         if (response is ChatMembers members)
                         {
                             foreach (var member in members.Members)

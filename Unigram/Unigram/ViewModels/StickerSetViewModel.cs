@@ -41,7 +41,7 @@ namespace Unigram.ViewModels
             }
             else if (parameter is string name)
             {
-                var response = await ProtoService.SendAsync(new SearchStickerSet(name));
+                var response = await ProtoService.SendAsync(ModernTdlibCompatibility.SearchStickerSet(name));
                 if (response is StickerSet stickerSet)
                 {
                     IsLoading = false;

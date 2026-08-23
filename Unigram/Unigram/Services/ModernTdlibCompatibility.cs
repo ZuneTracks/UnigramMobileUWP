@@ -130,6 +130,11 @@ namespace Unigram.Services
             return new AddLocalMessage(chatId, senderId, replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), disableNotification, inputMessageContent);
         }
 
+        public static Function CreateSendMessage(long chatId, long replyToMessageId, MessageSendOptions options, InputMessageContent content)
+        {
+            return new SendMessage(chatId, null, replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), options, null, content);
+        }
+
         public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
         {
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
@@ -491,6 +496,15 @@ namespace Unigram.Services
             return new Telegram.Td.Api.SearchStickers(new StickerTypeRegular(), string.Empty, query, new List<string>(), 0, limit);
 #else
             return new Telegram.Td.Api.SearchStickers(query, limit);
+#endif
+        }
+
+        public static Function SearchStickerSet(string name)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchStickerSet(name, false);
+#else
+            return new Telegram.Td.Api.SearchStickerSet(name);
 #endif
         }
 

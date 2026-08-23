@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Telegram.Td.Api;
 using Unigram.Collections;
 using Unigram.Common;
+using Unigram.Controls;
 using Unigram.Converters;
 using Unigram.Services;
 using Unigram.Views.Popups;
@@ -77,7 +78,6 @@ namespace Unigram.ViewModels.Folders
                     new List<long>(),
                     new List<long>(),
                     new List<long>(),
-                    false,
                     false,
                     false,
                     false,
@@ -225,6 +225,10 @@ namespace Unigram.ViewModels.Folders
 
         public async Task AddIncludeAsync()
         {
+#if MODERN_TDLIB
+            await MessagePopup.ShowAsync("Selecting folder chats is unavailable in the modern TDLib experiment.", Strings.Resources.AppName, Strings.Resources.OK);
+            return;
+#else
             var result = await SharePopup.AddExecute(true, Include.ToList());
             if (result != null)
             {
@@ -251,6 +255,7 @@ namespace Unigram.ViewModels.Folders
 
                 Include.ReplaceWith(flags.Union(chats));
             }
+#endif
         }
 
         public RelayCommand AddExcludeCommand { get; }
@@ -262,6 +267,10 @@ namespace Unigram.ViewModels.Folders
 
         public async Task AddExcludeAsync()
         {
+#if MODERN_TDLIB
+            await MessagePopup.ShowAsync("Selecting folder chats is unavailable in the modern TDLib experiment.", Strings.Resources.AppName, Strings.Resources.OK);
+            return;
+#else
             var result = await SharePopup.AddExecute(false, Exclude.ToList());
             if (result != null)
             {
@@ -276,6 +285,7 @@ namespace Unigram.ViewModels.Folders
 
                 Exclude.ReplaceWith(result);
             }
+#endif
         }
 
         public RelayCommand<ChatFilterElement> RemoveIncludeCommand { get; }
