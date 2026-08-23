@@ -371,7 +371,7 @@ namespace Unigram.ViewModels.Drawers
             {
                 ProtoService.Send(new GetRecentStickers(), result2 =>
                 {
-                    ProtoService.Send(new GetInstalledStickerSets(false), result3 =>
+                    ProtoService.Send(ModernTdlibCompatibility.GetInstalledStickerSets(false), result3 =>
                     {
                         if (result1 is Stickers favorite && result2 is Stickers recent && result3 is StickerSets sets)
                         {
@@ -671,8 +671,14 @@ namespace Unigram.ViewModels.Drawers
         //public IList<StickerEmojis> Emojis { get => _set?.Emojis; set => _set?.Emojis = value; }
         //public IList<Sticker> Stickers { get; set; }
         public bool IsViewed => _set?.IsViewed ?? _info.IsViewed;
+#if MODERN_TDLIB
+        public bool IsAnimated => _set?.Stickers?.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm) == true
+            || _info.Covers?.Any(x => x.Format is StickerFormatTgs || x.Format is StickerFormatWebm) == true;
+        public bool IsMasks => (_set?.StickerType ?? _info.StickerType) is StickerTypeMask;
+#else
         public bool IsAnimated => _set?.IsAnimated ?? _info.IsAnimated;
         public bool IsMasks => _set?.IsMasks ?? _info.IsMasks;
+#endif
         public bool IsOfficial => _set?.IsOfficial ?? _info.IsOfficial;
         public bool IsArchived => _set?.IsArchived ?? _info.IsArchived;
         public bool IsInstalled => _set?.IsInstalled ?? _info.IsInstalled;
@@ -734,9 +740,15 @@ namespace Unigram.ViewModels.Drawers
 
         public File StickerValue => _sticker?.StickerValue;
         public Thumbnail Thumbnail => _sticker?.Thumbnail;
+#if MODERN_TDLIB
+        public MaskPosition MaskPosition => _sticker?.FullType is StickerFullTypeMask mask ? mask.MaskPosition : null;
+        public bool IsAnimated => _sticker?.Format is StickerFormatTgs || _sticker?.Format is StickerFormatWebm;
+        public bool IsMask => _sticker?.FullType is StickerFullTypeMask;
+#else
         public MaskPosition MaskPosition => _sticker?.MaskPosition;
         public bool IsAnimated => _sticker?.IsAnimated ?? false;
         public bool IsMask => _sticker?.IsMask ?? false;
+#endif
         public string Emoji => _sticker?.Emoji;
         public int Height => _sticker?.Height ?? 0;
         public int Width => _sticker?.Width ?? 0;
@@ -820,7 +832,13 @@ namespace Unigram.ViewModels.Drawers
             {
                 if (phase == 0)
                 {
-                    var response = await _protoService.SendAsync(new SearchInstalledStickerSets(_masks, _query, 100));
+                    var response = await _protoService.SendAsync(
+#if MODERN_TDLIB
+                        new SearchInstalledStickerSets(_masks ? (StickerType)new StickerTypeMask() : new StickerTypeRegular(), _query, 100)
+#else
+                        new SearchInstalledStickerSets(_masks, _query, 100)
+#endif
+                    );
                     if (response is StickerSets sets)
                     {
                         foreach (var item in sets.Sets.Select(x => new StickerSetViewModel(_protoService, _aggregator, x)))
@@ -835,12 +853,60 @@ namespace Unigram.ViewModels.Drawers
                 {
                     if (Emoji.ContainsSingleEmoji(_query))
                     {
-                        var response = await _protoService.SendAsync(new GetStickers(_query, 100));
+                        var response = await _protoService.SendAsync(
+#if MODERN_TDLIB
+                            new GetStickers(new StickerTypeRegular(), _query, 100, 0)
+#else
+                            new GetStickers(_query, 100)
+#endif
+                        );
                         if (response is Stickers stickers && stickers.StickersValue.Count > 0)
                         {
                             Add(new StickerSetViewModel(_protoService, _aggregator,
-                                new StickerSetInfo(0, _query, "emoji", null, new ClosedVectorPath[0], false, false, false, false, false, false, stickers.StickersValue.Count, stickers.StickersValue),
-                                new StickerSet(0, _query, "emoji", null, new ClosedVectorPath[0], false, false, false, false, false, false, stickers.StickersValue, new Emojis[0])));
+                                new StickerSetInfo(
+                                    0,
+                                    _query,
+                                    "emoji",
+                                    null,
+                                    null,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+#if MODERN_TDLIB
+                                    new StickerTypeRegular(),
+                                    false,
+                                    false,
+                                    false,
+#else
+                                    false,
+                                    false,
+                                    false,
+#endif
+                                    stickers.StickersValue.Count,
+                                    stickers.StickersValue),
+                                new StickerSet(
+                                    0,
+                                    _query,
+                                    "emoji",
+                                    null,
+                                    null,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+#if MODERN_TDLIB
+                                    new StickerTypeRegular(),
+                                    false,
+                                    false,
+                                    false,
+#else
+                                    false,
+                                    false,
+                                    false,
+#endif
+                                    stickers.StickersValue,
+                                    new Emojis[0])));
                         }
                     }
                     else
@@ -850,12 +916,60 @@ namespace Unigram.ViewModels.Drawers
                         {
                             for (int i = 0; i < Math.Min(10, emojis.EmojisValue.Count); i++)
                             {
-                                var response = await _protoService.SendAsync(new GetStickers(emojis.EmojisValue[i], 100));
+                                var response = await _protoService.SendAsync(
+#if MODERN_TDLIB
+                                    new GetStickers(new StickerTypeRegular(), emojis.EmojisValue[i], 100, 0)
+#else
+                                    new GetStickers(emojis.EmojisValue[i], 100)
+#endif
+                                );
                                 if (response is Stickers stickers && stickers.StickersValue.Count > 0)
                                 {
                                     Add(new StickerSetViewModel(_protoService, _aggregator,
-                                        new StickerSetInfo(0, emojis.EmojisValue[i], "emoji", null, new ClosedVectorPath[0], false, false, false, false, false, false, stickers.StickersValue.Count, stickers.StickersValue),
-                                        new StickerSet(0, emojis.EmojisValue[i], "emoji", null, new ClosedVectorPath[0], false, false, false, false, false, false, stickers.StickersValue, new Emojis[0])));
+                                        new StickerSetInfo(
+                                            0,
+                                            emojis.EmojisValue[i],
+                                            "emoji",
+                                            null,
+                                            null,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+#if MODERN_TDLIB
+                                            new StickerTypeRegular(),
+                                            false,
+                                            false,
+                                            false,
+#else
+                                            false,
+                                            false,
+                                            false,
+#endif
+                                            stickers.StickersValue.Count,
+                                            stickers.StickersValue),
+                                        new StickerSet(
+                                            0,
+                                            emojis.EmojisValue[i],
+                                            "emoji",
+                                            null,
+                                            null,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+#if MODERN_TDLIB
+                                            new StickerTypeRegular(),
+                                            false,
+                                            false,
+                                            false,
+#else
+                                            false,
+                                            false,
+                                            false,
+#endif
+                                            stickers.StickersValue,
+                                            new Emojis[0])));
                                 }
                             }
                         }
@@ -863,7 +977,13 @@ namespace Unigram.ViewModels.Drawers
                 }
                 else if (phase == 2)
                 {
-                    var response = await _protoService.SendAsync(new SearchStickerSets(_query));
+                    var response = await _protoService.SendAsync(
+#if MODERN_TDLIB
+                        new SearchStickerSets(new StickerTypeRegular(), _query)
+#else
+                        new SearchStickerSets(_query)
+#endif
+                    );
                     if (response is StickerSets sets)
                     {
                         foreach (var item in sets.Sets.Select(x => new StickerSetViewModel(_protoService, _aggregator, x, x.Covers)))
