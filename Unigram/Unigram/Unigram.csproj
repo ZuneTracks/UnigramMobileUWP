@@ -20,7 +20,9 @@
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
     <AppxBundle>Always</AppxBundle>
-    <AppxBundlePlatforms>x64|arm</AppxBundlePlatforms>
+    <UseModernTdlib Condition="'$(UseModernTdlib)' == ''">false</UseModernTdlib>
+    <AppxBundlePlatforms Condition="'$(UseModernTdlib)' == 'true'">arm</AppxBundlePlatforms>
+    <AppxBundlePlatforms Condition="'$(UseModernTdlib)' != 'true'">x64|arm</AppxBundlePlatforms>
     <PackageCertificateThumbprint>A2A8DEBFB129BF1ED16C0CF24397A3FD27C2FBC5</PackageCertificateThumbprint>
     <BuildAppxSideloadPackageForUap>False</BuildAppxSideloadPackageForUap>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
@@ -30,7 +32,6 @@
     <GenerateTestArtifacts>False</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <UseModernTdlib Condition="'$(UseModernTdlib)' == ''">false</UseModernTdlib>
     <ModernTdlibRoot Condition="'$(ModernTdlibRoot)' == ''">$(UNIGRAM_MODERN_TDLIB_ROOT)</ModernTdlibRoot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
@@ -2791,7 +2792,7 @@
     <Error Condition="!Exists('$(ProjectDir)Constants.Secret.cs')" Text="Packaging the experimental app requires the ignored Constants.Secret.cs. The compile-only placeholder must never be packaged." />
   </Target>
   <PropertyGroup>
-    <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -file "$(ProjectDir)\..\UpdateManifest.ps1" -path $(ProjectDir) -config $(ConfigurationName)</PreBuildEvent>
+    <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -file "$(ProjectDir)\..\UpdateManifest.ps1" -path $(ProjectDir) -config $(ConfigurationName) -experimental:$(UseModernTdlib)</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>

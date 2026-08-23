@@ -66,7 +66,13 @@ namespace Unigram.ViewModels.Chats
                 var limit = 20;
                 var offset = -limit / 2;
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter));
+                var response = await ProtoService.SendAsync(
+#if MODERN_TDLIB
+                    new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter)
+#else
+                    new SearchChatMessages(_chatId, string.Empty, null, fromMessageId, offset, limit, _filter, _threadId)
+#endif
+                );
                 if (response is Messages messages)
                 {
                     TotalItems = messages.TotalCount;
@@ -115,7 +121,13 @@ namespace Unigram.ViewModels.Chats
                 var limit = 21;
                 var offset = _isMirrored ? -limit + 1 : 0;
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter));
+                var response = await ProtoService.SendAsync(
+#if MODERN_TDLIB
+                    new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter)
+#else
+                    new SearchChatMessages(_chatId, string.Empty, null, fromMessageId, offset, limit, _filter, _threadId)
+#endif
+                );
                 if (response is Messages messages)
                 {
                     TotalItems = messages.TotalCount;
@@ -152,7 +164,13 @@ namespace Unigram.ViewModels.Chats
                 var limit = 21;
                 var offset = _isMirrored ? 0 : -limit + 1;
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter));
+                var response = await ProtoService.SendAsync(
+#if MODERN_TDLIB
+                    new SearchChatMessages(_chatId, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, offset, limit, _filter)
+#else
+                    new SearchChatMessages(_chatId, string.Empty, null, fromMessageId, offset, limit, _filter, _threadId)
+#endif
+                );
                 if (response is Messages messages)
                 {
                     TotalItems = messages.TotalCount;

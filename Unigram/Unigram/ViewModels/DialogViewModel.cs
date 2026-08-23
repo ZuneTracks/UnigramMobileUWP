@@ -1012,7 +1012,13 @@ namespace Unigram.ViewModels
                     }
                 }
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(chat.Id, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, -9, 10, new SearchMessagesFilterUnreadMention()));
+                var response = await ProtoService.SendAsync(
+#if MODERN_TDLIB
+                    new SearchChatMessages(chat.Id, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, -9, 10, new SearchMessagesFilterUnreadMention())
+#else
+                    new SearchChatMessages(chat.Id, string.Empty, null, fromMessageId, -9, 10, new SearchMessagesFilterUnreadMention(), _threadId)
+#endif
+                );
                 if (response is Messages messages)
                 {
                     var stack = new List<long>();
