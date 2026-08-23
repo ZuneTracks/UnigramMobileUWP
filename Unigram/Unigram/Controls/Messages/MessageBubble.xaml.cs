@@ -530,11 +530,11 @@ namespace Unigram.Controls.Messages
 
             //if (message.HasViaBotId && message.ViaBot != null && !message.ViaBot.IsDeleted && message.ViaBot.HasUsername)
             var viaBot = message.ProtoService.GetUser(message.ViaBotUserId);
-            if (viaBot != null && viaBot.Type is UserTypeBot && !string.IsNullOrEmpty(viaBot.Username))
+            if (viaBot != null && viaBot.Type is UserTypeBot && !string.IsNullOrEmpty(viaBot.GetUsername()))
             {
                 var hyperlink = new Hyperlink();
                 hyperlink.Inlines.Add(new Run { Text = paragraph.Inlines.Count > 0 ? " via @" : "via @", FontWeight = FontWeights.Normal });
-                hyperlink.Inlines.Add(new Run { Text = viaBot.Username });
+                hyperlink.Inlines.Add(new Run { Text = viaBot.GetUsername() });
                 hyperlink.UnderlineStyle = UnderlineStyle.None;
                 hyperlink.Foreground = light ? new SolidColorBrush(Colors.White) : GetBrush("MessageHeaderForegroundBrush");
                 hyperlink.Click += (s, args) => ViaBot_Click(message);

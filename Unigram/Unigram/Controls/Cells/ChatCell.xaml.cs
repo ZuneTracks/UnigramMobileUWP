@@ -678,9 +678,9 @@ namespace Unigram.Controls.Cells
                     {
                         result = string.Format(format, from.LastName.Trim());
                     }
-                    else if (!string.IsNullOrEmpty(from.Username))
+                    else if (!string.IsNullOrEmpty(from.GetUsername()))
                     {
-                        result = string.Format(format, from.Username.Trim());
+                        result = string.Format(format, from.GetUsername().Trim());
                     }
                     else if (from.Type is UserTypeDeleted)
                     {

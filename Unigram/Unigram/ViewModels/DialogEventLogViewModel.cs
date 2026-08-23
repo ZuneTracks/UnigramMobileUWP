@@ -323,7 +323,7 @@ namespace Unigram.ViewModels
                         break;
                     case ChatEventMemberLeft memberLeft:
                         message = GetMessage(_chat.Id, channel, item);
-                        message.Content = new MessageChatDeleteMember(item.UserId);
+                        message.Content = new MessageChatDeleteMember(item.MemberId is MessageSenderUser member ? member.UserId : 0);
                         break;
                     case ChatEventDescriptionChanged descriptionChanged:
                     case ChatEventUsernameChanged usernameChanged:
@@ -350,7 +350,7 @@ namespace Unigram.ViewModels
                         break;
                     case ChatEventMemberJoined memberJoined:
                         message = GetMessage(_chat.Id, channel, item);
-                        message.Content = new MessageChatAddMembers(new long[] { item.UserId });
+                        message.Content = new MessageChatAddMembers(new long[] { item.MemberId is MessageSenderUser member ? member.UserId : 0 });
                         break;
                     case ChatEventTitleChanged titleChanged:
                         message = GetMessage(_chat.Id, channel, item);
@@ -427,25 +427,25 @@ namespace Unigram.ViewModels
                 //{
                 //    AppendChange(n.IsViewMessages, Strings.Resources.EventLogRestrictedReadMessages);
                 //}
-                if (o.CanSendMessages != n.CanSendMessages)
+                if (o.GetCanSendMessages() != n.GetCanSendMessages())
                 {
-                    AppendChange(n.CanSendMessages, Strings.Resources.EventLogRestrictedSendMessages);
+                    AppendChange(n.GetCanSendMessages(), Strings.Resources.EventLogRestrictedSendMessages);
                 }
                 if (o.CanSendOtherMessages != n.CanSendOtherMessages)
                 {
                     AppendChange(n.CanSendOtherMessages, Strings.Resources.EventLogRestrictedSendStickers);
                 }
-                if (o.CanSendMediaMessages != n.CanSendMediaMessages)
+                if (o.GetCanSendMediaMessages() != n.GetCanSendMediaMessages())
                 {
-                    AppendChange(n.CanSendMediaMessages, Strings.Resources.EventLogRestrictedSendMedia);
+                    AppendChange(n.GetCanSendMediaMessages(), Strings.Resources.EventLogRestrictedSendMedia);
                 }
                 if (o.CanSendPolls != n.CanSendPolls)
                 {
                     AppendChange(n.CanSendPolls, Strings.Resources.EventLogRestrictedSendPolls);
                 }
-                if (o.CanAddWebPagePreviews != n.CanAddWebPagePreviews)
+                if (o.GetCanAddWebPagePreviews() != n.GetCanAddWebPagePreviews())
                 {
-                    AppendChange(n.CanAddWebPagePreviews, Strings.Resources.EventLogRestrictedSendEmbed);
+                    AppendChange(n.GetCanAddWebPagePreviews(), Strings.Resources.EventLogRestrictedSendEmbed);
                 }
                 if (o.CanChangeInfo != n.CanChangeInfo)
                 {
@@ -479,11 +479,11 @@ namespace Unigram.ViewModels
                 }
                 else if (memberRestricted.OldStatus is ChatMemberStatusBanned oldBanned)
                 {
-                    o = new ChatMemberStatusRestricted(false, oldBanned.BannedUntilDate, new ChatPermissions(false, false, false, false, false, false, false, false));
+                    o = new ChatMemberStatusRestricted(false, oldBanned.BannedUntilDate, ModernTdlibCompatibility.CreateChatPermissions(false));
                 }
                 else if (memberRestricted.OldStatus is ChatMemberStatusMember)
                 {
-                    o = new ChatMemberStatusRestricted(true, 0, new ChatPermissions(true, true, true, true, true, true, true, true));
+                    o = new ChatMemberStatusRestricted(true, 0, ModernTdlibCompatibility.CreateChatPermissions(true));
                 }
 
                 if (memberRestricted.NewStatus is ChatMemberStatusRestricted newRestricted)
@@ -492,11 +492,11 @@ namespace Unigram.ViewModels
                 }
                 else if (memberRestricted.NewStatus is ChatMemberStatusBanned newBanned)
                 {
-                    n = new ChatMemberStatusRestricted(false, newBanned.BannedUntilDate, new ChatPermissions(false, false, false, false, false, false, false, false));
+                    n = new ChatMemberStatusRestricted(false, newBanned.BannedUntilDate, ModernTdlibCompatibility.CreateChatPermissions(false));
                 }
                 else if (memberRestricted.NewStatus is ChatMemberStatusMember)
                 {
-                    n = new ChatMemberStatusRestricted(true, 0, new ChatPermissions(true, true, true, true, true, true, true, true));
+                    n = new ChatMemberStatusRestricted(true, 0, ModernTdlibCompatibility.CreateChatPermissions(true));
                 }
 
                 if (!channel && (n == null || n != null && o != null /*&& n.RestrictedUntilDate != o.RestrictedUntilDate*/))
@@ -564,11 +564,11 @@ namespace Unigram.ViewModels
                     var added = false;
                     if (o == null)
                     {
-                        o = new ChatMemberStatusRestricted(true, 0, new ChatPermissions(true, true, true, true, true, true, true, true));
+                        o = new ChatMemberStatusRestricted(true, 0, ModernTdlibCompatibility.CreateChatPermissions(true));
                     }
                     if (n == null)
                     {
-                        n = new ChatMemberStatusRestricted(true, 0, new ChatPermissions(true, true, true, true, true, true, true, true));
+                        n = new ChatMemberStatusRestricted(true, 0, ModernTdlibCompatibility.CreateChatPermissions(true));
                     }
 
                     void AppendChange(bool value, string label)
@@ -587,25 +587,25 @@ namespace Unigram.ViewModels
                     //{
                     //    AppendChange(n.IsViewMessages, Strings.Resources.EventLogRestrictedReadMessages);
                     //}
-                    if (o.Permissions.CanSendMessages != n.Permissions.CanSendMessages)
+                    if (o.Permissions.GetCanSendMessages() != n.Permissions.GetCanSendMessages())
                     {
-                        AppendChange(n.Permissions.CanSendMessages, Strings.Resources.EventLogRestrictedSendMessages);
+                        AppendChange(n.Permissions.GetCanSendMessages(), Strings.Resources.EventLogRestrictedSendMessages);
                     }
                     if (o.Permissions.CanSendOtherMessages != n.Permissions.CanSendOtherMessages)
                     {
                         AppendChange(n.Permissions.CanSendOtherMessages, Strings.Resources.EventLogRestrictedSendStickers);
                     }
-                    if (o.Permissions.CanSendMediaMessages != n.Permissions.CanSendMediaMessages)
+                    if (o.Permissions.GetCanSendMediaMessages() != n.Permissions.GetCanSendMediaMessages())
                     {
-                        AppendChange(n.Permissions.CanSendMediaMessages, Strings.Resources.EventLogRestrictedSendMedia);
+                        AppendChange(n.Permissions.GetCanSendMediaMessages(), Strings.Resources.EventLogRestrictedSendMedia);
                     }
                     if (o.Permissions.CanSendPolls != n.Permissions.CanSendPolls)
                     {
                         AppendChange(n.Permissions.CanSendPolls, Strings.Resources.EventLogRestrictedSendPolls);
                     }
-                    if (o.Permissions.CanAddWebPagePreviews != n.Permissions.CanAddWebPagePreviews)
+                    if (o.Permissions.GetCanAddWebPagePreviews() != n.Permissions.GetCanAddWebPagePreviews())
                     {
-                        AppendChange(n.Permissions.CanAddWebPagePreviews, Strings.Resources.EventLogRestrictedSendEmbed);
+                        AppendChange(n.Permissions.GetCanAddWebPagePreviews(), Strings.Resources.EventLogRestrictedSendEmbed);
                     }
                     if (o.Permissions.CanChangeInfo != n.Permissions.CanChangeInfo)
                     {
@@ -798,17 +798,17 @@ namespace Unigram.ViewModels
                     entities.Add(new TextEntity(offset, name.Length, new TextEntityTypeMentionName(user.Id)));
                 }
 
-                if (string.IsNullOrEmpty(user.Username))
+                if (string.IsNullOrEmpty(user.GetUsername()))
                 {
                     return name;
                 }
 
                 if (offset >= 0)
                 {
-                    entities.Add(new TextEntity(name.Length + offset + 2, user.Username.Length + 1, new TextEntityTypeMentionName(user.Id)));
+                    entities.Add(new TextEntity(name.Length + offset + 2, user.GetUsername().Length + 1, new TextEntityTypeMentionName(user.Id)));
                 }
 
-                return string.Format("{0} (@{1})", name, user.Username);
+                return string.Format("{0} (@{1})", name, user.GetUsername());
             }
             else if (sender is Chat chat)
             {

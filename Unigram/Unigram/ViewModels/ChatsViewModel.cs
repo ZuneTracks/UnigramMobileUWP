@@ -399,7 +399,7 @@ namespace Unigram.ViewModels
                     {
                         if (delete.Type is ChatTypePrivate privata && check)
                         {
-                            await ProtoService.SendAsync(new ToggleMessageSenderIsBlocked(new MessageSenderUser(privata.UserId), true));
+                            await ProtoService.SendAsync(ModernTdlibCompatibility.SetMessageSenderBlocked(new MessageSenderUser(privata.UserId), true));
                         }
 
                         ProtoService.Send(new DeleteChatHistory(delete.Id, true, false));

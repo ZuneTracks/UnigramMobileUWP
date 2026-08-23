@@ -200,6 +200,60 @@ namespace Unigram.Common
 
     public static class TdExtensions
     {
+        public static string GetUsername(this User user)
+        {
+#if MODERN_TDLIB
+            return user.Usernames?.EditableUsername ?? string.Empty;
+#else
+            return user.Username;
+#endif
+        }
+
+        public static string GetUsername(this Supergroup supergroup)
+        {
+#if MODERN_TDLIB
+            return supergroup.Usernames?.EditableUsername ?? string.Empty;
+#else
+            return supergroup.Username;
+#endif
+        }
+
+        public static bool GetCanSendMessages(this ChatPermissions permissions)
+        {
+#if MODERN_TDLIB
+            return permissions.CanSendBasicMessages;
+#else
+            return permissions.CanSendMessages;
+#endif
+        }
+
+        public static bool GetCanSendMediaMessages(this ChatPermissions permissions)
+        {
+#if MODERN_TDLIB
+            return permissions.CanSendAudios || permissions.CanSendDocuments || permissions.CanSendPhotos || permissions.CanSendVideos || permissions.CanSendVideoNotes || permissions.CanSendVoiceNotes || permissions.CanSendOtherMessages;
+#else
+            return permissions.CanSendMediaMessages;
+#endif
+        }
+
+        public static bool GetCanAddWebPagePreviews(this ChatPermissions permissions)
+        {
+#if MODERN_TDLIB
+            return permissions.CanAddLinkPreviews;
+#else
+            return permissions.CanAddWebPagePreviews;
+#endif
+        }
+
+        public static bool IsChatBlocked(this Chat chat)
+        {
+#if MODERN_TDLIB
+            return chat.BlockList is BlockListMain;
+#else
+            return chat.IsBlocked;
+#endif
+        }
+
         public static File InvalidFile()
         {
             return new File(0, 0, 0, new LocalFile(string.Empty, false, false, false, false, 0, 0, 0), new RemoteFile(string.Empty, string.Empty, false, false, 0));
@@ -1691,7 +1745,7 @@ namespace Unigram.Common
         public static int Count(this ChatPermissions permissions)
         {
             var count = 0;
-            if (permissions.CanAddWebPagePreviews)
+            if (permissions.GetCanAddWebPagePreviews())
             {
                 count++;
             }
@@ -1707,11 +1761,11 @@ namespace Unigram.Common
             {
                 count++;
             }
-            if (permissions.CanSendMediaMessages)
+            if (permissions.GetCanSendMediaMessages())
             {
                 count++;
             }
-            if (permissions.CanSendMessages)
+            if (permissions.GetCanSendMessages())
             {
                 count++;
             }

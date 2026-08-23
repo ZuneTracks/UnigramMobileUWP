@@ -1043,8 +1043,8 @@ namespace Unigram.ViewModels
 
                     if (switchInline.InCurrentChat)
                     {
-                        SetText(string.Format("@{0} {1}", bot.Username, switchInline.Query), focus: true);
-                        ResolveInlineBot(bot.Username, switchInline.Query);
+                        SetText(string.Format("@{0} {1}", bot.GetUsername(), switchInline.Query), focus: true);
+                        ResolveInlineBot(bot.GetUsername(), switchInline.Query);
                     }
                     else
                     {
@@ -1146,7 +1146,7 @@ namespace Unigram.ViewModels
                         var viaBot = message.GetViaBotUser();
                         if (viaBot != null)
                         {
-                            bundle.Add("username", viaBot.Username);
+                            bundle.Add("username", viaBot.GetUsername());
                         }
 
                         ChatActionManager.SetTyping(new ChatActionStartPlayingGame());

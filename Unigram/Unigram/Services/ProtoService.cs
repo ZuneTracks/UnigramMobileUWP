@@ -1437,6 +1437,15 @@ namespace Unigram.Services
                     value.HasScheduledMessages = updateChatHasScheduledMessages.HasScheduledMessages;
                 }
             }
+#if MODERN_TDLIB
+            else if (update is UpdateChatBlockList updateChatBlockList)
+            {
+                if (_chats.TryGetValue(updateChatBlockList.ChatId, out Chat value))
+                {
+                    value.BlockList = updateChatBlockList.BlockList;
+                }
+            }
+#else
             else if (update is UpdateChatIsBlocked updateChatIsBlocked)
             {
                 if (_chats.TryGetValue(updateChatIsBlocked.ChatId, out Chat value))
@@ -1444,6 +1453,7 @@ namespace Unigram.Services
                     value.IsBlocked = updateChatIsBlocked.IsBlocked;
                 }
             }
+#endif
             else if (update is UpdateChatIsMarkedAsUnread updateChatIsMarkedAsUnread)
             {
                 if (_chats.TryGetValue(updateChatIsMarkedAsUnread.ChatId, out Chat value))

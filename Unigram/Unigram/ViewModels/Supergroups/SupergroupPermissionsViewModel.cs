@@ -34,10 +34,10 @@ namespace Unigram.ViewModels.Supergroups
             CanPinMessages = chat.Permissions.CanPinMessages;
             CanInviteUsers = chat.Permissions.CanInviteUsers;
             CanSendPolls = chat.Permissions.CanSendPolls;
-            CanAddWebPagePreviews = chat.Permissions.CanAddWebPagePreviews;
+            CanAddWebPagePreviews = chat.Permissions.GetCanAddWebPagePreviews();
             CanSendOtherMessages = chat.Permissions.CanSendOtherMessages;
-            CanSendMediaMessages = chat.Permissions.CanSendMediaMessages;
-            CanSendMessages = chat.Permissions.CanSendMessages;
+            CanSendMediaMessages = chat.Permissions.GetCanSendMediaMessages();
+            CanSendMessages = chat.Permissions.GetCanSendMessages();
         }
 
         #region Flags
@@ -212,11 +212,11 @@ namespace Unigram.ViewModels.Supergroups
                 CanChangeInfo = _canChangeInfo,
                 CanPinMessages = _canPinMessages,
                 CanInviteUsers = _canInviteUsers,
-                CanAddWebPagePreviews = _canAddWebPagePreviews,
+                CanAddLinkPreviews = _canAddWebPagePreviews,
                 CanSendPolls = _canSendPolls,
                 CanSendOtherMessages = _canSendOtherMessages,
-                CanSendMediaMessages = _canSendMediaMessages,
-                CanSendMessages = _canSendMessages
+                CanSendPhotos = _canSendMediaMessages,
+                CanSendBasicMessages = _canSendMessages
             };
 
             var response = await ProtoService.SendAsync(new SetChatPermissions(chat.Id, permissions));

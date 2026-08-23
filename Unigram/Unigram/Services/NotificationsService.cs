@@ -1183,9 +1183,9 @@ namespace Unigram.Services
                 {
                     result = $"{from.LastName.Trim()}: ";
                 }
-                else if (!string.IsNullOrEmpty(from.Username))
+                else if (!string.IsNullOrEmpty(from.GetUsername()))
                 {
-                    result = $"{from.Username.Trim()}: ";
+                    result = $"{from.GetUsername().Trim()}: ";
                 }
                 else if (from.Type is UserTypeDeleted)
                 {
@@ -1320,9 +1320,9 @@ namespace Unigram.Services
                     {
                         result = $"{senderUser.LastName.Trim()}: ";
                     }
-                    else if (!string.IsNullOrEmpty(senderUser.Username))
+                    else if (!string.IsNullOrEmpty(senderUser.GetUsername()))
                     {
-                        result = $"{senderUser.Username.Trim()}: ";
+                        result = $"{senderUser.GetUsername().Trim()}: ";
                     }
                     else if (senderUser.Type is UserTypeDeleted)
                     {
