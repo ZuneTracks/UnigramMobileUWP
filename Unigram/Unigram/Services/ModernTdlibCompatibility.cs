@@ -135,6 +135,71 @@ namespace Unigram.Services
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
         }
 
+        public static Invoice GetPaymentFormInvoice(PaymentForm paymentForm)
+        {
+            return (paymentForm?.Type as PaymentFormTypeRegular)?.Invoice;
+        }
+
+        public static OrderInfo GetPaymentFormSavedOrderInfo(PaymentForm paymentForm)
+        {
+            return (paymentForm?.Type as PaymentFormTypeRegular)?.SavedOrderInfo;
+        }
+
+        public static bool HasPaymentFormSavedCredentials(PaymentForm paymentForm)
+        {
+            return (paymentForm?.Type as PaymentFormTypeRegular)?.SavedCredentials?.Count > 0;
+        }
+
+        public static bool GetPaymentFormCanSaveCredentials(PaymentForm paymentForm)
+        {
+            return (paymentForm?.Type as PaymentFormTypeRegular)?.CanSaveCredentials == true;
+        }
+
+        public static void ClearPaymentFormSavedCredentials(PaymentForm paymentForm)
+        {
+            var regular = paymentForm?.Type as PaymentFormTypeRegular;
+            if (regular != null)
+            {
+                regular.SavedCredentials = new List<SavedCredentials>();
+            }
+        }
+
+        public static string GetPaymentFormUrl(PaymentForm paymentForm)
+        {
+            var regular = paymentForm?.Type as PaymentFormTypeRegular;
+            return (regular?.PaymentProvider as PaymentProviderOther)?.Url;
+        }
+
+        public static Function CreateValidateOrderInfo(long chatId, long messageId, OrderInfo orderInfo, bool allowSave)
+        {
+            return new ValidateOrderInfo(new InputInvoiceMessage(chatId, messageId), orderInfo, allowSave);
+        }
+
+        public static Invoice GetPaymentReceiptInvoice(PaymentReceipt receipt)
+        {
+            return (receipt?.Type as PaymentReceiptTypeRegular)?.Invoice;
+        }
+
+        public static OrderInfo GetPaymentReceiptOrderInfo(PaymentReceipt receipt)
+        {
+            return (receipt?.Type as PaymentReceiptTypeRegular)?.OrderInfo;
+        }
+
+        public static ShippingOption GetPaymentReceiptShippingOption(PaymentReceipt receipt)
+        {
+            return (receipt?.Type as PaymentReceiptTypeRegular)?.ShippingOption;
+        }
+
+        public static string GetPaymentReceiptCredentialsTitle(PaymentReceipt receipt)
+        {
+            return (receipt?.Type as PaymentReceiptTypeRegular)?.CredentialsTitle;
+        }
+
+        public static long GetPaymentReceiptPaymentProviderUserId(PaymentReceipt receipt)
+        {
+            return (receipt?.Type as PaymentReceiptTypeRegular)?.PaymentProviderUserId ?? 0;
+        }
+
         public static BaseObject GetMessageProperties(IProtoService protoService, Message message)
         {
             return protoService.Execute(new Telegram.Td.Api.GetMessageProperties(message.ChatId, message.Id));

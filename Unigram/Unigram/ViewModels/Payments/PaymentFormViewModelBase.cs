@@ -48,5 +48,15 @@ namespace Unigram.ViewModels.Payments
                 Set(ref _paymentForm, value);
             }
         }
+
+        public Invoice PaymentInvoice => ModernTdlibCompatibility.GetPaymentFormInvoice(_paymentForm);
+
+        public OrderInfo SavedOrderInfo => ModernTdlibCompatibility.GetPaymentFormSavedOrderInfo(_paymentForm);
+
+        public bool HasSavedCredentials => ModernTdlibCompatibility.HasPaymentFormSavedCredentials(_paymentForm);
+
+        public bool CanSaveCredentials => ModernTdlibCompatibility.GetPaymentFormCanSaveCredentials(_paymentForm);
+
+        public string PaymentFormUrl => ModernTdlibCompatibility.GetPaymentFormUrl(_paymentForm);
     }
 }
