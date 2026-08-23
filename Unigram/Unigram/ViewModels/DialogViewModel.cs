@@ -27,6 +27,16 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using Point = Windows.Foundation.Point;
 
+#if !MODERN_TDLIB
+using ReportReason = ChatReportReason;
+using ReportReasonSpam = ChatReportReasonSpam;
+using ReportReasonViolence = ChatReportReasonViolence;
+using ReportReasonPornography = ChatReportReasonPornography;
+using ReportReasonChildAbuse = ChatReportReasonChildAbuse;
+using ReportReasonCustom = ChatReportReasonCustom;
+using ReportReasonUnrelatedLocation = ChatReportReasonUnrelatedLocation;
+#endif
+
 namespace Unigram.ViewModels
 {
     public partial class DialogViewModel : TLViewModelBase, IDelegable<IDialogDelegate>

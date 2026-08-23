@@ -21,6 +21,15 @@ using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
+#if !MODERN_TDLIB
+using ReportReason = ChatReportReason;
+using ReportReasonSpam = ChatReportReasonSpam;
+using ReportReasonViolence = ChatReportReasonViolence;
+using ReportReasonPornography = ChatReportReasonPornography;
+using ReportReasonChildAbuse = ChatReportReasonChildAbuse;
+using ReportReasonCustom = ChatReportReasonCustom;
+#endif
+
 namespace Unigram.ViewModels
 {
     public partial class DialogViewModel

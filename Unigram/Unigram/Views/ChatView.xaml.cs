@@ -48,6 +48,11 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Point = Windows.Foundation.Point;
 
+#if !MODERN_TDLIB
+using ReportReasonSpam = ChatReportReasonSpam;
+using ReportReasonUnrelatedLocation = ChatReportReasonUnrelatedLocation;
+#endif
+
 namespace Unigram.Views
 {
     public sealed partial class ChatView : HostedPage, INavigablePage, ISearchablePage, IDialogDelegate, IActivablePage

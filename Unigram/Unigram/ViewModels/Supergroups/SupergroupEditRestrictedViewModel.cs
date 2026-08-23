@@ -328,7 +328,11 @@ namespace Unigram.ViewModels.Supergroups
                     CanChangeInfo = _canChangeInfo,
                     CanPinMessages = _canPinMessages,
                     CanInviteUsers = _canInviteUsers,
+#if MODERN_TDLIB
                     CanAddLinkPreviews = _canAddWebPagePreviews,
+#else
+                    CanAddWebPagePreviews = _canAddWebPagePreviews,
+#endif
                     CanSendPolls = _canSendPolls,
                     CanSendOtherMessages = _canSendOtherMessages,
 #if MODERN_TDLIB
@@ -341,7 +345,7 @@ namespace Unigram.ViewModels.Supergroups
                     CanSendBasicMessages = _canSendMessages,
 #else
                     CanSendMediaMessages = _canSendMediaMessages,
-                    CanSendBasicMessages = _canSendMessages,
+                    CanSendMessages = _canSendMessages,
 #endif
                 }
             };

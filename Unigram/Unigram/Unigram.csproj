@@ -507,6 +507,7 @@
     <Compile Include="Selectors\ChatStatisticsOverviewTemplateSelector.cs" />
     <Compile Include="Services\CallsService.cs" Condition="'$(UseModernTdlib)' != 'true'" />
     <Compile Include="Services\DataSavingMode.cs" />
+    <Compile Include="Services\LegacyTdlibCompatibility.cs" Condition="'$(UseModernTdlib)' != 'true'" />
     <Compile Include="Services\ModernTdlibCompatibility.cs" Condition="'$(UseModernTdlib)' == 'true'" />
     <Compile Include="Services\Updates\UpdateSelectedBackground.cs" />
     <Compile Include="Services\ProtoService.ChatList.cs" />
