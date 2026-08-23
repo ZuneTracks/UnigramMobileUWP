@@ -1445,6 +1445,7 @@ namespace Unigram.Services
                     Title = x.Name?.Text?.Text ?? string.Empty,
                     IconName = x.Icon?.Name ?? string.Empty
                 }).ToList();
+                _aggregator.Publish(new UpdateChatFilters { ChatFilters = _chatFilters });
             }
 #else
             else if (update is UpdateChatFilters updateChatFilters)

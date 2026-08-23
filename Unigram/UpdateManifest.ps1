@@ -33,7 +33,7 @@ if ($useExperimental) {
     $h["DEBUG"] = "49197Wirdschon.UnigramMobileTdlibExperimental"
     $h["RELEASE"] = "49197Wirdschon.UnigramMobileTdlibExperimental"
 } else {
-    $h["DEBUG"] = "49197Wirdschon.UnigramMobile"
+    $h["DEBUG"] = "49197Wirdschon.UnigramMobileExperimental"
     $h["RELEASE"] = "49197Wirdschon.UnigramMobile"
 }
 
@@ -58,7 +58,7 @@ if ($useExperimental) {
     $h["DEBUG"] = "Unigram Mobile TDLib Experimental"
     $h["RELEASE"] = "Unigram Mobile TDLib Experimental"
 } else {
-    $h["DEBUG"] = "Unigram"
+    $h["DEBUG"] = "Unigram Mobile Experimental"
     $h["RELEASE"] = "Unigram"
 }
 
@@ -71,7 +71,7 @@ if ($useExperimental) {
     $h["DEBUG"] = "Unigram Mobile TDLib Experimental"
     $h["RELEASE"] = "Unigram Mobile TDLib Experimental"
 } else {
-    $h["DEBUG"] = "Unigram"
+    $h["DEBUG"] = "Unigram Mobile Experimental"
     $h["RELEASE"] = "Unigram"
 }
 
