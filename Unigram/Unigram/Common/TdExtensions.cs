@@ -750,6 +750,24 @@ namespace Unigram.Common
 #endif
             }
 
+            public static string GetSwitchPmParameter(this InlineQueryResults value)
+            {
+#if MODERN_TDLIB
+                return (value?.Button?.Type as InlineQueryResultsButtonTypeStartBot)?.Parameter;
+#else
+                return value?.SwitchPmParameter;
+#endif
+            }
+
+            public static string GetSwitchPmText(this InlineQueryResults value)
+            {
+#if MODERN_TDLIB
+                return value?.Button?.Text;
+#else
+                return value?.SwitchPmText;
+#endif
+            }
+
             public static string GetIpAddress(this ConnectedWebsite value)
             {
 #if MODERN_TDLIB
