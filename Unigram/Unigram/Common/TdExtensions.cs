@@ -2590,6 +2590,8 @@ namespace Telegram.Td.Api
         /// </summary>
         public long UserId { get; set; }
 
+        public MessageSender MemberId { get; set; }
+
         /// <summary>
         /// Point in time (Unix timestamp) when the event happened.
         /// </summary>
@@ -2603,7 +2605,8 @@ namespace Telegram.Td.Api
         public MessageChatEvent(ChatEvent chatEvent)
         {
             Action = chatEvent.Action;
-            UserId = chatEvent.UserId;
+            MemberId = chatEvent.MemberId;
+            UserId = MemberId is MessageSenderUser member ? member.UserId : 0;
             Date = chatEvent.Date;
             Id = chatEvent.Id;
         }
