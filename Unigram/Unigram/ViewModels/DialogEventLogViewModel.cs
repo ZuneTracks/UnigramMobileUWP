@@ -27,11 +27,7 @@ namespace Unigram.ViewModels
 
         private long _minEventId = long.MaxValue;
 
-#if MODERN_TDLIB
-        private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, false, true, true, true, true, true, true);
-#else
         private ChatEventLogFilters _filters = new ChatEventLogFilters(true, true, true, true, true, true, true, true, true, true, true, true);
-#endif
         public ChatEventLogFilters Filters
         {
             get => _filters;
@@ -59,6 +55,8 @@ namespace Unigram.ViewModels
                     _filters.MessageEdits &&
                     _filters.MessagePins &&
                     _filters.SettingChanges &&
+                    _filters.InviteLinkChanges &&
+                    _filters.VideoChatChanges &&
                     _userIds.IsEmpty())
                 {
                     return Strings.Resources.EventLogAllEvents;
@@ -236,11 +234,7 @@ namespace Unigram.ViewModels
 
         private Message CreateMessage(long chatId, bool isChannel, ChatEvent chatEvent, bool child = false)
         {
-#if MODERN_TDLIB
-            MessageSender sender = chatEvent.MemberId;
-#else
             MessageSender sender = new MessageSenderUser(chatEvent.UserId);
-#endif
 
             if (child)
             {
@@ -401,11 +395,11 @@ namespace Unigram.ViewModels
 
                 if (o == null)
                 {
-                    o = new ChatPermissions();
+                    o = CreateEmptyPermissions();
                 }
                 if (n == null)
                 {
-                    n = new ChatPermissions();
+                    n = CreateEmptyPermissions();
                 }
 
                 var rights = new StringBuilder(Strings.Resources.EventLogDefaultPermissions);
@@ -670,11 +664,11 @@ namespace Unigram.ViewModels
 
                 if (o == null)
                 {
-                    o = new ChatMemberStatusAdministrator();
+                    o = CreateEmptyAdministratorStatus();
                 }
                 if (n == null)
                 {
-                    n = new ChatMemberStatusAdministrator();
+                    n = CreateEmptyAdministratorStatus();
                 }
 
                 if (!string.Equals(o.CustomTitle, n.CustomTitle))
@@ -785,6 +779,24 @@ namespace Unigram.ViewModels
             }
 
             return new MessageChatEvent(item);
+        }
+
+        private static ChatMemberStatusAdministrator CreateEmptyAdministratorStatus()
+        {
+#if MODERN_TDLIB
+            return new ChatMemberStatusAdministrator(string.Empty, false, false, false, false, false, false, false, false, false, false, false, false);
+#else
+            return new ChatMemberStatusAdministrator();
+#endif
+        }
+
+        private static ChatPermissions CreateEmptyPermissions()
+        {
+#if MODERN_TDLIB
+            return new ChatPermissions(false, false, false, false, false, false, false, false);
+#else
+            return new ChatPermissions();
+#endif
         }
 
         private string GetUserName(BaseObject sender, List<TextEntity> entities, int offset)
