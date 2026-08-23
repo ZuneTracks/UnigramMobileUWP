@@ -249,7 +249,7 @@ namespace Unigram.ViewModels
         {
             if (update.ChatId == _chat?.Id)
             {
-                var response = await ProtoService.SendAsync(new GetMessage(update.ChatId, update.ReplyMarkupMessageId));
+                var response = await ProtoService.SendAsync(new GetMessage(update.ChatId, ModernTdlibCompatibility.GetUpdateChatReplyMarkupMessageId(update)));
                 if (response is Message message)
                 {
                     BeginOnUIThread(() => Delegate?.UpdateChatReplyMarkup(_chat, _messageFactory.Create(this, message)));

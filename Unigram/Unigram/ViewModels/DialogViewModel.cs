@@ -907,9 +907,10 @@ namespace Unigram.ViewModels
                 fullInfo = await ProtoService.SendAsync(new GetUserFullInfo(user.Id)) as UserFullInfo;
             }
 
-            if (fullInfo != null && fullInfo.Description.Length > 0)
+            var description = ModernTdlibCompatibility.GetUserFullInfoDescription(fullInfo, true);
+            if (fullInfo != null && description.Length > 0)
             {
-                var result = ProtoService.Execute(new GetTextEntities(fullInfo.Description)) as TextEntities;
+                var result = ProtoService.Execute(new GetTextEntities(description)) as TextEntities;
                 var entities = result?.Entities ?? new List<TextEntity>();
 
                 foreach (var entity in entities)
@@ -919,7 +920,7 @@ namespace Unigram.ViewModels
 
                 entities.Add(new TextEntity(0, Strings.Resources.BotInfoTitle.Length, new TextEntityTypeBold()));
 
-                var message = $"{Strings.Resources.BotInfoTitle}{Environment.NewLine}{fullInfo.Description}";
+                var message = $"{Strings.Resources.BotInfoTitle}{Environment.NewLine}{description}";
                 var text = new FormattedText(message, entities);
 
                 Items.Insert(0, _messageFactory.Create(this, new Message(0, new MessageSenderUser(user.Id), chat.Id, null, null, false, false, false, false, false, true, false, false, false, false, false, false, false, false, 0, 0, null, null, 0, 0, 0, 0, 0, 0, string.Empty, 0, string.Empty, new MessageText(text, null), null)));
@@ -3520,7 +3521,7 @@ namespace Unigram.ViewModels
                 return;
             }
 
-            ProtoService.Send(new SetChatMessageTtlSetting(chat.Id, dialog.Value));
+            ProtoService.Send(ModernTdlibCompatibility.CreateSetChatMessageTtlSetting(chat.Id, dialog.Value));
         }
 
         #endregion
