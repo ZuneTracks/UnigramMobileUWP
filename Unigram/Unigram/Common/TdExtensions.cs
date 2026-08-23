@@ -741,6 +741,15 @@ namespace Unigram.Common
 #endif
             }
 
+            public static bool HasEmbedUrl(this WebPage value)
+            {
+#if MODERN_TDLIB
+                return value?.Type is LinkPreviewTypeEmbeddedVideoPlayer;
+#else
+                return value?.EmbedUrl?.Length > 0;
+#endif
+            }
+
             public static string GetIpAddress(this ConnectedWebsite value)
             {
 #if MODERN_TDLIB
