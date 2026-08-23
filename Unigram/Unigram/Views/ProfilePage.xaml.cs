@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using Telegram.Td.Api;
 using Unigram.Collections;
 using Unigram.Common;
+using Unigram.Services;
 using Unigram.Controls.Gallery;
 using Unigram.Converters;
 using Unigram.ViewModels;

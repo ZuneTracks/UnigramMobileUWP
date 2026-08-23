@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Reactive.Linq;
 using Telegram.Td.Api;
 using Unigram.Common;
+using Unigram.Services;
 using Unigram.Controls;
 using Unigram.Converters;
 using Unigram.Navigation;
