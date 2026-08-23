@@ -48,7 +48,7 @@ namespace Unigram.ViewModels.Chats
                 var limit = 20;
                 var offset = -limit / 2;
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(_chat.Id, string.Empty, null, 0, offset, limit, new SearchMessagesFilterChatPhoto(), 0));
+                var response = await ProtoService.SendAsync(new SearchChatMessages(_chat.Id, null, string.Empty, null, 0, offset, limit, new SearchMessagesFilterChatPhoto()));
                 if (response is Messages messages)
                 {
                     TotalItems = messages.TotalCount;

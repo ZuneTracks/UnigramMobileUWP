@@ -9,6 +9,11 @@ namespace Unigram.Services
 {
     public static class ModernTdlibCompatibility
     {
+        public static MessageTopic GetMessageTopic(long threadId)
+        {
+            return threadId == 0 ? null : new MessageTopicThread(threadId);
+        }
+
         public static Message CreateMessage(long id, MessageSender sender, long chatId, MessageSendingState sendingState, MessageSchedulingState schedulingState, bool isOutgoing, bool isChannelPost, int date, MessageContent content)
         {
             return new Message(

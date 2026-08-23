@@ -680,7 +680,7 @@ namespace Unigram.ViewModels
                 }
                 else if (_type == DialogType.Pinned)
                 {
-                    func = new SearchChatMessages(chat.Id, string.Empty, null, maxId.Value, 0, 50, new SearchMessagesFilterPinned(), 0);
+                    func = new SearchChatMessages(chat.Id, null, string.Empty, null, maxId.Value, 0, 50, new SearchMessagesFilterPinned());
                 }
                 else
                 {
@@ -809,7 +809,7 @@ namespace Unigram.ViewModels
                 }
                 else if (_type == DialogType.Pinned)
                 {
-                    func = new SearchChatMessages(chat.Id, string.Empty, null, maxId.Value, -49, 50, new SearchMessagesFilterPinned(), 0);
+                    func = new SearchChatMessages(chat.Id, null, string.Empty, null, maxId.Value, -49, 50, new SearchMessagesFilterPinned());
                 }
                 else
                 {
@@ -1012,7 +1012,7 @@ namespace Unigram.ViewModels
                     }
                 }
 
-                var response = await ProtoService.SendAsync(new SearchChatMessages(chat.Id, string.Empty, null, fromMessageId, -9, 10, new SearchMessagesFilterUnreadMention(), _threadId));
+                var response = await ProtoService.SendAsync(new SearchChatMessages(chat.Id, ModernTdlibCompatibility.GetMessageTopic(_threadId), string.Empty, null, fromMessageId, -9, 10, new SearchMessagesFilterUnreadMention()));
                 if (response is Messages messages)
                 {
                     var stack = new List<long>();
@@ -1147,7 +1147,7 @@ namespace Unigram.ViewModels
                 limit = 100;
             }
 
-            var response = await ProtoService.SendAsync(new SearchChatMessages(chat.Id, string.Empty, null, maxId, offset, limit, new SearchMessagesFilterPinned(), 0));
+            var response = await ProtoService.SendAsync(new SearchChatMessages(chat.Id, null, string.Empty, null, maxId, offset, limit, new SearchMessagesFilterPinned()));
             if (response is Messages messages)
             {
                 if (direction == VerticalAlignment.Center)
@@ -1261,7 +1261,7 @@ namespace Unigram.ViewModels
                 }
                 else if (_type == DialogType.Pinned)
                 {
-                    func = new SearchChatMessages(chat.Id, string.Empty, null, maxId, -25, 50, new SearchMessagesFilterPinned(), 0);
+                    func = new SearchChatMessages(chat.Id, null, string.Empty, null, maxId, -25, 50, new SearchMessagesFilterPinned());
                 }
                 else
                 {
