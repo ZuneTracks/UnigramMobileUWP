@@ -51,7 +51,44 @@ namespace Unigram.Services
 
         public static string GetWebPageTypeName(WebPage webPage)
         {
-            return webPage?.Type;
+            if (webPage?.Type == null)
+            {
+                return null;
+            }
+
+            if (webPage.Type is LinkPreviewTypePhoto)
+            {
+                return "photo";
+            }
+            if (webPage.Type is LinkPreviewTypeEmbeddedVideoPlayer || webPage.Type is LinkPreviewTypeExternalVideo)
+            {
+                return "video";
+            }
+            if (webPage.Type is LinkPreviewTypeArticle)
+            {
+                return "article";
+            }
+            if (webPage.Type is LinkPreviewTypeBackground)
+            {
+                return "telegram_background";
+            }
+            if (webPage.Type is LinkPreviewTypeMessage)
+            {
+                return "telegram_message";
+            }
+            if (webPage.Type is LinkPreviewTypeChat chat)
+            {
+                if (chat.Type is InviteLinkChatTypeChannel)
+                {
+                    return "telegram_channel";
+                }
+                if (chat.Type is InviteLinkChatTypeSupergroup)
+                {
+                    return "telegram_megagroup";
+                }
+            }
+
+            return null;
         }
 
         public static TdlibParameters CreateTdlibParameters(bool useTestDc, string databaseDirectory, string filesDirectory, bool useFileDatabase, bool useChatInfoDatabase, bool useMessageDatabase, bool useSecretChats, int apiId, string apiHash, string systemLanguageCode, string deviceModel, string systemVersion, string applicationVersion, bool enableStorageOptimizer, bool ignoreFileNames)
@@ -80,17 +117,17 @@ namespace Unigram.Services
 
         public static Function CreateGetWebPagePreview(FormattedText text)
         {
-            return new GetWebPagePreview(text);
+            return new GetLinkPreview(text, new LinkPreviewOptions(false, string.Empty, false, false, false));
         }
 
         public static InputMessageContent CreateInputMessageText(FormattedText text, bool disableWebPagePreview, bool clearDraft)
         {
-            return new InputMessageText(text, disableWebPagePreview, clearDraft);
+            return new InputMessageText(text, new LinkPreviewOptions(disableWebPagePreview, string.Empty, false, false, false), clearDraft);
         }
 
         public static Function CreateAddLocalMessage(long chatId, MessageSender senderId, long replyToMessageId, bool disableNotification, InputMessageContent inputMessageContent)
         {
-            return new AddLocalMessage(chatId, senderId, replyToMessageId, disableNotification, inputMessageContent);
+            return new AddLocalMessage(chatId, senderId, replyToMessageId == 0 ? null : new InputMessageReplyToMessage(replyToMessageId, null, 0, string.Empty), disableNotification, inputMessageContent);
         }
 
         public static Function CreateSetLogStream(string path, int maxFileSize, bool redirectStderr)
