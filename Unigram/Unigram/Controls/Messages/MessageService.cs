@@ -904,6 +904,8 @@ namespace Unigram.Controls.Messages
             return (content, null);
         }
 
+#endif
+
         private static (string, IList<TextEntity>) UpdatePaymentSuccessful(MessageViewModel message, MessagePaymentSuccessful paymentSuccessful, bool active)
         {
             var content = string.Empty;
@@ -923,6 +925,7 @@ namespace Unigram.Controls.Messages
             return (content, null);
         }
 
+#if !MODERN_TDLIB
         private static (string, IList<TextEntity>) UpdatePinMessage(MessageViewModel message, MessagePinMessage pinMessage, bool active)
         {
             var content = string.Empty;

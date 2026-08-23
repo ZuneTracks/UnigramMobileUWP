@@ -205,10 +205,10 @@ namespace Unigram.ViewModels.Payments
         private async void SendExecute()
         {
             var save = _isSave ?? false;
-            if (_paymentForm.SavedCredentials != null && !save && _paymentForm.CanSaveCredentials)
+            if (ModernTdlibCompatibility.GetPaymentFormSavedCredentials(_paymentForm) != null && !save && ModernTdlibCompatibility.GetPaymentFormCanSaveCredentials(_paymentForm))
             {
                 //_paymentForm.HasSavedCredentials = false;
-                _paymentForm.SavedCredentials = null;
+                ModernTdlibCompatibility.ClearPaymentFormSavedCredentials(_paymentForm);
 
                 ProtoService.Send(new DeleteSavedCredentials());
             }

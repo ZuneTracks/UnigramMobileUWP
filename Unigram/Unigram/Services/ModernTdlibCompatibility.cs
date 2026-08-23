@@ -260,6 +260,83 @@ namespace Unigram.Services
 #endif
         }
 
+        public static Invoice GetPaymentFormInvoice(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            return (form?.Type as PaymentFormTypeRegular)?.Invoice;
+#else
+            return form?.Invoice;
+#endif
+        }
+
+        public static IList<SavedCredentials> GetPaymentFormSavedCredentials(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            return (form?.Type as PaymentFormTypeRegular)?.SavedCredentials;
+#else
+            return form?.SavedCredentials;
+#endif
+        }
+
+        public static bool GetPaymentFormCanSaveCredentials(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            return (form?.Type as PaymentFormTypeRegular)?.CanSaveCredentials ?? false;
+#else
+            return form?.CanSaveCredentials ?? false;
+#endif
+        }
+
+        public static OrderInfo GetPaymentFormSavedOrderInfo(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            return (form?.Type as PaymentFormTypeRegular)?.SavedOrderInfo;
+#else
+            return form?.SavedOrderInfo;
+#endif
+        }
+
+        public static void ClearPaymentFormSavedCredentials(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            var regular = form?.Type as PaymentFormTypeRegular;
+            if (regular != null)
+            {
+                regular.SavedCredentials = null;
+            }
+#else
+            form.SavedCredentials = null;
+#endif
+        }
+
+        public static string GetPaymentFormUrl(PaymentForm form)
+        {
+#if MODERN_TDLIB
+            // Modern TDLib keeps provider details in PaymentFormTypeRegular and has no legacy WebView URL.
+            return null;
+#else
+            return form?.Url;
+#endif
+        }
+
+        public static long GetPaymentReceiptSellerBotUserId(PaymentReceipt receipt)
+        {
+#if MODERN_TDLIB
+            return receipt?.SellerBotUserId ?? 0;
+#else
+            return receipt?.PaymentsProviderUserId ?? 0;
+#endif
+        }
+
+        public static Function CreateValidateOrderInfo(long chatId, long messageId, OrderInfo orderInfo, bool allowSave)
+        {
+#if MODERN_TDLIB
+            return new ValidateOrderInfo(new InputInvoiceMessage(chatId, messageId), orderInfo, allowSave);
+#else
+            return new ValidateOrderInfo(chatId, messageId, orderInfo, allowSave);
+#endif
+        }
+
         public static bool GetAdministratorCanDeleteMessages(ChatMemberStatusAdministrator administrator)
         {
 #if MODERN_TDLIB

@@ -1,6 +1,7 @@
 ﻿using System;
 using Unigram.Common;
 using Unigram.Native;
+using Unigram.Services;
 using Unigram.ViewModels.Payments;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -55,7 +56,11 @@ namespace Unigram.Views.Payments
 
             if (e.PropertyName.Equals("Navigate"))
             {
-                View.Navigate(new Uri(ViewModel.PaymentForm.Url));
+                var url = ModernTdlibCompatibility.GetPaymentFormUrl(ViewModel.PaymentForm);
+                if (!string.IsNullOrEmpty(url))
+                {
+                    View.Navigate(new Uri(url));
+                }
             }
         }
 

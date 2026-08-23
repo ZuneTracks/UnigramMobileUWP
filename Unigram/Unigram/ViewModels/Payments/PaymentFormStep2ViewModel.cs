@@ -71,7 +71,7 @@ namespace Unigram.ViewModels.Payments
         {
             if (_shipping != null)
             {
-                if (_paymentForm.SavedCredentials != null)
+                if (ModernTdlibCompatibility.GetPaymentFormSavedCredentials(_paymentForm) != null)
                 {
                     //if (ApplicationSettings.Current.TmpPassword != null)
                     //{

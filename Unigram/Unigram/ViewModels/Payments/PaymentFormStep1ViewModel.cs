@@ -79,7 +79,8 @@ namespace Unigram.ViewModels.Payments
         {
             get
             {
-                return _paymentForm != null && (_paymentForm.Invoice.NeedEmailAddress || _paymentForm.Invoice.NeedName || _paymentForm.Invoice.NeedPhoneNumber);
+                var invoice = ModernTdlibCompatibility.GetPaymentFormInvoice(_paymentForm);
+                return invoice != null && (invoice.NeedEmailAddress || invoice.NeedName || invoice.NeedPhoneNumber);
             }
         }
 
@@ -103,39 +104,40 @@ namespace Unigram.ViewModels.Payments
 
             var save = _isSave ?? false;
             var info = new OrderInfo();
-            if (_paymentForm.Invoice.NeedName)
+            var invoice = ModernTdlibCompatibility.GetPaymentFormInvoice(_paymentForm);
+            if (invoice.NeedName)
             {
                 info.Name = _info.Name;
             }
-            if (_paymentForm.Invoice.NeedEmailAddress)
+            if (invoice.NeedEmailAddress)
             {
                 info.EmailAddress = _info.EmailAddress;
             }
-            if (_paymentForm.Invoice.NeedPhoneNumber)
+            if (invoice.NeedPhoneNumber)
             {
                 info.PhoneNumber = _info.PhoneNumber;
             }
-            if (_paymentForm.Invoice.NeedShippingAddress)
+            if (invoice.NeedShippingAddress)
             {
                 info.ShippingAddress = _info.ShippingAddress;
                 info.ShippingAddress.CountryCode = _selectedCountry?.Code?.ToUpper();
             }
 
-            var response = await ProtoService.SendAsync(new ValidateOrderInfo(0, 0, info, save));
+            var response = await ProtoService.SendAsync(ModernTdlibCompatibility.CreateValidateOrderInfo(0, 0, info, save));
             if (response is ValidatedOrderInfo validated)
             {
                 IsLoading = false;
 
-                if (_paymentForm.SavedOrderInfo != null && !save)
+                if (ModernTdlibCompatibility.GetPaymentFormSavedOrderInfo(_paymentForm) != null && !save)
                 {
                     ProtoService.Send(new DeleteSavedOrderInfo());
                 }
 
-                if (_paymentForm.Invoice.IsFlexible)
+                if (invoice.IsFlexible)
                 {
                     //NavigationService.NavigateToPaymentFormStep2(_message, _paymentForm, info, response.Result);
                 }
-                else if (_paymentForm.SavedCredentials != null)
+                else if (ModernTdlibCompatibility.GetPaymentFormSavedCredentials(_paymentForm) != null)
                 {
                     //if (ApplicationSettings.Current.TmpPassword != null)
                     //{
