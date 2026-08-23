@@ -696,7 +696,7 @@ namespace Unigram.Controls.Chats
 
             Sending?.Invoke(this, EventArgs.Empty);
 
-            var options = new MessageSendOptions(disableNotification, false, null);
+            var options = ModernTdlibCompatibility.CreateMessageSendOptions(disableNotification, false, null);
 
             var text = GetFormattedText(true);
             await ViewModel.SendMessageAsync(text, options);

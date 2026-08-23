@@ -66,6 +66,11 @@ namespace Unigram.Services
 #endif
         }
 
+        public static MessageSendOptions CreateMessageSendOptions(bool disableNotification, bool fromBackground, MessageSchedulingState schedulingState)
+        {
+            return new MessageSendOptions(null, disableNotification, fromBackground, false, false, 0, false, schedulingState, 0, 0, false);
+        }
+
         public static StickerType GetStickerType(bool masks)
         {
 #if MODERN_TDLIB

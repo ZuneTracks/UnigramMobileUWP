@@ -699,16 +699,16 @@ namespace Unigram.ViewModels
 
                 if (dialog.IsUntilOnline)
                 {
-                    return new MessageSendOptions(false, false, new MessageSchedulingStateSendWhenOnline());
+                    return ModernTdlibCompatibility.CreateMessageSendOptions(false, false, new MessageSchedulingStateSendWhenOnline());
                 }
                 else
                 {
-                    return new MessageSendOptions(false, false, new MessageSchedulingStateSendAtDate(dialog.Value.ToTimestamp()));
+                    return ModernTdlibCompatibility.CreateMessageSendOptions(false, false, new MessageSchedulingStateSendAtDate(dialog.Value.ToTimestamp()));
                 }
             }
             else
             {
-                return new MessageSendOptions(silent ?? false, false, null);
+                return ModernTdlibCompatibility.CreateMessageSendOptions(silent ?? false, false, null);
             }
         }
 
@@ -716,7 +716,7 @@ namespace Unigram.ViewModels
         {
             if (options == null)
             {
-                options = new MessageSendOptions(false, false, null);
+                options = ModernTdlibCompatibility.CreateMessageSendOptions(false, false, null);
             }
 
             var response = await ProtoService.SendAsync(new SendMessage(chat.Id, _threadId, replyToMessageId, options, null, inputMessageContent));

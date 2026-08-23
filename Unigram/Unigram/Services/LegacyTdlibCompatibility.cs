@@ -16,6 +16,11 @@ namespace Unigram.Services
             return new ToggleMessageSenderIsBlocked(sender, blocked);
         }
 
+        public static MessageSendOptions CreateMessageSendOptions(bool disableNotification, bool fromBackground, MessageSchedulingState schedulingState)
+        {
+            return new MessageSendOptions(disableNotification, fromBackground, schedulingState);
+        }
+
         public static Function GetInstalledStickerSets(bool masks)
         {
             return new GetInstalledStickerSets(masks);
