@@ -23,6 +23,95 @@ namespace Unigram.Services
 #endif
         }
 
+        public static StickerType GetStickerType(bool masks)
+        {
+#if MODERN_TDLIB
+            return masks ? new StickerTypeMask() : new StickerTypeRegular();
+#else
+            return null;
+#endif
+        }
+
+        public static Function GetInstalledStickerSets(bool masks)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.GetInstalledStickerSets(GetStickerType(masks));
+#else
+            return new Telegram.Td.Api.GetInstalledStickerSets(masks);
+#endif
+        }
+
+        public static Function GetRecentStickers(bool masks)
+        {
+            return new Telegram.Td.Api.GetRecentStickers(masks);
+        }
+
+        public static Function GetArchivedStickerSets(bool masks, long offset, int limit)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.GetArchivedStickerSets(GetStickerType(masks), offset, limit);
+#else
+            return new Telegram.Td.Api.GetArchivedStickerSets(masks, offset, limit);
+#endif
+        }
+
+        public static Function ReorderInstalledStickerSets(bool masks, IList<long> stickerSetIds)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.ReorderInstalledStickerSets(GetStickerType(masks), stickerSetIds);
+#else
+            return new Telegram.Td.Api.ReorderInstalledStickerSets(masks, stickerSetIds);
+#endif
+        }
+
+        public static Function GetTrendingStickerSets()
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.GetTrendingStickerSets(new StickerTypeRegular(), 0, 24);
+#else
+            return new Telegram.Td.Api.GetTrendingStickerSets(0, 24);
+#endif
+        }
+
+        public static Function GetStickers(string query, int limit)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.GetStickers(new StickerTypeRegular(), query, limit, 0);
+#else
+            return new Telegram.Td.Api.GetStickers(query, limit);
+#endif
+        }
+
+        public static Function SearchStickers(string query, int limit)
+        {
+#if MODERN_TDLIB
+            return new Telegram.Td.Api.SearchStickers(new StickerTypeRegular(), string.Empty, query, new List<string>(), 0, limit);
+#else
+            return new Telegram.Td.Api.SearchStickers(query, limit);
+#endif
+        }
+
+#if MODERN_TDLIB
+        public static StickerSetInfo CreateStickerSetInfo(long id, string title, string name, Thumbnail thumbnail, Outline thumbnailOutline, bool isOwned, bool isInstalled, bool isArchived, bool isOfficial, bool isAnimated, bool isMasks, bool isViewed, int size, IList<Sticker> covers)
+        {
+            return new StickerSetInfo(id, title, name, thumbnail, thumbnailOutline, isOwned, isInstalled, isArchived, isOfficial, GetStickerType(isMasks), false, false, isViewed, size, covers);
+        }
+#else
+        public static StickerSetInfo CreateStickerSetInfo(long id, string title, string name, Thumbnail thumbnail, IList<ClosedVectorPath> thumbnailOutline, bool isOwned, bool isInstalled, bool isArchived, bool isOfficial, bool isAnimated, bool isMasks, bool isViewed, int size, IList<Sticker> covers)
+        {
+            return new StickerSetInfo(id, title, name, thumbnail, thumbnailOutline, isInstalled, isArchived, isOfficial, isAnimated, isMasks, isViewed, size, covers);
+        }
+#endif
+
+        public static bool IsStickerType(bool masks, StickerType stickerType)
+        {
+#if MODERN_TDLIB
+            return masks ? stickerType is StickerTypeMask : stickerType is StickerTypeRegular;
+#else
+            return false;
+#endif
+        }
+
         public static ChatPermissions CreateChatPermissions(bool allowed)
         {
 #if MODERN_TDLIB
