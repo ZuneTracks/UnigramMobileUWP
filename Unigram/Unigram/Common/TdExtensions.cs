@@ -723,6 +723,33 @@ namespace Unigram.Common
 #endif
             }
 
+            public static string GetIpAddress(this Session value)
+            {
+#if MODERN_TDLIB
+                return value?.IpAddress;
+#else
+                return value?.Ip;
+#endif
+            }
+
+            public static string GetLocation(this Session value)
+            {
+#if MODERN_TDLIB
+                return value?.Location;
+#else
+                return value?.Country;
+#endif
+            }
+
+            public static string GetIpAddress(this ConnectedWebsite value)
+            {
+#if MODERN_TDLIB
+                return value?.IpAddress;
+#else
+                return value?.Ip;
+#endif
+            }
+
             public static string GetText(this PollOption option)
             {
 #if MODERN_TDLIB
