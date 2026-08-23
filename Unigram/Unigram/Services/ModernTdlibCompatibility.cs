@@ -98,6 +98,155 @@ namespace Unigram.Services
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
         }
 
+        public static BaseObject GetMessageProperties(IProtoService protoService, Message message)
+        {
+            return protoService.Execute(new Telegram.Td.Api.GetMessageProperties(message.ChatId, message.Id));
+        }
+
+        public static bool GetMessageCanBeDeletedForAllUsers(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanBeDeletedForAllUsers == true;
+        }
+
+        public static bool GetMessageCanBeDeletedForAllUsers(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeDeletedForAllUsers(message, GetMessageProperties(protoService, message));
+        }
+
+        public static bool GetMessageCanBeDeletedOnlyForSelf(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanBeDeletedOnlyForSelf == true;
+        }
+
+        public static bool GetMessageCanBeDeletedOnlyForSelf(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeDeletedOnlyForSelf(message, GetMessageProperties(protoService, message));
+        }
+
+        public static bool GetMessageCanBeForwarded(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanBeForwarded == true;
+        }
+
+        public static bool GetMessageCanBeForwarded(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeForwarded(message, GetMessageProperties(protoService, message));
+        }
+
+        public static bool GetMessageCanBeEdited(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanBeEdited == true;
+        }
+
+        public static bool GetMessageCanGetMessageThread(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanGetMessageThread == true;
+        }
+
+        public static bool GetMessageCanGetStatistics(Message message, BaseObject properties)
+        {
+            return (properties as MessageProperties)?.CanGetStatistics == true;
+        }
+
+        public static double GetMessageTtlExpiresIn(Message message)
+        {
+            return message.SelfDestructIn;
+        }
+
+        public static void SetMessageTtlExpiresIn(Message message, double value)
+        {
+            message.SelfDestructIn = value;
+        }
+
+        public static int GetMessageTtl(Message message)
+        {
+            return (message.SelfDestructType as MessageSelfDestructTypeTimer)?.SelfDestructTime ?? 0;
+        }
+
+        public static long GetMessageReplyToMessageId(Message message)
+        {
+            return (message.ReplyTo as MessageReplyToMessage)?.MessageId ?? 0;
+        }
+
+        public static long GetMessageReplyInChatId(Message message)
+        {
+            return (message.ReplyTo as MessageReplyToMessage)?.ChatId ?? 0;
+        }
+
+        public static long GetMessageThreadId(Message message)
+        {
+            return GetMessageThreadId(message.TopicId);
+        }
+
+        public static long GetMessageThreadId(MessageTopic topic)
+        {
+            if (topic is MessageTopicThread thread)
+            {
+                return thread.MessageThreadId;
+            }
+            if (topic is MessageTopicForum forum)
+            {
+                return forum.ForumTopicId;
+            }
+            if (topic is MessageTopicDirectMessages directMessages)
+            {
+                return directMessages.DirectMessagesChatTopicId;
+            }
+            if (topic is MessageTopicSavedMessages savedMessages)
+            {
+                return savedMessages.SavedMessagesTopicId;
+            }
+            return 0;
+        }
+
+        public static long GetUpdateChatActionThreadId(UpdateChatAction update)
+        {
+            return GetMessageThreadId(update.TopicId);
+        }
+
+        public static long GetDraftReplyToMessageId(DraftMessage draft)
+        {
+            return (draft.ReplyTo as InputMessageReplyToMessage)?.MessageId ?? 0;
+        }
+
+        public static void UpdateMessageReplyTo(Message target, Message source)
+        {
+            target.ReplyTo = source.ReplyTo;
+        }
+
+        public static void SetMessageReplyToMessageId(Message message, long value)
+        {
+            if (message.ReplyTo is MessageReplyToMessage reply)
+            {
+                reply.MessageId = value;
+            }
+        }
+
+        public static bool GetUserIsVerified(User user)
+        {
+            return user.VerificationStatus?.IsVerified == true;
+        }
+
+        public static bool GetSupergroupIsVerified(Supergroup supergroup)
+        {
+            return supergroup.VerificationStatus?.IsVerified == true;
+        }
+
+        public static bool GetStickerIsAnimated(Sticker sticker)
+        {
+            return sticker?.Format is StickerFormatTgs || sticker?.Format is StickerFormatWebm;
+        }
+
+        public static bool GetStickerSetIsAnimated(StickerSet stickerSet)
+        {
+            return stickerSet?.Stickers?.Any(GetStickerIsAnimated) == true;
+        }
+
+        public static bool GetStickerSetInfoIsAnimated(StickerSetInfo stickerSet)
+        {
+            return stickerSet?.Covers?.Any(GetStickerIsAnimated) == true;
+        }
+
         public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
         {
 #if MODERN_TDLIB

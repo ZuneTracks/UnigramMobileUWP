@@ -386,11 +386,11 @@ namespace Unigram.Controls.Cells
             var verified = false;
             if (chat.Type is ChatTypePrivate privata)
             {
-                verified = _protoService.GetUser(privata.UserId)?.IsVerified ?? false;
+                verified = ModernTdlibCompatibility.GetUserIsVerified(_protoService.GetUser(privata.UserId));
             }
             else if (chat.Type is ChatTypeSupergroup super)
             {
-                verified = _protoService.GetSupergroup(super.SupergroupId)?.IsVerified ?? false;
+                verified = ModernTdlibCompatibility.GetSupergroupIsVerified(_protoService.GetSupergroup(super.SupergroupId));
             }
 
             VerifiedIcon.Visibility = verified ? Visibility.Visible : Visibility.Collapsed;

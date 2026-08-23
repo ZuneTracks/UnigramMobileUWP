@@ -63,6 +63,132 @@ namespace Unigram.Services
             return new SetLogStream(new LogStreamFile(path, maxFileSize, redirectStderr));
         }
 
+        public static BaseObject GetMessageProperties(IProtoService protoService, Message message)
+        {
+            return null;
+        }
+
+        public static bool GetMessageCanBeDeletedForAllUsers(Message message, BaseObject properties)
+        {
+            return message.CanBeDeletedForAllUsers;
+        }
+
+        public static bool GetMessageCanBeDeletedForAllUsers(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeDeletedForAllUsers(message, null);
+        }
+
+        public static bool GetMessageCanBeDeletedOnlyForSelf(Message message, BaseObject properties)
+        {
+            return message.CanBeDeletedOnlyForSelf;
+        }
+
+        public static bool GetMessageCanBeDeletedOnlyForSelf(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeDeletedOnlyForSelf(message, null);
+        }
+
+        public static bool GetMessageCanBeForwarded(Message message, BaseObject properties)
+        {
+            return message.CanBeForwarded;
+        }
+
+        public static bool GetMessageCanBeForwarded(IProtoService protoService, Message message)
+        {
+            return GetMessageCanBeForwarded(message, null);
+        }
+
+        public static bool GetMessageCanBeEdited(Message message, BaseObject properties)
+        {
+            return message.CanBeEdited;
+        }
+
+        public static bool GetMessageCanGetMessageThread(Message message, BaseObject properties)
+        {
+            return message.CanGetMessageThread;
+        }
+
+        public static bool GetMessageCanGetStatistics(Message message, BaseObject properties)
+        {
+            return message.CanGetStatistics;
+        }
+
+        public static double GetMessageTtlExpiresIn(Message message)
+        {
+            return message.TtlExpiresIn;
+        }
+
+        public static void SetMessageTtlExpiresIn(Message message, double value)
+        {
+            message.TtlExpiresIn = value;
+        }
+
+        public static int GetMessageTtl(Message message)
+        {
+            return message.Ttl;
+        }
+
+        public static long GetMessageReplyToMessageId(Message message)
+        {
+            return message.ReplyToMessageId;
+        }
+
+        public static long GetMessageReplyInChatId(Message message)
+        {
+            return message.ReplyInChatId;
+        }
+
+        public static long GetMessageThreadId(Message message)
+        {
+            return message.MessageThreadId;
+        }
+
+        public static long GetUpdateChatActionThreadId(UpdateChatAction update)
+        {
+            return update.MessageThreadId;
+        }
+
+        public static long GetDraftReplyToMessageId(DraftMessage draft)
+        {
+            return draft.ReplyToMessageId;
+        }
+
+        public static void UpdateMessageReplyTo(Message target, Message source)
+        {
+            target.ReplyToMessageId = source.ReplyToMessageId;
+            target.ReplyInChatId = source.ReplyInChatId;
+        }
+
+        public static void SetMessageReplyToMessageId(Message message, long value)
+        {
+            message.ReplyToMessageId = value;
+        }
+
+        public static bool GetUserIsVerified(User user)
+        {
+            return user.IsVerified;
+        }
+
+        public static bool GetSupergroupIsVerified(Supergroup supergroup)
+        {
+            return supergroup.IsVerified;
+        }
+
+        public static bool GetStickerIsAnimated(Sticker sticker)
+        {
+            return sticker?.IsAnimated == true;
+        }
+
+        public static bool GetStickerSetIsAnimated(StickerSet stickerSet)
+        {
+            return stickerSet?.IsAnimated == true;
+        }
+
+        public static bool GetStickerSetInfoIsAnimated(StickerSetInfo stickerSet)
+        {
+            return stickerSet?.IsAnimated == true;
+        }
+
         public static Function SetMessageSenderBlocked(MessageSender sender, bool blocked)
         {
             return new ToggleMessageSenderIsBlocked(sender, blocked);

@@ -11,6 +11,7 @@ using System.Windows.Input;
 using Telegram.Td;
 using Telegram.Td.Api;
 using Unigram.Common;
+using Unigram.Services;
 
 #if MODERN_TDLIB
 using MessageForwardOriginUser = Telegram.Td.Api.MessageOriginUser;

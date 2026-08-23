@@ -1859,7 +1859,7 @@ namespace Unigram.Controls.Messages
             }
             else if (constraint is Message message)
             {
-                ttl = message.Ttl > 0;
+                ttl = ModernTdlibCompatibility.GetMessageTtl(message) > 0;
                 constraint = message.Content;
             }
 
