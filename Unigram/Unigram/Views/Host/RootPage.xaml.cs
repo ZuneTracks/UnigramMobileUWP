@@ -162,7 +162,8 @@ namespace Unigram.Views.Host
                         service.Navigate(typeof(SignInPasswordPage));
                         break;
 #if MODERN_TDLIB
-                    default:
+                    case null:
+                    case AuthorizationStateWaitTdlibParameters waitTdlibParameters:
                         // TDLib can still be starting when the shell is created. Keep the
                         // content frame usable until the first authorization update arrives.
                         service.Navigate(typeof(IntroPage));

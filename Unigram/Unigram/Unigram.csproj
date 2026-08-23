@@ -2813,21 +2813,21 @@
       <Reference Remove="System.Numerics.Vectors" />
       <Reference Include="System.Numerics.Vectors">
         <HintPath>$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll</HintPath>
-        <Private>true</Private>
+        <Private>false</Private>
       </Reference>
       <Reference Remove="System.Numerics.Vectors.WindowsRuntime" />
       <Reference Include="System.Numerics.Vectors.WindowsRuntime">
         <HintPath>$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll</HintPath>
-        <Private>true</Private>
+        <Private>false</Private>
       </Reference>
       <_ReferencePathWithoutModernNumerics Include="@(ReferencePath)" Condition="'%(ReferencePath.Filename)' != 'System.Numerics.Vectors' and '%(ReferencePath.Filename)' != 'System.Numerics.Vectors.WindowsRuntime'" />
       <ReferencePath Remove="@(ReferencePath)" />
       <ReferencePath Include="@(_ReferencePathWithoutModernNumerics)" />
       <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.dll">
-        <Private>true</Private>
+        <Private>false</Private>
       </ReferencePath>
       <ReferencePath Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll">
-        <Private>true</Private>
+        <Private>false</Private>
       </ReferencePath>
     </ItemGroup>
   </Target>
@@ -2845,9 +2845,10 @@
       <ReferenceCopyLocalPaths Include="$(UwpNumericsReferenceRoot)\System.Numerics.Vectors.WindowsRuntime.dll" />
     </ItemGroup>
   </Target>
-  <Target Name="RemoveModernUwpNumericsFromAppx" BeforeTargets="_GenerateAppxPackageFile;_GenerateAppxUploadPackageFile" Condition="'$(UseModernTdlib)' == 'true'">
+  <Target Name="RemoveModernUwpNumericsFromAppx" AfterTargets="BuildNativePackage" Condition="'$(UseModernTdlib)' == 'true'">
     <ItemGroup>
       <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Filename)' == 'System.Numerics.Vectors' or '%(ReferenceCopyLocalPaths.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
+      <PackagingOutputs Remove="@(PackagingOutputs)" Condition="'%(PackagingOutputs.Filename)' == 'System.Numerics.Vectors' or '%(PackagingOutputs.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
       <AppxPackagePayload Remove="@(AppxPackagePayload)" Condition="'%(AppxPackagePayload.Filename)' == 'System.Numerics.Vectors' or '%(AppxPackagePayload.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
       <AppxUploadPackagePayload Remove="@(AppxUploadPackagePayload)" Condition="'%(AppxUploadPackagePayload.Filename)' == 'System.Numerics.Vectors' or '%(AppxUploadPackagePayload.Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
     </ItemGroup>
@@ -2857,6 +2858,9 @@
       <_PackageLayoutFileSource Remove="@(_PackageLayoutFileSource)" Condition="'%(Filename)' == 'System.Numerics.Vectors' or '%(Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
       <_UploadPackageLayoutFileSource Remove="@(_UploadPackageLayoutFileSource)" Condition="'%(Filename)' == 'System.Numerics.Vectors' or '%(Filename)' == 'System.Numerics.Vectors.WindowsRuntime'" />
     </ItemGroup>
+  </Target>
+  <Target Name="DeleteModernUwpNumericsPackageFiles" AfterTargets="_CreatePackageLayout;_CreateUploadPackageLayout" BeforeTargets="_GenerateAppxPackageFile;_GenerateAppxUploadPackageFile" Condition="'$(UseModernTdlib)' == 'true'">
+    <Delete Files="$(AppxLayoutDir)System.Numerics.Vectors.dll;$(AppxLayoutDir)System.Numerics.Vectors.WindowsRuntime.dll;$(AppxUploadLayoutDir)System.Numerics.Vectors.dll;$(AppxUploadLayoutDir)System.Numerics.Vectors.WindowsRuntime.dll" />
   </Target>
   <Target Name="RequireTdlibCredentialsForPackage" BeforeTargets="_GenerateAppxPackage;GenerateAppxPackage" Condition="'$(UseModernTdlib)' == 'true'">
     <Error Condition="!Exists('$(ProjectDir)Constants.Secret.cs')" Text="Packaging the experimental app requires the ignored Constants.Secret.cs. The compile-only placeholder must never be packaged." />
