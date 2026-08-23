@@ -14,9 +14,7 @@ using Unigram.Logs;
 using Unigram.Navigation.Services;
 using Unigram.Services;
 using Unigram.ViewModels.Delegates;
-#if !MODERN_TDLIB
 using Unigram.Views.Folders;
-#endif
 using Unigram.Views.Popups;
 using Windows.Foundation;
 using Windows.UI.Xaml.Controls;
@@ -259,7 +257,7 @@ namespace Unigram.ViewModels
         {
             if (chat.UnreadCount > 0)
             {
-                ProtoService.Send(new ViewMessages(chat.Id, 0, new[] { chat.LastMessage.Id }, true));
+                ProtoService.Send(ModernTdlibCompatibility.CreateViewMessages(chat.Id, 0, new[] { chat.LastMessage.Id }, true));
 
                 if (chat.UnreadMentionCount > 0)
                 {
@@ -287,7 +285,7 @@ namespace Unigram.ViewModels
                 {
                     if (chat.UnreadCount > 0)
                     {
-                        ProtoService.Send(new ViewMessages(chat.Id, 0, new[] { chat.LastMessage.Id }, true));
+                        ProtoService.Send(ModernTdlibCompatibility.CreateViewMessages(chat.Id, 0, new[] { chat.LastMessage.Id }, true));
                     }
                     else if (chat.IsMarkedAsUnread)
                     {

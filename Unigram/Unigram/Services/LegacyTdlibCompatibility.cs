@@ -314,6 +314,60 @@ namespace Unigram.Services
             return new ViewMessages(chatId, threadId, messageIds, forceRead);
         }
 
+        public static Function CreateNewBasicGroupChat(IList<long> userIds, string title)
+        {
+            return new CreateNewBasicGroupChat(userIds, title);
+        }
+
+        public static Function CreateNewSupergroupChat(string title, bool isChannel, string description, ChatLocation location, bool forImport)
+        {
+            return new CreateNewSupergroupChat(title, isChannel, description, location, forImport);
+        }
+
+        public static Function CreateImportContacts(string phoneNumber, string firstName, string lastName)
+        {
+            return new ImportContacts(new[] { new Contact(phoneNumber, firstName, lastName, string.Empty, 0) });
+        }
+
+        public static Function CreateChangeImportedContacts(IEnumerable<(string PhoneNumber, string FirstName, string LastName)> contacts)
+        {
+            var importedContacts = new List<Contact>();
+            foreach (var contact in contacts)
+            {
+                importedContacts.Add(new Contact(contact.PhoneNumber, contact.FirstName, contact.LastName, string.Empty, 0));
+            }
+
+            return new ChangeImportedContacts(importedContacts);
+        }
+
+        public static IList<long> GetChatStatisticsMessageIds(ChatStatisticsChannel statistics)
+        {
+            var messageIds = new List<long>();
+            foreach (var interaction in statistics.RecentMessageInteractions)
+            {
+                messageIds.Add(interaction.MessageId);
+            }
+
+            return messageIds;
+        }
+
+        public static bool TryGetChatStatisticsInteraction(ChatStatisticsChannel statistics, long messageId, out int forwardCount, out int viewCount)
+        {
+            foreach (var interaction in statistics.RecentMessageInteractions)
+            {
+                if (interaction.MessageId == messageId)
+                {
+                    forwardCount = interaction.ForwardCount;
+                    viewCount = interaction.ViewCount;
+                    return true;
+                }
+            }
+
+            forwardCount = 0;
+            viewCount = 0;
+            return false;
+        }
+
         public static Function CreateSearchEmojis(string query, string inputLanguage)
         {
             return new SearchEmojis(query, false, new[] { inputLanguage });
