@@ -7,6 +7,9 @@
 *.userosscache
 *.sln.docstates
 
+# Signing certificates contain private keys.
+*.pfx
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
