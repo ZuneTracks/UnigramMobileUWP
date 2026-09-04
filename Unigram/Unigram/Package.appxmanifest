@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4" xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" IgnorableNamespaces="uap uap3 uap4 uap5 mp">
-  <Identity Name="7907E48C.UnigramMobileUWP" Publisher="CN=691E17B0-34D9-414F-A069-E10642BB3CEA" Version="26.9.6031.0" />
+  <Identity Name="7907E48C.UnigramMobileUWP" Publisher="CN=691E17B0-34D9-414F-A069-E10642BB3CEA" Version="26.9.6032.0" />
   <mp:PhoneIdentity PhoneProductId="774d6326-71d7-49b1-bee7-dd0715e7b8a0" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>Unigram Mobile UWP</DisplayName>
