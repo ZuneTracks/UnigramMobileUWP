@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <StoreAssociation xmlns="http://schemas.microsoft.com/appx/2010/storeassociation">
-  <Publisher>CN=691E17B0-34D9-414F-A069-E10642BB3CEA</Publisher>
-  <PublisherDisplayName>ND Technologies Inc.</PublisherDisplayName>
+  <Publisher>CN=3ED86B18-5F5F-4AE0-AA9C-697B841F55A7</Publisher>
+  <PublisherDisplayName>ZuneTracks</PublisherDisplayName>
   <DeveloperAccountType>MSA</DeveloperAccountType>
   <GeneratePackageHash>http://www.w3.org/2001/04/xmlenc#sha256</GeneratePackageHash>
   <SupportedLocales>
@@ -361,15 +361,15 @@
     <Language Code="zu-za" InMinimumRequirementSet="true" />
   </SupportedLocales>
   <ProductReservedInfo>
-    <MainPackageIdentityName>7907E48C.UnigramMobileUWP</MainPackageIdentityName>
+    <MainPackageIdentityName>ZuneTracks.UnigramMobileUWP</MainPackageIdentityName>
     <ReservedNames>
       <ReservedName>Unigram Mobile UWP</ReservedName>
     </ReservedNames>
   </ProductReservedInfo>
   <AccountPackageIdentityNames>
-    <MainPackageIdentityName>7907E48C.LiveDriveUWP</MainPackageIdentityName>
-    <MainPackageIdentityName>7907E48C.UniTubeUWP</MainPackageIdentityName>
-    <MainPackageIdentityName>7907E48C.WootDailydeals</MainPackageIdentityName>
+    <MainPackageIdentityName>ZuneTracks.LiveDriveUWP</MainPackageIdentityName>
+    <MainPackageIdentityName>ZuneTracks.UniTubeUWP</MainPackageIdentityName>
+    <MainPackageIdentityName>ZuneTracks.WootDailydeals</MainPackageIdentityName>
   </AccountPackageIdentityNames>
-  <PackageInfoList LandingUrl="https://devcenterapi.dce.mp.microsoft.com/dashboard/Application?appId=9P9R2NMKQ1DQ" />
+  <PackageInfoList LandingUrl="https://devcenterapi.dce.mp.microsoft.com/dashboard/Application?appId=9P6JR7M555Z0" />
 </StoreAssociation>
