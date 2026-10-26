@@ -487,6 +487,12 @@ namespace Unigram.Views
         }
 #endif
 
+#if !MODERN_TGCALLS
+        private void Camera_Click(object sender, RoutedEventArgs e)
+        {
+        }
+#endif
+
         public void Connect(VoIPControllerWrapper controller)
         {
             _controller = controller;
