@@ -64,62 +64,51 @@ function Draw-MetroMark {
         [int] $Height
     )
 
-    $unit = [single][Math]::Min($Width, $Height)
-    $offsetX = [single](($Width - $unit) / 2.0)
-    $bubble = [System.Drawing.RectangleF]::new(
-        $offsetX + $unit * 0.22,
-        $unit * 0.21,
-        $unit * 0.58,
-        $unit * 0.52)
+    $designWidth = if ($Width -gt ($Height * 1.5)) {
+        [single]($Height * 0.785)
+    }
+    else {
+        [single]([Math]::Min($Width, $Height) * 0.785)
+    }
+    $bodyHeight = [single]($designWidth * 0.697)
+    $designHeight = [single]($bodyHeight + ($designWidth * 0.084))
+    $x = [single](($Width - $designWidth) / 2.0)
+    $y = [single](($Height - $designHeight) / 2.0 + ($designWidth * 0.03))
+    $body = [System.Drawing.RectangleF]::new($x, $y, $designWidth, $bodyHeight)
     [System.Drawing.PointF[]] $tail = @(
-        [System.Drawing.PointF]::new($bubble.Left + $unit * 0.16, $bubble.Bottom - $unit * 0.02),
-        [System.Drawing.PointF]::new($bubble.Left + $unit * 0.07, $bubble.Bottom + $unit * 0.14),
-        [System.Drawing.PointF]::new($bubble.Left + $unit * 0.31, $bubble.Bottom))
-
-    $bubblePath = New-RoundedRectanglePath -Bounds $bubble -Radius ($unit * 0.09)
-    $bubblePath.StartFigure()
-    $bubblePath.AddPolygon($tail)
-    $bubblePath.CloseFigure()
+        [System.Drawing.PointF]::new($x + ($designWidth * 0.162), $y + $bodyHeight),
+        [System.Drawing.PointF]::new($x + ($designWidth * 0.077), $y + $bodyHeight + ($designWidth * 0.107)),
+        [System.Drawing.PointF]::new($x + ($designWidth * 0.321), $y + $bodyHeight))
+    $bodyPath = New-RoundedRectanglePath -Bounds $body -Radius ($bodyHeight * 0.229)
     $whiteBrush = [System.Drawing.SolidBrush]::new($white)
-    try {
-        $Graphics.FillPath($whiteBrush, $bubblePath)
-    }
-    finally {
-        $whiteBrush.Dispose()
-        $bubblePath.Dispose()
-    }
-
-    $envelope = [System.Drawing.RectangleF]::new(
-        $offsetX + $unit * 0.47,
-        $unit * 0.36,
-        $unit * 0.24,
-        $unit * 0.20)
     $blueBrush = [System.Drawing.SolidBrush]::new($metroBlue)
-    $trailPen = [System.Drawing.Pen]::new($metroBlue, [Math]::Max(1.0, $unit * 0.036))
-    $seamPen = [System.Drawing.Pen]::new($white, [Math]::Max(1.0, $unit * 0.035))
+    $trailPen = [System.Drawing.Pen]::new($metroBlue, [Math]::Max(1.0, $designWidth * 0.042))
     try {
+        $Graphics.FillPath($whiteBrush, $bodyPath)
+        $Graphics.FillPolygon($whiteBrush, $tail)
+
+        [System.Drawing.PointF[]] $upperWing = @(
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.361), $y + ($bodyHeight * 0.311)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.955), $y + ($bodyHeight * 0.493)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.291), $y + ($bodyHeight * 0.400)))
+        [System.Drawing.PointF[]] $lowerWing = @(
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.269), $y + ($bodyHeight * 0.486)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.341), $y + ($bodyHeight * 0.636)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.955), $y + ($bodyHeight * 0.493)))
+        $Graphics.FillPolygon($blueBrush, $upperWing)
+        $Graphics.FillPolygon($blueBrush, $lowerWing)
+
         $trailPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
         $trailPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
-        $seamPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
-        $seamPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
-
-        foreach ($fraction in @(0.40, 0.50, 0.60)) {
-            $y = [single]($unit * $fraction)
-            $Graphics.DrawLine($trailPen, $offsetX + $unit * 0.29, $y, $offsetX + $unit * 0.42, $y)
-        }
-
-        $Graphics.FillRectangle($blueBrush, $envelope)
-        $Graphics.DrawLines(
-            $seamPen,
-            [System.Drawing.PointF[]]@(
-                [System.Drawing.PointF]::new($envelope.Left + $unit * 0.015, $envelope.Top + $unit * 0.015),
-                [System.Drawing.PointF]::new($envelope.Left + $envelope.Width / 2.0, $envelope.Top + $envelope.Height * 0.60),
-                [System.Drawing.PointF]::new($envelope.Right - $unit * 0.015, $envelope.Top + $unit * 0.015)))
+        $Graphics.DrawLine($trailPen, $x + ($designWidth * 0.092), $y + ($bodyHeight * 0.368), $x + ($designWidth * 0.221), $y + ($bodyHeight * 0.368))
+        $Graphics.DrawLine($trailPen, $x + ($designWidth * 0.077), $y + ($bodyHeight * 0.482), $x + ($designWidth * 0.209), $y + ($bodyHeight * 0.482))
+        $Graphics.DrawLine($trailPen, $x + ($designWidth * 0.104), $y + ($bodyHeight * 0.596), $x + ($designWidth * 0.236), $y + ($bodyHeight * 0.596))
     }
     finally {
-        $seamPen.Dispose()
         $trailPen.Dispose()
         $blueBrush.Dispose()
+        $whiteBrush.Dispose()
+        $bodyPath.Dispose()
     }
 }
 
@@ -130,48 +119,56 @@ function Draw-LockScreenBadge {
         [int] $Height
     )
 
-    $unit = [single][Math]::Min($Width, $Height)
-    $offsetX = [single](($Width - $unit) / 2.0)
-    $bubble = [System.Drawing.RectangleF]::new(
-        $offsetX + $unit * 0.17,
-        $unit * 0.19,
-        $unit * 0.66,
-        $unit * 0.56)
-    $outlinePen = [System.Drawing.Pen]::new($white, [Math]::Max(1.0, $unit * 0.105))
-    $envelopePen = [System.Drawing.Pen]::new($white, [Math]::Max(1.0, $unit * 0.072))
-    $bubblePath = New-RoundedRectanglePath -Bounds $bubble -Radius ($unit * 0.10)
+    $designWidth = [single]([Math]::Min($Width, $Height) * 0.785)
+    $bodyHeight = [single]($designWidth * 0.697)
+    $designHeight = [single]($bodyHeight + ($designWidth * 0.084))
+    $x = [single](($Width - $designWidth) / 2.0)
+    $y = [single](($Height - $designHeight) / 2.0 + ($designWidth * 0.03))
+    $lineWidth = [Math]::Max(1.0, $designWidth * 0.055)
+    $outlinePen = [System.Drawing.Pen]::new($white, $lineWidth)
+    $radius = [single]($bodyHeight * 0.229)
+    $diameter = [single]($radius * 2.0)
+    $bottom = [single]($y + $bodyHeight)
+    $tailLeft = [single]($x + ($designWidth * 0.162))
+    $tailRight = [single]($x + ($designWidth * 0.321))
+    $tailTip = [System.Drawing.PointF]::new($x + ($designWidth * 0.077), $bottom + ($designWidth * 0.107))
+    $bodyPath = [System.Drawing.Drawing2D.GraphicsPath]::new()
     try {
         $outlinePen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
-        $outlinePen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
-        $outlinePen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
-        $envelopePen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
-        $envelopePen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
-        $envelopePen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+        $bodyPath.StartFigure()
+        $bodyPath.AddArc($x, $y, $diameter, $diameter, 180, 90)
+        $bodyPath.AddArc($x + $designWidth - $diameter, $y, $diameter, $diameter, 270, 90)
+        $bodyPath.AddArc($x + $designWidth - $diameter, $bottom - $diameter, $diameter, $diameter, 0, 90)
+        $bodyPath.AddLine($x + $designWidth - $radius, $bottom, $tailRight, $bottom)
+        $bodyPath.AddLine($tailRight, $bottom, $tailTip.X, $tailTip.Y)
+        $bodyPath.AddLine($tailTip.X, $tailTip.Y, $tailLeft, $bottom)
+        $bodyPath.AddLine($tailLeft, $bottom, $x + $radius, $bottom)
+        $bodyPath.AddArc($x, $bottom - $diameter, $diameter, $diameter, 90, 90)
+        $bodyPath.CloseFigure()
+        $Graphics.DrawPath($outlinePen, $bodyPath)
+        [System.Drawing.PointF[]] $upperWing = @(
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.361), $y + ($bodyHeight * 0.311)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.955), $y + ($bodyHeight * 0.493)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.291), $y + ($bodyHeight * 0.400)))
+        [System.Drawing.PointF[]] $lowerWing = @(
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.269), $y + ($bodyHeight * 0.486)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.341), $y + ($bodyHeight * 0.636)),
+            [System.Drawing.PointF]::new($x + ($designWidth * 0.955), $y + ($bodyHeight * 0.493)))
+        $gliderBrush = [System.Drawing.SolidBrush]::new($white)
+        try {
+            $Graphics.FillPolygon($gliderBrush, $upperWing)
+            $Graphics.FillPolygon($gliderBrush, $lowerWing)
+        }
+        finally {
+            $gliderBrush.Dispose()
+        }
 
-        $Graphics.DrawPath($outlinePen, $bubblePath)
-        $Graphics.DrawLines(
-            $outlinePen,
-            [System.Drawing.PointF[]]@(
-                [System.Drawing.PointF]::new($bubble.Left + $unit * 0.20, $bubble.Bottom - $unit * 0.02),
-                [System.Drawing.PointF]::new($bubble.Left + $unit * 0.10, $bubble.Bottom + $unit * 0.13),
-                [System.Drawing.PointF]::new($bubble.Left + $unit * 0.32, $bubble.Bottom)))
-
-        $envelope = [System.Drawing.RectangleF]::new(
-            $offsetX + $unit * 0.34,
-            $unit * 0.37,
-            $unit * 0.32,
-            $unit * 0.22)
-        $Graphics.DrawRectangle($envelopePen, $envelope.X, $envelope.Y, $envelope.Width, $envelope.Height)
-        $Graphics.DrawLines(
-            $envelopePen,
-            [System.Drawing.PointF[]]@(
-                [System.Drawing.PointF]::new($envelope.Left, $envelope.Top),
-                [System.Drawing.PointF]::new($envelope.Left + $envelope.Width / 2.0, $envelope.Top + $envelope.Height * 0.65),
-                [System.Drawing.PointF]::new($envelope.Right, $envelope.Top)))
+        $Graphics.DrawLine($outlinePen, $x + ($designWidth * 0.092), $y + ($bodyHeight * 0.368), $x + ($designWidth * 0.221), $y + ($bodyHeight * 0.368))
+        $Graphics.DrawLine($outlinePen, $x + ($designWidth * 0.077), $y + ($bodyHeight * 0.482), $x + ($designWidth * 0.209), $y + ($bodyHeight * 0.482))
+        $Graphics.DrawLine($outlinePen, $x + ($designWidth * 0.104), $y + ($bodyHeight * 0.596), $x + ($designWidth * 0.236), $y + ($bodyHeight * 0.596))
     }
     finally {
-        $bubblePath.Dispose()
-        $envelopePen.Dispose()
+        $bodyPath.Dispose()
         $outlinePen.Dispose()
     }
 }
