@@ -36,6 +36,7 @@ namespace Unigram.Views.Host
         private MvxObservableCollection<object> _navigationViewItems;
         private readonly Dictionary<int, User> _sessionUsers = new Dictionary<int, User>();
         private readonly HashSet<int> _pendingSessionUsers = new HashSet<int>();
+        private readonly HashSet<long> _pendingSessionPhotos = new HashSet<long>();
         private int _accountSelectorDiagnosticBudget = 64;
         private long _accountSelectorSessionsHash = long.MinValue;
         private bool _accountSelectorWasExpanded;
@@ -358,8 +359,43 @@ namespace Unigram.Views.Host
                 indicator.Visibility = session == _lifetime.ActiveItem ? Visibility.Visible : Visibility.Collapsed;
 
                 var photo = content.Children[0] as ProfilePicture;
-                photo.Source = PlaceholderHelper.GetUser(session.ProtoService, user, 28);
+                photo.Source = GetSessionPhoto(session, user);
             }
+        }
+
+        // Like upstream's ProfilePictureSource: show initials until the photo is downloaded, then refresh.
+        private ImageSource GetSessionPhoto(ISessionService session, User user)
+        {
+            var source = PlaceholderHelper.GetUser(session.ProtoService, user, 28);
+            if (source != null)
+            {
+                return source;
+            }
+
+            var file = user.ProfilePhoto?.Small;
+            if (file != null && file.Local.CanBeDownloaded && _pendingSessionPhotos.Add(((long)session.Id << 32) | (uint)file.Id))
+            {
+                session.ProtoService.Send(new DownloadFile(file.Id, 1, 0, 0, true), response =>
+                {
+                    _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    {
+                        _pendingSessionPhotos.Remove(((long)session.Id << 32) | (uint)file.Id);
+
+                        if (response is File downloaded && downloaded.Local.IsDownloadingCompleted)
+                        {
+                            user.UpdateFile(downloaded);
+                            TraceAccountSelector($"stage=photo;slot={session.Id};result=downloaded");
+                            RefreshSessionContainers();
+                        }
+                        else
+                        {
+                            TraceAccountSelector($"stage=photo;slot={session.Id};result={response?.GetType().Name ?? "null"}");
+                        }
+                    });
+                });
+            }
+
+            return PlaceholderHelper.GetUser(user, 28);
         }
 
         private void RequestSessionUser(ISessionService session)
@@ -597,7 +633,7 @@ namespace Unigram.Views.Host
                 else if (args.Phase == 2 && user != null)
                 {
                     var photo = content.Children[0] as ProfilePicture;
-                    photo.Source = PlaceholderHelper.GetUser(session.ProtoService, user, 28);
+                    photo.Source = GetSessionPhoto(session, user);
                 }
 
                 if (args.Phase < 2)
