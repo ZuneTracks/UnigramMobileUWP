@@ -25,6 +25,7 @@ namespace Unigram
 				virtual void Run(IBackgroundTaskInstance^ taskInstance);
 
 				static void UpdatePrimaryBadge(int badgeNumber);
+				static void UpdateBadgeFromPush(String^ session, String^ loc_key, JsonObject^ custom, String^ group, bool muted);
 				static void UpdatePrimaryTile(String^ launch, String^ caption, String^ message, String^ picture);
 				static IAsyncAction^ UpdateToast(String^ caption, String^ message, String^ attribution, String^ session, String^ sound, String^ launch, String^ tag, String^ group, String^ picture, String^ hero, String^ date, String^ loc_key);
 

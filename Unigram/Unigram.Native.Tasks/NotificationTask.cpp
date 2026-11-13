@@ -147,6 +147,12 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		}
 
 		auto muted = data->GetNamedString("mute", "0") == L"1";
+		if (sessionMapped)
+		{
+			// Must run before the toast is shown: in chat-count mode an existing toast group means the chat was already counted.
+			UpdateBadgeFromPush(session, data->GetNamedString("loc_key"), data->GetNamedObject("custom", nullptr), GetGroup(data->GetNamedObject("custom", nullptr)), muted);
+		}
+
 		if (!muted)
 		{
 			auto loc_key = data->GetNamedString("loc_key");
@@ -531,6 +537,75 @@ void NotificationTask::UpdatePrimaryBadge(int badgeNumber)
 	catch (Exception ^ ex)
 	{
 		LogError(L"updating primary badge", ex);
+	}
+}
+
+void NotificationTask::UpdateBadgeFromPush(String^ session, String^ loc_key, JsonObject^ custom, String^ group, bool muted)
+{
+	try
+	{
+		// The managed app records the real unread count and the active account's badge
+		// preferences whenever it updates the badge; pushes only add to that baseline.
+		auto values = ApplicationData::Current->LocalSettings->Values;
+		if (!values->HasKey(L"BadgeCount") || !values->HasKey(L"BadgeSession"))
+		{
+			LogDiagnostic(L"native.badge", L"result=skipped;reason=no_baseline");
+			return;
+		}
+
+		auto badgeSession = safe_cast<int>(values->Lookup(L"BadgeSession"));
+		if (session == nullptr || !session->Equals(ref new String(std::to_wstring(badgeSession).c_str())))
+		{
+			LogDiagnostic(L"native.badge", L"result=skipped;reason=other_account");
+			return;
+		}
+
+		std::wstring key = loc_key->Data();
+		auto isMessage = key.find(L"MESSAGE") == 0 || key.find(L"CHAT_") == 0 || key.find(L"CHANNEL_") == 0
+			|| key.find(L"PINNED_") == 0 || key.find(L"ENCRYPTED_MESSAGE") == 0 || key.find(L"CONTACT_JOINED") == 0;
+		if (!isMessage || key.find(L"REACT") != std::wstring::npos || (custom != nullptr && custom->HasKey(L"edit_date")))
+		{
+			LogDiagnostic(L"native.badge", L"result=skipped;reason=not_new_message");
+			return;
+		}
+
+		auto includeMuted = values->HasKey(L"BadgeIncludeMuted") && safe_cast<bool>(values->Lookup(L"BadgeIncludeMuted"));
+		if (muted && !includeMuted)
+		{
+			LogDiagnostic(L"native.badge", L"result=skipped;reason=muted");
+			return;
+		}
+
+		auto countMessages = !values->HasKey(L"BadgeCountMessages") || safe_cast<bool>(values->Lookup(L"BadgeCountMessages"));
+		if (!countMessages)
+		{
+			// Counting chats: only a chat without a toast on screen is new to the count. Muted
+			// chats show no toast, so they can't be tracked and are left to the app's next update.
+			if (group == nullptr || muted)
+			{
+				LogDiagnostic(L"native.badge", L"result=skipped;reason=chat_untracked");
+				return;
+			}
+
+			auto history = ToastNotificationManager::History->GetHistory(L"App");
+			for (unsigned int i = 0; i < history->Size; i++)
+			{
+				if (group->Equals(history->GetAt(i)->Group))
+				{
+					LogDiagnostic(L"native.badge", L"result=skipped;reason=chat_already_counted");
+					return;
+				}
+			}
+		}
+
+		auto count = safe_cast<int>(values->Lookup(L"BadgeCount")) + 1;
+		values->Insert(L"BadgeCount", PropertyValue::CreateInt32(count));
+		UpdatePrimaryBadge(count);
+		LogDiagnostic(L"native.badge", countMessages ? L"result=updated;mode=messages" : L"result=updated;mode=chats");
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"updating badge from push", ex);
 	}
 }
 

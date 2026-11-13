@@ -32,6 +32,8 @@ namespace Unigram.Services
         Task UnregisterAsync();
         Task CloseAsync();
 
+        void RefreshBadge();
+
         Task ProcessAsync(Dictionary<string, string> data);
 
         void PlaySound();
@@ -89,6 +91,11 @@ namespace Unigram.Services
 
             _aggregator.Subscribe(this);
 
+            RefreshBadge();
+        }
+
+        public void RefreshBadge()
+        {
             var unreadCount = _cacheService.GetUnreadCount(new ChatListMain());
             Handle(unreadCount.UnreadChatCount);
             Handle(unreadCount.UnreadMessageCount);
@@ -96,6 +103,20 @@ namespace Unigram.Services
 
         private void UpdateBadge(int count)
         {
+            try
+            {
+                // Baseline for the native push task, which adds new-message pushes to it while the app isn't running.
+                var values = ApplicationData.Current.LocalSettings.Values;
+                values["BadgeCount"] = count;
+                values["BadgeSession"] = _sessionService.Id;
+                values["BadgeCountMessages"] = _settings.Notifications.CountUnreadMessages;
+                values["BadgeIncludeMuted"] = _settings.Notifications.IncludeMutedChats;
+            }
+            catch (Exception ex)
+            {
+                Logs.Logger.Error(Logs.Target.Notifications, $"Unable to store badge baseline: {ex.Message}");
+            }
+
             try
             {
                 var updater = BadgeUpdateManager.CreateBadgeUpdaterForApplication("App");

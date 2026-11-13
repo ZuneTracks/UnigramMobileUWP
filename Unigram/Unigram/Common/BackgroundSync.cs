@@ -247,6 +247,8 @@ namespace Unigram.Common
                 {
                     await Task.Delay(PollInterval, cancellation.Token);
                 }
+
+                RefreshBadge(sessions);
             }
             catch (OperationCanceledException)
             {
@@ -265,6 +267,34 @@ namespace Unigram.Common
                 // The CTS has no timer, so it is left to the GC rather than disposed; a late
                 // Canceled callback racing with this block could otherwise hit a disposed source.
                 Logs.PushDiagnostics.Write("background.sync.result", $"result={result};sessions={sessions.Count};ready={ready};signed_out={signedOut};notification_groups={Volatile.Read(ref _notificationGroups)};pending_notifications={Volatile.Read(ref _pendingNotifications)};elapsed_ms={watch.ElapsedMilliseconds}");
+            }
+        }
+
+        private static void RefreshBadge(IList<ISessionService> sessions)
+        {
+            // Pushes only add to the badge, so re-read the synced unread count to correct it.
+            var active = sessions.FirstOrDefault(x => x.IsActive);
+            if (active == null || GetStatus(active.ProtoService) != SessionStatus.Ready)
+            {
+                Logs.PushDiagnostics.Write("background.sync.badge", "result=skipped;reason=active_not_ready");
+                return;
+            }
+
+            try
+            {
+                if (TLContainer.Current.TryResolve(active.Id, out INotificationsService notifications))
+                {
+                    notifications.RefreshBadge();
+                    Logs.PushDiagnostics.Write("background.sync.badge", "result=refreshed");
+                }
+                else
+                {
+                    Logs.PushDiagnostics.Write("background.sync.badge", "result=skipped;reason=no_service");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.PushDiagnostics.WriteException("background.sync.badge", ex);
             }
         }
 
