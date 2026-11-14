@@ -211,7 +211,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Notifications**\n• Tapping a notification opens its chat again, including when the app was closed\n• Notifications for newer accounts, groups and channels open the right chat\n• Tapping, replying to or marking a notification as read uses the account it was sent to";
+        public static readonly string CurrentChangelog = "**Notifications**\n• Tapping a notification opens its chat again, including when the app was closed\n• Notifications for newer accounts, groups and channels open the right chat\n• Tapping, replying to or marking a notification as read uses the account it was sent to\n\n**Live Tile and menu**\n• The unread badge now updates from notifications while the app is closed\n• Account photos show in the side menu again";
 
         public int Session => _session;
 
