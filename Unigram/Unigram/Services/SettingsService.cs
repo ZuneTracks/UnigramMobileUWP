@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Notifications**\n• Push notification registration now refreshes every 24 hours, including after resuming and during background sync, so Telegram keeps delivering notifications";
+        public static readonly string CurrentChangelog = "**Groups**\n• Members approved through join requests now show \"was accepted into the group\" instead of an empty message";
 
         public int Session => _session;
 
