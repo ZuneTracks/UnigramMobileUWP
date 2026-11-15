@@ -36,6 +36,7 @@ namespace Unigram.Common
         private static readonly TimeSpan ReconnectGrace = TimeSpan.FromSeconds(2);
         private static readonly TimeSpan NotificationSettle = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
+        private static readonly TimeSpan RegistrationDeadline = TimeSpan.FromSeconds(8);
 
         // Toasts and tiles still being prepared must finish before the deferral completes,
         // otherwise the process is suspended mid-way and nothing is shown.
@@ -249,6 +250,7 @@ namespace Unigram.Common
                 }
 
                 RefreshBadge(sessions);
+                await RefreshPushRegistrationAsync(sessions, cancellation.Token);
             }
             catch (OperationCanceledException)
             {
@@ -268,6 +270,29 @@ namespace Unigram.Common
                 // Canceled callback racing with this block could otherwise hit a disposed source.
                 Logs.PushDiagnostics.Write("background.sync.result", $"result={result};sessions={sessions.Count};ready={ready};signed_out={signedOut};notification_groups={Volatile.Read(ref _notificationGroups)};pending_notifications={Volatile.Read(ref _pendingNotifications)};elapsed_ms={watch.ElapsedMilliseconds}");
             }
+        }
+
+        private static async Task RefreshPushRegistrationAsync(IList<ISessionService> sessions, CancellationToken token)
+        {
+            // Sync only runs once pushes have gone quiet, which is exactly when a lapsed
+            // registration would keep them quiet; RegisterAsync skips registrations under a day old.
+            var tasks = new List<Task>();
+            foreach (var session in sessions)
+            {
+                if (GetStatus(session.ProtoService) == SessionStatus.Ready && TLContainer.Current.TryResolve(session.Id, out INotificationsService notifications))
+                {
+                    tasks.Add(notifications.RegisterAsync());
+                }
+            }
+
+            if (tasks.Count == 0)
+            {
+                return;
+            }
+
+            var all = Task.WhenAll(tasks);
+            var completed = await Task.WhenAny(all, Task.Delay(RegistrationDeadline, token));
+            Logs.PushDiagnostics.Write("background.sync.push_registration", $"sessions={tasks.Count};result={(completed == all ? "completed" : "timeout")}");
         }
 
         private static void RefreshBadge(IList<ISessionService> sessions)

@@ -73,6 +73,7 @@ namespace Unigram.Services
         private CancellationTokenSource _registrationRetryCancellation;
 
         private static readonly TimeSpan RegistrationRetryDelay = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan RegistrationRefreshInterval = TimeSpan.FromHours(24);
         private static readonly TimeSpan NotificationReconciliationDelay = TimeSpan.FromSeconds(5);
         private static int _foregroundTileDiagnosticBudget = 48;
 
@@ -963,13 +964,29 @@ namespace Unigram.Services
                     return;
                 }
 
+                var now = DateTimeOffset.UtcNow;
+                var lastRegistration = _settings.PushRegistrationTime;
+                var age = lastRegistration == DateTimeOffset.MinValue ? (TimeSpan?)null : now - lastRegistration;
+                var ageHours = age.HasValue ? Math.Max(0, (int)age.Value.TotalHours).ToString(CultureInfo.InvariantCulture) : "never";
+
+                // Telegram asks clients to repeat registerDevice at least every 24 hours, and a
+                // long-suspended process never restarts, so a successful registration expires here.
                 if (_alreadyRegistered)
                 {
-                    Logs.PushDiagnostics.Write("wns.registration.skipped", $"session={_sessionService.Id};reason=already_registered");
-                    return;
+                    if (age.HasValue && age.Value >= TimeSpan.Zero && age.Value < RegistrationRefreshInterval)
+                    {
+                        Logs.PushDiagnostics.Write("wns.registration.skipped", $"session={_sessionService.Id};reason=already_registered;age_hours={ageHours}");
+                        return;
+                    }
+
+                    _alreadyRegistered = false;
+                    Logs.PushDiagnostics.Write("wns.registration.refresh", $"session={_sessionService.Id};reason=registration_stale;age_hours={ageHours}");
+                }
+                else
+                {
+                    Logs.PushDiagnostics.Write("wns.registration.previous", $"session={_sessionService.Id};age_hours={ageHours}");
                 }
 
-                var now = DateTimeOffset.UtcNow;
                 if (now < _nextRegistrationAttempt)
                 {
                     Logs.PushDiagnostics.Write("wns.registration.skipped", $"session={_sessionService.Id};reason=retry_cooldown;retry_after={_nextRegistrationAttempt:O}");
@@ -980,7 +997,7 @@ namespace Unigram.Services
                 {
                     Logs.PushDiagnostics.Write("wns.channel.request", $"session={_sessionService.Id}");
                     var channel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
-                    Logs.PushDiagnostics.Write("wns.channel.created", $"session={_sessionService.Id};uri_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)};expires={channel.ExpirationTime:O}");
+                    Logs.PushDiagnostics.Write("wns.channel.created", $"session={_sessionService.Id};uri_hash={Logs.PushDiagnostics.HashIdentifier(channel.Uri)};uri_changed={!string.Equals(channel.Uri, _settings.PushToken, StringComparison.Ordinal)};expires={channel.ExpirationTime:O}");
                     var ids = new HashSet<long>();
                     var invalidIds = 0;
 
@@ -1007,6 +1024,7 @@ namespace Unigram.Services
                     {
                         _settings.PushReceiverId = 0;
                         _settings.PushToken = null;
+                        _settings.PushRegistrationTime = DateTimeOffset.MinValue;
                         _alreadyRegistered = false;
                         _nextRegistrationAttempt = DateTimeOffset.UtcNow.Add(RegistrationRetryDelay);
                         ScheduleRegistrationRetry();
@@ -1032,6 +1050,7 @@ namespace Unigram.Services
                     channel.PushNotificationReceived += OnPushNotificationReceived;
                     _settings.PushReceiverId = receiverId.Id;
                     _settings.PushToken = channel.Uri;
+                    _settings.PushRegistrationTime = DateTimeOffset.UtcNow;
                     _alreadyRegistered = true;
                     _nextRegistrationAttempt = DateTimeOffset.MinValue;
                     CancelRegistrationRetry();
@@ -1042,6 +1061,7 @@ namespace Unigram.Services
                 {
                     _alreadyRegistered = false;
                     _settings.PushToken = null;
+                    _settings.PushRegistrationTime = DateTimeOffset.MinValue;
                     _nextRegistrationAttempt = DateTimeOffset.UtcNow.Add(RegistrationRetryDelay);
                     ScheduleRegistrationRetry();
                     Logs.Logger.Error(Logs.Target.Notifications, $"Unable to register WNS channel: {ex.Message}");
@@ -1159,6 +1179,7 @@ namespace Unigram.Services
 
             _settings.PushToken = null;
             _settings.PushReceiverId = 0;
+            _settings.PushRegistrationTime = DateTimeOffset.MinValue;
             _alreadyRegistered = false;
             _nextRegistrationAttempt = DateTimeOffset.MinValue;
             CancelRegistrationRetry();

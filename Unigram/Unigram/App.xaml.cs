@@ -612,6 +612,12 @@ namespace Unigram
                 network.Reconnect();
             }
 
+            // A resumed process is not a restart, so refresh push registrations older than a day.
+            foreach (var notifications in TLContainer.Current.ResolveAll<INotificationsService>())
+            {
+                Task.Run(() => notifications.RegisterAsync());
+            }
+
             base.OnResuming(s, e, previousExecutionState);
         }
 

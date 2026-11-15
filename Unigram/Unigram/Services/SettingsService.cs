@@ -33,6 +33,7 @@ namespace Unigram.Services
 
         long UserId { get; set; }
         long PushReceiverId { get; set; }
+        DateTimeOffset PushRegistrationTime { get; set; }
 
         string FilesDirectory { get; set; }
 
@@ -211,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Notifications**\n• Tapping a notification opens its chat again, including when the app was closed\n• Notifications for newer accounts, groups and channels open the right chat\n• Tapping, replying to or marking a notification as read uses the account it was sent to\n\n**Live Tile and menu**\n• The unread badge now updates from notifications while the app is closed\n• Account photos show in the side menu again";
+        public static readonly string CurrentChangelog = "**Notifications**\n• Push notification registration now refreshes every 24 hours, including after resuming and during background sync, so Telegram keeps delivering notifications";
 
         public int Session => _session;
 
@@ -471,6 +472,25 @@ namespace Unigram.Services
                 }
 
                 AddOrUpdateValue(_own, "PushReceiverId", value);
+            }
+        }
+
+        private long? _pushRegistrationTicks;
+        public DateTimeOffset PushRegistrationTime
+        {
+            get
+            {
+                if (_pushRegistrationTicks == null)
+                    _pushRegistrationTicks = GetValueOrDefault(_own, "PushRegistrationTicks", 0L);
+
+                var ticks = _pushRegistrationTicks ?? 0L;
+                return ticks > 0 ? new DateTimeOffset(ticks, TimeSpan.Zero) : DateTimeOffset.MinValue;
+            }
+            set
+            {
+                var ticks = value == DateTimeOffset.MinValue ? 0L : value.UtcTicks;
+                _pushRegistrationTicks = ticks;
+                AddOrUpdateValue(_own, "PushRegistrationTicks", ticks);
             }
         }
 
