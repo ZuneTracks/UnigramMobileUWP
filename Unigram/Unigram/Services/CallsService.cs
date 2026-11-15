@@ -55,6 +55,14 @@ namespace Unigram.Services
         private int _diagnosticCallId;
         private int _previousDiagnosticCallId;
 
+        // On resume TDLib replays Pending and Discarded for calls that ended while the app
+        // was suspended before any dispatched UI work runs; remembering the discarded ids
+        // keeps the call screen from opening for calls that are already over.
+        private const int MaxDiscardedCallIds = 16;
+        private readonly object _discardedCallLock = new object();
+        private readonly Queue<int> _discardedCallIds = new Queue<int>();
+        private int _clearedCallToastId;
+
         private Call _call;
         private DateTime _callStarted;
         private VoIPControllerWrapper _controller;
@@ -353,7 +361,7 @@ namespace Unigram.Services
                     if (TryStartModernCall(update.Call, ready, modernVersion))
                     {
                         WriteAudioCallDiagnostic("voip.ready", "result=starting;transport=modern_tgcalls");
-                        BeginOnUIThread(() => Show(update.Call, null, _callStarted));
+                        BeginOnUIThread(() => ShowUnlessDiscarded(update.Call, null));
                         return;
                     }
 
@@ -422,9 +430,10 @@ namespace Unigram.Services
                     });
                 };
 
+                var controller = _controller;
                 BeginOnUIThread(() =>
                 {
-                    Show(update.Call, _controller, _callStarted);
+                    ShowUnlessDiscarded(update.Call, controller);
                 });
 
                 var endpoints = new List<Endpoint>();
@@ -466,6 +475,8 @@ namespace Unigram.Services
             }
             else if (update.Call.State is CallStateDiscarded discarded)
             {
+                MarkCallDiscarded(update.Call.Id);
+
                 if (discarded.NeedDebugInformation && _controller != null)
                 {
                     ProtoService.Send(ModernTdlibCompatibility.CreateSendCallDebugInformation(update.Call.Id, _controller.GetDebugLog()));
@@ -483,6 +494,11 @@ namespace Unigram.Services
                 DisposeModernCall();
 #endif
                 _call = null;
+            }
+
+            if (!update.Call.IsOutgoing && !(update.Call.State is CallStatePending))
+            {
+                RemoveIncomingCallToast(update.Call);
             }
 
             await Dispatcher.DispatchAsync(() =>
@@ -511,10 +527,92 @@ namespace Unigram.Services
                         Hide();
                         break;
                     default:
-                        Show(update.Call, null, _callStarted);
+                        ShowUnlessDiscarded(update.Call, null);
                         break;
                 }
             });
+        }
+
+        private void MarkCallDiscarded(int callId)
+        {
+            lock (_discardedCallLock)
+            {
+                if (_discardedCallIds.Contains(callId))
+                {
+                    return;
+                }
+
+                _discardedCallIds.Enqueue(callId);
+                while (_discardedCallIds.Count > MaxDiscardedCallIds)
+                {
+                    _discardedCallIds.Dequeue();
+                }
+            }
+        }
+
+        private bool IsCallDiscarded(int callId)
+        {
+            lock (_discardedCallLock)
+            {
+                return _discardedCallIds.Contains(callId);
+            }
+        }
+
+        /// <summary>
+        /// The background push task shows a ringing toast (tag "phoneCall", group "u" + caller)
+        /// for incoming calls. Once the call is answered, declined or over it must stop ringing.
+        /// </summary>
+        private async void RemoveIncomingCallToast(Call call)
+        {
+            if (_clearedCallToastId == call.Id)
+            {
+                return;
+            }
+
+            _clearedCallToastId = call.Id;
+
+            var group = "u" + call.UserId.ToString(CultureInfo.InvariantCulture);
+            var removed = false;
+
+            try
+            {
+                var history = await Windows.UI.Notifications.ToastNotificationManager.GetDefault().GetHistoryForToastCollectionIdAsync(SessionId.ToString(CultureInfo.InvariantCulture));
+                if (history != null)
+                {
+                    history.Remove("phoneCall", group);
+                    removed = true;
+                }
+            }
+            catch (Exception error)
+            {
+                WriteAudioCallDiagnostic("voip.toast", $"result=failed;scope=collection;hresult=0x{error.HResult:X8}");
+            }
+
+            try
+            {
+                Windows.UI.Notifications.ToastNotificationManager.History.Remove("phoneCall", group);
+                removed = true;
+            }
+            catch (Exception error)
+            {
+                WriteAudioCallDiagnostic("voip.toast", $"result=failed;scope=default;hresult=0x{error.HResult:X8}");
+            }
+
+            if (removed)
+            {
+                WriteAudioCallDiagnostic("voip.toast", "result=removed");
+            }
+        }
+
+        private void ShowUnlessDiscarded(Call call, VoIPControllerWrapper controller)
+        {
+            if (IsCallDiscarded(call.Id))
+            {
+                WriteAudioCallDiagnostic("voip.ui", "result=skipped;reason=already_discarded");
+                return;
+            }
+
+            Show(call, controller, _callStarted);
         }
 
 #if MODERN_TGCALLS

@@ -27,6 +27,51 @@ using namespace Windows::Storage;
 using namespace Windows::UI::Notifications;
 using namespace Windows::UI::StartScreen;
 
+namespace
+{
+	// Telegram's ring timeout is 90 seconds; a call push older than this cannot still be
+	// ringing on the caller's side, so it is shown as an ordinary notification instead.
+	const time_t CallRingWindowSeconds = 60;
+	const time_t CallToastLifetimeSeconds = 90;
+
+	// loc_key is a server-defined constant (for example PHONE_CALL_REQUEST). Only uppercase
+	// letters, digits and underscores are kept so no payload content can reach the log.
+	String^ SanitizePushType(String^ loc_key)
+	{
+		if (loc_key == nullptr || loc_key->Length() == 0)
+		{
+			return L"none";
+		}
+
+		std::wstring result;
+		for (auto ch : std::wstring(loc_key->Data()))
+		{
+			if (result.size() >= 48)
+			{
+				break;
+			}
+
+			if ((ch >= L'A' && ch <= L'Z') || (ch >= L'0' && ch <= L'9') || ch == L'_')
+			{
+				result += ch;
+			}
+			else
+			{
+				result += L'?';
+			}
+		}
+
+		return ref new String(result.c_str());
+	}
+
+	DateTime FromUnixTime(time_t value)
+	{
+		DateTime result;
+		result.UniversalTime = (static_cast<int64>(value) + 11644473600LL) * 10000000LL;
+		return result;
+	}
+}
+
 void NotificationTask::Run(IBackgroundTaskInstance^ taskInstance)
 {
 	auto deferral = taskInstance->GetDeferral();
@@ -119,6 +164,15 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		{
 			LogDiagnostic(L"native.session.resolve", L"result=mapped");
 		}
+
+		auto muted = data->GetNamedString("mute", "0") == L"1";
+		{
+			std::wstring details = L"type=";
+			details += SanitizePushType(data->GetNamedString("loc_key", L""))->Data();
+			details += muted ? L";mute=1" : L";mute=0";
+			LogDiagnostic(L"native.payload.type", ref new String(details.c_str()));
+		}
+
 		if (data->HasKey("loc_key") == false)
 		{
 			//time_t rawtime = time(NULL);
@@ -146,14 +200,23 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 			return;
 		}
 
-		auto muted = data->GetNamedString("mute", "0") == L"1";
+		auto pushType = data->GetNamedString("loc_key");
+		auto isCallRequest = pushType->Equals(L"PHONE_CALL_REQUEST");
+		if (pushType->Equals(L"PHONE_CALL_MISSED"))
+		{
+			// The call is over: stop the ringing toast even if the chat is muted.
+			RemoveCallToast(session, GetGroup(data->GetNamedObject("custom", nullptr)));
+		}
+
 		if (sessionMapped)
 		{
 			// Must run before the toast is shown: in chat-count mode an existing toast group means the chat was already counted.
-			UpdateBadgeFromPush(session, data->GetNamedString("loc_key"), data->GetNamedObject("custom", nullptr), GetGroup(data->GetNamedObject("custom", nullptr)), muted);
+			UpdateBadgeFromPush(session, pushType, data->GetNamedObject("custom", nullptr), GetGroup(data->GetNamedObject("custom", nullptr)), muted);
 		}
 
-		if (!muted)
+		// Chat mute silences messages, not calls: Telegram marks call pushes from muted
+		// chats with mute=1, and suppressing them meant incoming calls never rang.
+		if (!muted || isCallRequest)
 		{
 			auto loc_key = data->GetNamedString("loc_key");
 			auto loc_args = data->GetNamedArray("loc_args");
@@ -189,15 +252,20 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 				message = data->GetNamedString("text", "New Notification");
 			}
 
-			//if (loc_key->Equals(L"PHONE_CALL_MISSED"))
-			//{
-			//	ToastNotificationManager::History->Remove(L"phoneCall");
-			//}
-
-			if (loc_key->Equals(L"PHONE_CALL_REQUEST"))
+			if (isCallRequest)
 			{
-				create_task(UpdateToast(caption, message, session, session, sound, launch, L"phoneCall", group, picture, nullptr, date, loc_key)).get();
-				//UpdatePhoneCall(caption, message, sound, launch, L"phoneCall", group, picture, date, loc_key);
+				auto pushTime = static_cast<time_t>(notification->GetNamedNumber(L"date", 0));
+				auto now = std::time(nullptr);
+				if (pushTime > 0 && now - pushTime <= CallRingWindowSeconds)
+				{
+					create_task(ShowIncomingCallToast(caption, message, session, launch, group, picture, date, pushTime + CallToastLifetimeSeconds)).get();
+					LogDiagnostic(L"native.notification.displayed", muted ? L"toast=true;kind=call;ring=1;muted=1" : L"toast=true;kind=call;ring=1;muted=0");
+				}
+				else
+				{
+					create_task(UpdateToast(caption, message, session, session, sound, launch, L"phoneCall", group, picture, nullptr, date, loc_key)).get();
+					LogDiagnostic(L"native.notification.displayed", L"toast=true;kind=call;ring=0;reason=stale");
+				}
 			}
 			else
 			{
@@ -211,8 +279,8 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 				{
 					LogDiagnostic(L"native.tile.decision", L"result=skipped;reason=secret_chat_setting");
 				}
+				LogDiagnostic(L"native.notification.displayed", L"toast=true");
 			}
-			LogDiagnostic(L"native.notification.displayed", L"toast=true");
 		}
 		else
 		{
@@ -887,6 +955,112 @@ Windows::Foundation::IAsyncAction^ NotificationTask::UpdateToast(String^ caption
 			LogError(L"showing toast notification", ex);
 		}
 	});
+}
+
+Windows::Foundation::IAsyncAction^ NotificationTask::ShowIncomingCallToast(String^ caption, String^ message, String^ account, String^ launch, String^ group, String^ picture, String^ date, time_t expires)
+{
+	return create_async([=]()
+	{
+		// scenario='incomingCall' keeps the toast on screen with looping call audio. The
+		// accept action only opens the app; the call itself is answered on the call screen
+		// once TDLib delivers the pending call.
+		std::wstring xml = L"<toast scenario='incomingCall' launch='";
+		xml += launch->Data();
+		xml += L"' displayTimestamp='";
+		xml += date->Data();
+		xml += L"'><visual><binding template='ToastGeneric'>";
+
+		if (picture != nullptr)
+		{
+			xml += L"<image placement='appLogoOverride' hint-crop='circle' src='";
+			xml += picture->Data();
+			xml += L"'/>";
+		}
+
+		xml += L"<text><![CDATA[";
+		xml += caption->Data();
+		xml += L"]]></text><text><![CDATA[";
+		xml += message->Data();
+		xml += L"]]></text></binding></visual>";
+		xml += L"<actions><action activationType='foreground' content='ms-resource:AcceptCall' arguments='";
+		xml += launch->Data();
+		xml += L"'/><action activationType='system' content='' arguments='dismiss'/></actions>";
+		xml += L"<audio src='ms-winsoundevent:Notification.Looping.Call' loop='true'/>";
+		xml += L"</toast>";
+
+		try
+		{
+			auto notifier = create_task(ToastNotificationManager::GetDefault()->GetToastNotifierForToastCollectionIdAsync(account)).get();
+			if (notifier == nullptr)
+			{
+				notifier = ToastNotificationManager::CreateToastNotifier(L"App");
+			}
+
+			auto document = ref new XmlDocument();
+			document->LoadXml(ref new String(xml.c_str()));
+
+			auto notification = ref new ToastNotification(document);
+			notification->Tag = L"phoneCall";
+			notification->RemoteId = L"phoneCall";
+			if (group != nullptr)
+			{
+				notification->Group = group;
+				notification->RemoteId += "_";
+				notification->RemoteId += group;
+			}
+
+			notification->ExpirationTime = ref new Box<DateTime>(FromUnixTime(expires));
+			notifier->Show(notification);
+		}
+		catch (Exception ^ ex)
+		{
+			LogError(L"showing incoming call toast", ex);
+		}
+	});
+}
+
+void NotificationTask::RemoveCallToast(String^ account, String^ group)
+{
+	auto removed = false;
+	try
+	{
+		auto history = create_task(ToastNotificationManager::GetDefault()->GetHistoryForToastCollectionIdAsync(account)).get();
+		if (history != nullptr)
+		{
+			if (group != nullptr)
+			{
+				history->Remove(L"phoneCall", group);
+			}
+			else
+			{
+				history->Remove(L"phoneCall");
+			}
+			removed = true;
+		}
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"removing call toast from collection", ex);
+	}
+
+	try
+	{
+		if (group != nullptr)
+		{
+			ToastNotificationManager::History->Remove(L"phoneCall", group, L"App");
+		}
+		else
+		{
+			ToastNotificationManager::History->Remove(L"phoneCall");
+		}
+		removed = true;
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"removing call toast", ex);
+	}
+
+	LogDiagnostic(L"native.notification.removed", removed ? L"result=success;kind=call" : L"result=failed;kind=call");
 }
 
 //

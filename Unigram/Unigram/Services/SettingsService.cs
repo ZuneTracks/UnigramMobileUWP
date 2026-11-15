@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Groups**\n• Members approved through join requests now show \"was accepted into the group\" instead of an empty message";
+        public static readonly string CurrentChangelog = "**Calls**\n• Incoming calls from muted chats now ring instead of being silently dropped\n• The incoming-call notification rings until the call is answered, declined or missed\n• Calls that already ended while the app was in the background no longer open the call screen\n\n**Diagnostics**\n• Push diagnostics now record the notification type (for example PHONE_CALL_REQUEST) and mute flag";
 
         public int Session => _session;
 
