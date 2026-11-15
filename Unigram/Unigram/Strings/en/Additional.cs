@@ -798,6 +798,17 @@ namespace Unigram.Strings
         }
         
         /// <summary>
+        /// Localized resource similar to "un1 was accepted into the group"
+        /// </summary>
+        public static string UserAcceptedToGroupAction
+        {
+            get
+            {
+                return Resource.GetString("UserAcceptedToGroupAction");
+            }
+        }
+        
+        /// <summary>
         /// Localized resource similar to "un1 started a video chat"
         /// </summary>
         public static string EventLogStartedVideoChat

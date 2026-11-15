@@ -374,6 +374,10 @@
     <value>un1 started a video chat</value>
     <comment>Recent actions</comment>
   </data>
+  <data name="UserAcceptedToGroupAction" xml:space="preserve">
+    <value>un1 was accepted into the group</value>
+    <comment>Service message when a join request is approved</comment>
+  </data>
   <data name="EventLogEndedVideoChat" xml:space="preserve">
     <value>un1 ended the video chat</value>
     <comment>Recent actions</comment>

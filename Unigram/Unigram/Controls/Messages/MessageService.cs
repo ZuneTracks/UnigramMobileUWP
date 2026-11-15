@@ -62,6 +62,8 @@ namespace Unigram.Controls.Messages
                 case MessageChatJoinByLink chatJoinByLink:
                     return UpdateChatJoinByLink(message, chatJoinByLink, active);
 #if MODERN_TDLIB
+                case MessageChatJoinByRequest _:
+                    return UpdateChatJoinByRequest(message, active);
                 case MessageChatSetMessageAutoDeleteTime chatSetMessageAutoDeleteTime:
                     return UpdateChatSetMessageAutoDeleteTime(message, chatSetMessageAutoDeleteTime, active);
 #else
@@ -748,6 +750,19 @@ namespace Unigram.Controls.Messages
         }
 
 #if MODERN_TDLIB
+        private static (string, IList<TextEntity>) UpdateChatJoinByRequest(MessageViewModel message, bool active)
+        {
+            var content = string.Empty;
+            var entities = active ? new List<TextEntity>() : null;
+
+            if (message.ProtoService.TryGetUser(message.SenderId, out User senderUser))
+            {
+                content = ReplaceWithLink(Strings.Additional.UserAcceptedToGroupAction, "un1", senderUser, ref entities);
+            }
+
+            return (content, entities);
+        }
+
         private static (string, IList<TextEntity>) UpdateChatSetMessageAutoDeleteTime(MessageViewModel message, MessageChatSetMessageAutoDeleteTime chatSetMessageAutoDeleteTime, bool active)
         {
             var content = string.Empty;

@@ -1493,7 +1493,9 @@ namespace Unigram.Common
                 case MessageChatDeleteMember chatDeleteMember:
                 case MessageChatDeletePhoto chatDeletePhoto:
                 case MessageChatJoinByLink chatJoinByLink:
-#if !MODERN_TDLIB
+#if MODERN_TDLIB
+                case MessageChatJoinByRequest _:
+#else
                 case MessageChatSetTtl chatSetTtl:
 #endif
                 case MessageChatUpgradeFrom chatUpgradeFrom:
