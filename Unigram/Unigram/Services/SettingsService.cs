@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Calls**\n• Fixed accepting an incoming video call while the app is closed: the app now picks up the call after launching instead of never connecting\n\n**Diagnostics**\n• Records whether notification pictures come from a profile photo or a placeholder, to help fix toasts that show no avatar";
+        public static readonly string CurrentChangelog = "**Calls**\n• Fixed accepting an incoming call while the app is closed on faster phones: the call screen now opens and the call connects instead of the app stopping at the chat";
 
         public int Session => _session;
 
