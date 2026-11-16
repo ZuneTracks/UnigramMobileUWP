@@ -755,7 +755,7 @@ namespace Unigram.Controls.Messages
 
                 var button = new Button
                 {
-                    Content = $"{emoji.Emoji} {reaction.TotalCount}",
+                    Content = CreateReactionContent(message, reaction, emoji),
                     Tag = reaction,
                     Padding = new Thickness(6, 1, 6, 1),
                     Margin = new Thickness(0, 0, 4, 4),
@@ -774,6 +774,56 @@ namespace Unigram.Controls.Messages
             Reactions.Visibility = Reactions.Children.Count > 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
+
+        // Like desktop: when TDLib lists every reactor (private chats and small groups),
+        // show their avatars instead of the count.
+        private static object CreateReactionContent(MessageViewModel message, MessageReaction reaction, ReactionTypeEmoji emoji)
+        {
+            var countText = $"{emoji.Emoji} {reaction.TotalCount}";
+
+            var senders = reaction.RecentSenderIds;
+            if (senders == null || senders.Count == 0 || senders.Count != reaction.TotalCount)
+            {
+                return countText;
+            }
+
+            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+            panel.Children.Add(new TextBlock
+            {
+                Text = emoji.Emoji,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            foreach (var senderId in senders)
+            {
+                ImageSource source;
+                if (message.ProtoService.TryGetUser(senderId, out User user))
+                {
+                    source = PlaceholderHelper.GetUser(message.ProtoService, user, 20);
+                }
+                else if (message.ProtoService.TryGetChat(senderId, out Chat chat))
+                {
+                    source = PlaceholderHelper.GetChat(message.ProtoService, chat, 20);
+                }
+                else
+                {
+                    return countText;
+                }
+
+                panel.Children.Add(new ProfilePicture
+                {
+                    Source = source,
+                    Width = 20,
+                    Height = 20,
+                    Margin = new Thickness(panel.Children.Count > 1 ? -6 : 4, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    IsHitTestVisible = false,
+                    IsTabStop = false
+                });
+            }
+
+            return panel;
         }
 
         private void Reaction_Click(object sender, RoutedEventArgs e)
