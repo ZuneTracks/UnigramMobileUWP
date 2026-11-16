@@ -257,11 +257,14 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 			{
 				auto pushTime = static_cast<time_t>(notification->GetNamedNumber(L"date", 0));
 				auto now = std::time(nullptr);
+				LogCallPushShape(custom, pushTime > 0 ? static_cast<long long>(now - pushTime) : 0);
 				if (pushTime > 0 && now - pushTime <= CallRingWindowSeconds)
 				{
 					if (sessionMapped)
 					{
-						SavePendingCallPush(content, session, pushTime);
+						// The device receive time, not the server date: the two clocks can differ by
+						// a few seconds, which made the app reject fresh pushes as "expired".
+						SavePendingCallPush(content, session, now);
 					}
 
 					create_task(ShowIncomingCallToast(caption, message, session, launch, group, picture, date, pushTime + CallToastLifetimeSeconds)).get();
@@ -1073,7 +1076,58 @@ void NotificationTask::RemoveCallToast(String^ account, String^ group)
 // so the call push is kept for the app to replay through ProcessPushNotification when it
 // is cold-launched from the call toast. The file stays in the app's own LocalFolder and is
 // consumed or expired by the app; its content is never logged.
-void NotificationTask::SavePendingCallPush(String^ content, String^ session, time_t pushTime)
+// Records which call fields Telegram put in the push (names only, never values) so it is
+// visible whether a cold-launched app can rebuild the call from it.
+void NotificationTask::LogCallPushShape(JsonObject^ custom, long long skewSeconds)
+{
+	try
+	{
+		std::wstring details = L"has_custom=";
+		details += custom != nullptr ? L"1" : L"0";
+		if (custom != nullptr)
+		{
+			details += L";call_id=";
+			details += custom->HasKey(L"call_id") ? L"1" : L"0";
+			details += L";call_ah=";
+			details += custom->HasKey(L"call_ah") ? L"1" : L"0";
+			details += L";updates=";
+			details += custom->HasKey(L"updates") ? L"1" : L"0";
+			details += L";keys=";
+			bool first = true;
+			for (auto it = custom->First(); it->HasCurrent; it->MoveNext())
+			{
+				std::wstring key = it->Current->Key->Data();
+				bool safe = !key.empty() && key.length() <= 32;
+				for (auto ch : key)
+				{
+					if (!(iswalnum(ch) || ch == L'_'))
+					{
+						safe = false;
+						break;
+					}
+				}
+
+				if (!first)
+				{
+					details += L",";
+				}
+
+				details += safe ? key : L"?";
+				first = false;
+			}
+		}
+
+		details += L";receive_minus_date=";
+		details += std::to_wstring(skewSeconds);
+		LogDiagnostic(L"native.call.shape", ref new String(details.c_str()));
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"describing call push", ex);
+	}
+}
+
+void NotificationTask::SavePendingCallPush(String^ content, String^ session, time_t receivedTime)
 {
 	try
 	{
@@ -1098,7 +1152,7 @@ void NotificationTask::SavePendingCallPush(String^ content, String^ session, tim
 
 		auto values = ApplicationData::Current->LocalSettings->Values;
 		values->Insert(L"PendingCallPushSession", session);
-		values->Insert(L"PendingCallPushTime", PropertyValue::CreateInt64(static_cast<int64>(pushTime)));
+		values->Insert(L"PendingCallPushTime", PropertyValue::CreateInt64(static_cast<int64>(receivedTime)));
 		LogDiagnostic(L"native.call.pending", L"result=saved");
 	}
 	catch (Exception ^ ex)

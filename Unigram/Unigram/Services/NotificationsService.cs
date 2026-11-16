@@ -1241,6 +1241,7 @@ namespace Unigram.Services
         private const string PendingCallPushTimeKey = "PendingCallPushTime";
         private const string PendingCallPushFileName = "pending-call-push.json";
         private const long PendingCallPushLifetimeSeconds = 60;
+        private const long PendingCallPushClockToleranceSeconds = 10;
         private static readonly object _pendingCallPushLock = new object();
 
         // The native background task saves a ringing call push because the server does not
@@ -1304,9 +1305,9 @@ namespace Unigram.Services
                 }
 
                 var age = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - (storedTime is long pushTime ? pushTime : 0);
-                if (age < 0 || age > PendingCallPushLifetimeSeconds)
+                if (age < -PendingCallPushClockToleranceSeconds || age > PendingCallPushLifetimeSeconds)
                 {
-                    Logs.PushDiagnostics.Write("voip.push_replay", "result=skipped;reason=expired");
+                    Logs.PushDiagnostics.Write("voip.push_replay", $"result=skipped;reason=expired;age={age}");
                     return null;
                 }
 
