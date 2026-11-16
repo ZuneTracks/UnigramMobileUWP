@@ -45,6 +45,12 @@ namespace Unigram.Services
         int SessionId { get; }
 
         Client Client { get; }
+
+        /// <summary>
+        /// The latest incoming call if it is still ringing. Lets the call service pick up a call
+        /// whose update arrived before the service was created, as on a cold start from a call push.
+        /// </summary>
+        Call GetPendingIncomingCall();
     }
 
     public interface ICacheService
@@ -1565,6 +1571,14 @@ namespace Unigram.Services
 
 
 
+        private volatile Call _lastIncomingCall;
+
+        public Call GetPendingIncomingCall()
+        {
+            var call = _lastIncomingCall;
+            return call?.State is CallStatePending ? call : null;
+        }
+
         public void OnResult(BaseObject update)
         {
 #if MODERN_TDLIB
@@ -1649,7 +1663,10 @@ namespace Unigram.Services
             }
             else if (update is UpdateCall updateCall)
             {
-
+                if (updateCall.Call != null && !updateCall.Call.IsOutgoing)
+                {
+                    _lastIncomingCall = updateCall.Call;
+                }
             }
             else if (update is UpdateChatActionBar updateChatActionBar)
             {

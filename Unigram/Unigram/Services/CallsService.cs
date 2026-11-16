@@ -149,6 +149,15 @@ namespace Unigram.Services
 
             aggregator.Subscribe(this);
 
+            // On a cold start from a call push, TDLib can report the incoming call before this
+            // service exists (it is created with the main screen), and that update is not repeated.
+            var pendingCall = protoService.GetPendingIncomingCall();
+            if (pendingCall != null && _call == null)
+            {
+                WriteAudioCallDiagnostic("voip.update", $"result=replayed;reason=early_update;video={pendingCall.IsVideo.ToString().ToLowerInvariant()}");
+                Handle(new UpdateCall(pendingCall));
+            }
+
             _watcher = Windows.Devices.Enumeration.DeviceInformation.CreateWatcher(Windows.Devices.Sensors.ProximitySensor.GetDeviceSelector());
             _watcher.Added += OnProximitySensorAdded;
             _watcher.Start();
