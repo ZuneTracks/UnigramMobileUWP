@@ -1048,7 +1048,7 @@ fallback is taken.
 `Export-TdlibVsix.ps1` packages the built ARM output as `Telegram.Td.UWP-<version>-ARM.vsix`
 (default output: `%LOCALAPPDATA%\UnigramTdlibExperiment\artifacts\vsix`). It uses the layout and
 manifests from TDLib's `example/uwp` (`export-vsix`), restricted to ARM, and includes the build
-manifest and the binding-generator patches. The app itself does not consume the VSIX; it references
+manifest and every patch in `patches\` (binding-generator fixes and the call push fix). The app itself does not consume the VSIX; it references
 the build output directly. Projects using the VSIX reference it as
 `<SDKReference Include="Telegram.Td.UWP, Version=1.0" />` together with `Microsoft.VCLibs, Version=14.0`.
 

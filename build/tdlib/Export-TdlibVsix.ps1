@@ -60,7 +60,7 @@ $sdkManifest = (Get-Content -LiteralPath (Join-Path $template "SDKManifest.xml")
 
 $vsixManifest = (Get-Content -LiteralPath (Join-Path $template "extension.vsixmanifest") -Raw) `
     -replace 'Version="[0-9.]+" Language', ('Version="' + $version + '" Language') `
-    -replace '<Description>[^<]*</Description>', ('<Description>TDLib ' + $version + ' (commit ' + $buildInfo["TDLIB_COMMIT"] + ') C++/CX for UWP ARM32 / Windows 10 Mobile. OpenSSL ' + $buildInfo["OPENSSL_VERSION"] + ', zlib ' + $buildInfo["ZLIB_VERSION"] + '. Built by the UnigramMobile project; see patches/ for binding-generator changes.</Description>')
+    -replace '<Description>[^<]*</Description>', ('<Description>TDLib ' + $version + ' (commit ' + $buildInfo["TDLIB_COMMIT"] + ') C++/CX for UWP ARM32 / Windows 10 Mobile. OpenSSL ' + $buildInfo["OPENSSL_VERSION"] + ', zlib ' + $buildInfo["ZLIB_VERSION"] + '. Built by the UnigramMobile project; see patches/ for the binding-generator and call push changes.</Description>')
 [IO.File]::WriteAllText((Join-Path $staging "extension.vsixmanifest"), $vsixManifest, $utf8)
 
 $contentTypes = (Get-Content -LiteralPath (Join-Path $template "[Content_Types].xml") -Raw) `
