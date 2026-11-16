@@ -151,16 +151,37 @@ namespace Unigram.Services
 
             // On a cold start from a call push, TDLib can report the incoming call before this
             // service exists (it is created with the main screen), and that update is not repeated.
-            var pendingCall = protoService.GetPendingIncomingCall();
-            if (pendingCall != null && _call == null)
+            // The replay is queued at low priority so the call screen opens after startup navigation
+            // rather than in the middle of the main page's construction.
+            if (protoService.GetPendingIncomingCall() != null && _call == null)
             {
-                WriteAudioCallDiagnostic("voip.update", $"result=replayed;reason=early_update;video={pendingCall.IsVideo.ToString().ToLowerInvariant()}");
-                Handle(new UpdateCall(pendingCall));
+                var dispatcher = Unigram.Navigation.WindowContext.Default()?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    _ = dispatcher.DispatchAsync(ReplayPendingIncomingCall, CoreDispatcherPriority.Low);
+                }
+                else
+                {
+                    ReplayPendingIncomingCall();
+                }
             }
 
             _watcher = Windows.Devices.Enumeration.DeviceInformation.CreateWatcher(Windows.Devices.Sensors.ProximitySensor.GetDeviceSelector());
             _watcher.Added += OnProximitySensorAdded;
             _watcher.Start();
+        }
+
+        private void ReplayPendingIncomingCall()
+        {
+            // Re-read the cache: the call may have been discarded, or delivered normally, while queued.
+            var pendingCall = ProtoService.GetPendingIncomingCall();
+            if (pendingCall == null || _call != null)
+            {
+                return;
+            }
+
+            WriteAudioCallDiagnostic("voip.update", $"result=replayed;reason=early_update;video={pendingCall.IsVideo.ToString().ToLowerInvariant()}");
+            Handle(new UpdateCall(pendingCall));
         }
 
         #region Proximity
@@ -518,7 +539,16 @@ namespace Unigram.Services
                 RemoveIncomingCallToast(update.Call);
             }
 
-            await Dispatcher.DispatchAsync(() =>
+            // A pending call replayed from the constructor arrives before the main view model
+            // assigns this service's dispatcher, so fall back to the main window's dispatcher.
+            var dispatcher = Dispatcher ?? Unigram.Navigation.WindowContext.Default()?.Dispatcher;
+            if (dispatcher == null)
+            {
+                WriteAudioCallDiagnostic("voip.ui", "result=skipped;reason=dispatcher_unavailable");
+                return;
+            }
+
+            await dispatcher.DispatchAsync(() =>
             {
                 switch (update.Call.State)
                 {
