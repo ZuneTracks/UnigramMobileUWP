@@ -26,11 +26,22 @@ namespace Unigram.Controls
 
         private readonly LinkedList<BackStackType> _backStack = new LinkedList<BackStackType>();
 
+        private DispatcherTimer _renderTimer;
+        private string _renderTrigger;
+        private int _renderTicks;
+
+        /// <summary>
+        /// Supplies the master page's own render state (numbers and type names only) for the
+        /// nav.render snapshots. A blank screen leaves no other trace in the log.
+        /// </summary>
+        public Func<string> RenderDiagnostics { get; set; }
+
         public MasterDetailView()
         {
             DefaultStyleKey = typeof(MasterDetailView);
 
             Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
             SizeChanged += OnSizeChanged;
         }
 
@@ -58,7 +69,11 @@ namespace Unigram.Controls
         public void Dispose()
         {
             Loaded -= OnLoaded;
+            Unloaded -= OnUnloaded;
             SizeChanged -= OnSizeChanged;
+            DetachRenderDiagnostics();
+
+            RenderDiagnostics = null;
 
             var service = NavigationService;
             if (service != null)
@@ -167,6 +182,124 @@ namespace Unigram.Controls
             catch { }
         }
 
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            DetachRenderDiagnostics();
+        }
+
+        private void DetachRenderDiagnostics()
+        {
+            var window = Window.Current;
+            if (window != null)
+            {
+                window.VisibilityChanged -= OnWindowVisibilityChanged;
+            }
+
+            var timer = _renderTimer;
+            if (timer != null)
+            {
+                timer.Stop();
+                timer.Tick -= OnRenderTimerTick;
+                _renderTimer = null;
+            }
+        }
+
+        private void OnWindowVisibilityChanged(object sender, Windows.UI.Core.VisibilityChangedEventArgs e)
+        {
+            // Only when the chat list is what should be on screen, so a blank list that
+            // survives (or is fixed by) a trip to the background shows up in the log.
+            if (e.Visible && ActualWidth > 0 && CurrentState == MasterDetailState.Minimal && DetailFrame?.CurrentSourcePageType == BlankPageType)
+            {
+                ScheduleRenderDiagnostic("resume");
+            }
+        }
+
+        private void ScheduleRenderDiagnostic(string trigger)
+        {
+            try
+            {
+                if (_renderTimer == null)
+                {
+                    _renderTimer = new DispatcherTimer();
+                    _renderTimer.Tick += OnRenderTimerTick;
+                }
+
+                // Two snapshots: once page transitions should have finished, and again after
+                // a pause, to tell a list that is slow to draw from one that never draws.
+                _renderTimer.Stop();
+                _renderTrigger = trigger;
+                _renderTicks = 0;
+                _renderTimer.Interval = TimeSpan.FromMilliseconds(750);
+                _renderTimer.Start();
+            }
+            catch { }
+        }
+
+        private void OnRenderTimerTick(object sender, object e)
+        {
+            var timer = _renderTimer;
+            if (timer == null)
+            {
+                return;
+            }
+
+            timer.Stop();
+            _renderTicks++;
+
+            WriteRenderDiagnostic(_renderTicks == 1 ? "750ms" : "3s");
+
+            if (_renderTicks == 1)
+            {
+                timer.Interval = TimeSpan.FromMilliseconds(2250);
+                timer.Start();
+            }
+        }
+
+        private void WriteRenderDiagnostic(string when)
+        {
+            try
+            {
+                var master = MasterPresenter;
+                var detail = DetailFrame;
+
+                var details = $"trigger={_renderTrigger};when={when};state={CurrentState}"
+                    + $";detail={detail?.Content?.GetType().Name ?? "none"};depth={detail?.BackStackDepth ?? -1};hidden={(IsMasterHidden ? 1 : 0)}"
+                    + $";view={DescribeElement(this)};master={DescribeElement(master)};master_content={DescribeElement(master?.Content as UIElement)}"
+                    + $";detail_frame={DescribeElement(detail)};popups={VisualTreeHelper.GetOpenPopups(Window.Current).Count}";
+
+                var extra = RenderDiagnostics?.Invoke();
+                if (!string.IsNullOrEmpty(extra))
+                {
+                    details += ";" + extra;
+                }
+
+                Logs.PushDiagnostics.Write("nav.render", details);
+            }
+            catch (Exception ex)
+            {
+                Logs.PushDiagnostics.WriteException("nav.render.failed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Visibility, opacity and arranged size of an element as v/o/w/h, e.g. "v1/o1/w360/h592".
+        /// </summary>
+        public static string DescribeElement(UIElement element)
+        {
+            if (element == null)
+            {
+                return "null";
+            }
+
+            var result = $"v{(element.Visibility == Visibility.Visible ? 1 : 0)}/o{element.Opacity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}";
+            if (element is FrameworkElement framework)
+            {
+                result += $"/w{(int)framework.ActualWidth}/h{(int)framework.ActualHeight}";
+            }
+
+            return result;
+        }
+
         #endregion
 
         public void Push(bool hamburger)
@@ -205,6 +338,13 @@ namespace Unigram.Controls
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            var window = Window.Current;
+            if (window != null)
+            {
+                window.VisibilityChanged -= OnWindowVisibilityChanged;
+                window.VisibilityChanged += OnWindowVisibilityChanged;
+            }
+
             UpdateVisualState();
 
             if (CurrentState == MasterDetailState.Minimal && DetailFrame.CurrentSourcePageType == BlankPageType)
@@ -347,6 +487,11 @@ namespace Unigram.Controls
             if (e.NavigationMode == NavigationMode.New && DetailFrame.CanGoBack)
             {
                 Push(false);
+            }
+
+            if (e.NavigationMode == NavigationMode.Back)
+            {
+                ScheduleRenderDiagnostic("back");
             }
 
             if (CurrentState == MasterDetailState.Minimal && e.SourcePageType == BlankPageType)

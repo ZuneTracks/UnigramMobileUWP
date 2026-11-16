@@ -1323,6 +1323,8 @@ namespace Unigram.Views
                 MasterDetail.NavigationService.FrameFacade.Navigated += OnNavigated;
             }
 
+            MasterDetail.RenderDiagnostics = GetChatListRenderDiagnostics;
+
 #if MODERN_TDLIB
             Logs.PushDiagnostics.Write("main.initialize", "step=navigation_services");
 #endif
@@ -1339,6 +1341,29 @@ namespace Unigram.Views
 #if MODERN_TDLIB
             Logs.PushDiagnostics.Write("main.initialize", "step=done;result=ok");
 #endif
+        }
+
+        private string GetChatListRenderDiagnostics()
+        {
+            // The search and folder animations drive these panels through composition, which
+            // XAML Visibility/Opacity does not reflect, so report both.
+            return $"pivot={rpMasterTitlebar?.SelectedIndex ?? -1};search_collapsed={(_searchCollapsed ? 1 : 0)}"
+                + $";dialogs={DescribeComposed(DialogsPanel)};search={DescribeComposed(DialogsSearchPanel)}"
+                + $";chats_panel={DescribeComposed(ChatsPanel)};list={DescribeComposed(ChatsList)}"
+                + $";items={ChatsList?.Items?.Count ?? -1};realized={ChatsList?.ItemsPanelRoot?.Children.Count ?? -1}";
+        }
+
+        private static string DescribeComposed(UIElement element)
+        {
+            var result = MasterDetailView.DescribeElement(element);
+            if (element == null)
+            {
+                return result;
+            }
+
+            var visual = ElementCompositionPreview.GetElementVisual(element);
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            return result + $"/vo{visual.Opacity.ToString("0.##", culture)}/vs{visual.Scale.X.ToString("0.##", culture)}/vx{(int)visual.Offset.X}/vy{(int)visual.Offset.Y}";
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
