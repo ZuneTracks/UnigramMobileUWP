@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Reactions**\n• In private chats and small groups, reactions now show who reacted with small profile pictures instead of a count, like Unigram for desktop";
+        public static readonly string CurrentChangelog = "**Diagnostics**\n• Records the chat list's screen state after going back from a chat and when returning to the app, to help track down blank screens";
 
         public int Session => _session;
 
