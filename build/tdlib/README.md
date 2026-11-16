@@ -54,6 +54,14 @@ the direct `LinkPreviewType` variants. This is a narrow compatibility surface
 for the existing message renderer; unsupported preview categories still retain
 their modern typed `Type` object.
 
+`patches/0006-process-call-push-updates.patch` handles `PHONE_CALL_REQUEST` and
+`VIDEO_CALL_REQUEST` pushes that carry `custom.updates`: it decodes the embedded
+`Updates` and forwards its `updatePhoneCall` to `CallManager`. Upstream TDLib
+rejects call pushes (error 406), and Telegram does not resend a ringing call to
+a session created after the call started, so without this a cold launch from a
+call toast never sees the pending call. Duplicate deliveries are ignored by
+`CallActor` once the call has left its empty state.
+
 ## Build
 
 From a PowerShell prompt:

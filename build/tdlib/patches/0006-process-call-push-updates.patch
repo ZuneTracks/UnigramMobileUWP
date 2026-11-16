@@ -1,0 +1,95 @@
+diff --git a/td/telegram/NotificationManager.cpp b/td/telegram/NotificationManager.cpp
+index f9a0cec..c373c35 100644
+--- a/td/telegram/NotificationManager.cpp
++++ b/td/telegram/NotificationManager.cpp
+@@ -7,8 +7,10 @@
+ #include "td/telegram/NotificationManager.h"
+ 
+ #include "td/telegram/AuthManager.h"
++#include "td/telegram/CallManager.h"
+ #include "td/telegram/ChannelId.h"
+ #include "td/telegram/ChatId.h"
++#include "td/telegram/ChatManager.h"
+ #include "td/telegram/DeviceTokenManager.h"
+ #include "td/telegram/DialogManager.h"
+ #include "td/telegram/Document.h"
+@@ -3368,6 +3370,79 @@ Status NotificationManager::process_push_notification_payload(string payload, bo
+     return Status::Error(406, "New secret chat notification is not supported");
+   }
+ 
++  if ((loc_key == "PHONE_CALL_REQUEST" || loc_key == "VIDEO_CALL_REQUEST") && custom.has_field("updates")) {
++    // The server embeds the incoming phoneCallRequested in the push and does not resend it to
++    // a session created after the call started, so a client launched from the push needs it.
++    TRY_RESULT(updates_base64, custom.get_required_string_field("updates"));
++    TRY_RESULT(updates_data, base64url_decode(updates_base64));
++
++    TlParser gzip_parser(updates_data);
++    int32 id = gzip_parser.fetch_int();
++    if (gzip_parser.get_error()) {
++      return Status::Error(PSLICE() << "Failed to parse call updates: " << gzip_parser.get_error());
++    }
++    BufferSlice buffer;
++    static constexpr int32 GZIP_PACKED_ID = 812830625;
++    if (id == GZIP_PACKED_ID) {
++      auto packed_data = gzip_parser.template fetch_string<Slice>();
++      gzip_parser.fetch_end();
++      if (gzip_parser.get_error()) {
++        return Status::Error(PSLICE() << "Failed to parse gzip_packed in call updates: " << gzip_parser.get_error());
++      }
++      buffer = gzdecode(packed_data);
++      if (buffer.empty()) {
++        return Status::Error("Failed to uncompress call updates");
++      }
++    } else {
++      buffer = BufferSlice(updates_data);
++    }
++
++    TlBufferParser parser(&buffer);
++    auto updates = telegram_api::Updates::fetch(parser);
++    parser.fetch_end();
++    if (parser.get_error() != nullptr || updates == nullptr) {
++      return Status::Error(PSLICE() << "Failed to parse call updates: "
++                                    << Slice(parser.get_error() != nullptr ? parser.get_error() : "empty"));
++    }
++
++    vector<telegram_api::object_ptr<telegram_api::Update>> call_updates;
++    switch (updates->get_id()) {
++      case telegram_api::updateShort::ID:
++        call_updates.push_back(std::move(static_cast<telegram_api::updateShort *>(updates.get())->update_));
++        break;
++      case telegram_api::updates::ID: {
++        auto *container = static_cast<telegram_api::updates *>(updates.get());
++        td_->user_manager_->on_get_users(std::move(container->users_), "process_push_notification_call");
++        td_->chat_manager_->on_get_chats(std::move(container->chats_), "process_push_notification_call");
++        call_updates = std::move(container->updates_);
++        break;
++      }
++      case telegram_api::updatesCombined::ID: {
++        auto *container = static_cast<telegram_api::updatesCombined *>(updates.get());
++        td_->user_manager_->on_get_users(std::move(container->users_), "process_push_notification_call");
++        td_->chat_manager_->on_get_chats(std::move(container->chats_), "process_push_notification_call");
++        call_updates = std::move(container->updates_);
++        break;
++      }
++      default:
++        break;
++    }
++
++    bool has_call_update = false;
++    for (auto &update : call_updates) {
++      if (update != nullptr && update->get_id() == telegram_api::updatePhoneCall::ID) {
++        has_call_update = true;
++        send_closure(G()->call_manager(), &CallManager::update_call,
++                     telegram_api::move_object_as<telegram_api::updatePhoneCall>(update));
++      }
++    }
++    if (!has_call_update) {
++      return Status::Error(406, "Phone call notification has no call update");
++    }
++    promise.set_value(Unit());
++    return Status::OK();
++  }
++
+   if (begins_with(loc_key, "PHONE_CALL_") || begins_with(loc_key, "VIDEO_CALL_")) {
+     // TODO PHONE_CALL_REQUEST/PHONE_CALL_DECLINE/PHONE_CALL_MISSED/VIDEO_CALL_REQUEST/VIDEO_CALL_MISSED notifications
+     return Status::Error(406, "Phone call notification is not supported");

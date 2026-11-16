@@ -206,6 +206,7 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		{
 			// The call is over: stop the ringing toast even if the chat is muted.
 			RemoveCallToast(session, GetGroup(data->GetNamedObject("custom", nullptr)));
+			ClearPendingCallPush();
 		}
 
 		if (sessionMapped)
@@ -258,6 +259,11 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 				auto now = std::time(nullptr);
 				if (pushTime > 0 && now - pushTime <= CallRingWindowSeconds)
 				{
+					if (sessionMapped)
+					{
+						SavePendingCallPush(content, session, pushTime);
+					}
+
 					create_task(ShowIncomingCallToast(caption, message, session, launch, group, picture, date, pushTime + CallToastLifetimeSeconds)).get();
 					LogDiagnostic(L"native.notification.displayed", muted ? L"toast=true;kind=call;ring=1;muted=1" : L"toast=true;kind=call;ring=1;muted=0");
 				}
@@ -1061,6 +1067,69 @@ void NotificationTask::RemoveCallToast(String^ account, String^ group)
 	}
 
 	LogDiagnostic(L"native.notification.removed", removed ? L"result=success;kind=call" : L"result=failed;kind=call");
+}
+
+// TDLib does not resend a ringing call to a session that connects after the call started,
+// so the call push is kept for the app to replay through ProcessPushNotification when it
+// is cold-launched from the call toast. The file stays in the app's own LocalFolder and is
+// consumed or expired by the app; its content is never logged.
+void NotificationTask::SavePendingCallPush(String^ content, String^ session, time_t pushTime)
+{
+	try
+	{
+		std::wstring path = ApplicationData::Current->LocalFolder->Path->Data();
+		path += L"\\pending-call-push.json";
+
+		std::wstring wide = content->Data();
+		auto length = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.length()), nullptr, 0, nullptr, nullptr);
+		std::string utf8(length, '\0');
+		WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.length()), &utf8[0], length, nullptr, nullptr);
+
+		{
+			std::ofstream file(path, std::ios::trunc | std::ios::binary);
+			if (!file.is_open())
+			{
+				LogDiagnostic(L"native.call.pending", L"result=failed;reason=file_unavailable");
+				return;
+			}
+
+			file.write(utf8.data(), utf8.size());
+		}
+
+		auto values = ApplicationData::Current->LocalSettings->Values;
+		values->Insert(L"PendingCallPushSession", session);
+		values->Insert(L"PendingCallPushTime", PropertyValue::CreateInt64(static_cast<int64>(pushTime)));
+		LogDiagnostic(L"native.call.pending", L"result=saved");
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"saving pending call push", ex);
+	}
+}
+
+void NotificationTask::ClearPendingCallPush()
+{
+	try
+	{
+		auto values = ApplicationData::Current->LocalSettings->Values;
+		if (values->HasKey(L"PendingCallPushSession"))
+		{
+			values->Remove(L"PendingCallPushSession");
+		}
+		if (values->HasKey(L"PendingCallPushTime"))
+		{
+			values->Remove(L"PendingCallPushTime");
+		}
+
+		std::wstring path = ApplicationData::Current->LocalFolder->Path->Data();
+		path += L"\\pending-call-push.json";
+		DeleteFileW(path.c_str());
+		LogDiagnostic(L"native.call.pending", L"result=cleared");
+	}
+	catch (Exception ^ ex)
+	{
+		LogError(L"clearing pending call push", ex);
+	}
 }
 
 //

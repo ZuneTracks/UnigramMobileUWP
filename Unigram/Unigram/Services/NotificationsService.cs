@@ -1230,8 +1230,123 @@ namespace Unigram.Services
             {
                 Logs.PushDiagnostics.Write("wns.registration.retry", "reason=authorization_ready");
                 _ = RegisterAsync();
+#if MODERN_TDLIB
+                _ = ReplayPendingCallPushAsync();
+#endif
             }
         }
+
+#if MODERN_TDLIB
+        private const string PendingCallPushSessionKey = "PendingCallPushSession";
+        private const string PendingCallPushTimeKey = "PendingCallPushTime";
+        private const string PendingCallPushFileName = "pending-call-push.json";
+        private const long PendingCallPushLifetimeSeconds = 60;
+        private static readonly object _pendingCallPushLock = new object();
+
+        // The native background task saves a ringing call push because the server does not
+        // resend the call to a TDLib instance that connects after the call started. After a
+        // cold launch (usually from the call toast) the push is handed to TDLib, which
+        // creates the incoming call from the updatePhoneCall it carries (TDLib patch 0006).
+        private async Task ReplayPendingCallPushAsync()
+        {
+            string content;
+            try
+            {
+                content = TakePendingCallPush(_sessionService.Id.ToString(CultureInfo.InvariantCulture));
+            }
+            catch (Exception ex)
+            {
+                Logs.PushDiagnostics.WriteException("voip.push_replay", ex);
+                return;
+            }
+
+            if (content == null)
+            {
+                return;
+            }
+
+            var response = await _protoService.SendAsync(new ProcessPushNotification(content));
+            if (response is Error error)
+            {
+                Logs.PushDiagnostics.Write("voip.push_replay", $"result=error;code={error.Code}");
+            }
+            else
+            {
+                Logs.PushDiagnostics.Write("voip.push_replay", $"result=success;type={response?.GetType().Name ?? "null"}");
+            }
+        }
+
+        private static string TakePendingCallPush(string session)
+        {
+            lock (_pendingCallPushLock)
+            {
+                var values = ApplicationData.Current.LocalSettings.Values;
+                if (!values.TryGetValue(PendingCallPushSessionKey, out object storedSession))
+                {
+                    return null;
+                }
+
+                if (!string.Equals(storedSession as string, session, StringComparison.Ordinal))
+                {
+                    return null;
+                }
+
+                values.TryGetValue(PendingCallPushTimeKey, out object storedTime);
+                var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, PendingCallPushFileName);
+                var content = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
+
+                ClearPendingCallPushCore();
+
+                if (string.IsNullOrEmpty(content))
+                {
+                    Logs.PushDiagnostics.Write("voip.push_replay", "result=skipped;reason=missing");
+                    return null;
+                }
+
+                var age = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - (storedTime is long pushTime ? pushTime : 0);
+                if (age < 0 || age > PendingCallPushLifetimeSeconds)
+                {
+                    Logs.PushDiagnostics.Write("voip.push_replay", "result=skipped;reason=expired");
+                    return null;
+                }
+
+                Logs.PushDiagnostics.Write("voip.push_replay", $"result=replaying;age={age}");
+                return content;
+            }
+        }
+
+        public static void ClearPendingCallPush()
+        {
+            try
+            {
+                lock (_pendingCallPushLock)
+                {
+                    if (ApplicationData.Current.LocalSettings.Values.ContainsKey(PendingCallPushSessionKey))
+                    {
+                        ClearPendingCallPushCore();
+                        Logs.PushDiagnostics.Write("voip.push_replay", "result=cleared;reason=call_received");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.PushDiagnostics.WriteException("voip.push_replay", ex);
+            }
+        }
+
+        private static void ClearPendingCallPushCore()
+        {
+            var values = ApplicationData.Current.LocalSettings.Values;
+            values.Remove(PendingCallPushSessionKey);
+            values.Remove(PendingCallPushTimeKey);
+
+            var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, PendingCallPushFileName);
+            if (System.IO.File.Exists(path))
+            {
+                System.IO.File.Delete(path);
+            }
+        }
+#endif
 
         public void Handle(UpdateOption update)
         {
