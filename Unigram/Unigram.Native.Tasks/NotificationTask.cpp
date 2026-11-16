@@ -4,6 +4,7 @@
 #include <ios>
 #include <fstream>
 
+#include <algorithm>
 #include <experimental\resumable>
 #include <ppltasks.h>
 #include <pplawait.h>
@@ -247,6 +248,7 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 			auto group = GetGroup(custom);
 			auto isSecretChat = IsSecretChatPush(loc_key);
 			String^ picture = isSecretChat ? nullptr : GetPicture(custom, group, session);
+			LogPictureSource(picture);
 			auto date = GetDate(notification);
 
 			if (message == nullptr)
@@ -506,6 +508,36 @@ String^ NotificationTask::GetPicture(JsonObject^ custom, String^ group, String^ 
 		<< L"_placeholder.png";
 
 	return ref new String(almost.str().c_str());
+}
+
+// Records only which kind of avatar a toast references and whether that file exists; a
+// missing file makes the toast render without an avatar.
+void NotificationTask::LogPictureSource(String^ picture)
+{
+	if (picture == nullptr)
+	{
+		LogDiagnostic(L"native.toast.picture", L"source=none");
+		return;
+	}
+
+	std::wstring uri = picture->Data();
+	const std::wstring prefix = L"ms-appdata:///local/";
+	const wchar_t* source = uri.find(L"/profile_photos/") != std::wstring::npos ? L"photo" : L"placeholder";
+	bool exists = false;
+
+	if (uri.compare(0, prefix.length(), prefix) == 0)
+	{
+		std::wstring path = ApplicationData::Current->LocalFolder->Path->Data();
+		path += L"\\";
+		path += uri.substr(prefix.length());
+		std::replace(path.begin(), path.end(), L'/', L'\\');
+		exists = GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+	}
+
+	std::wstring details = L"source=";
+	details += source;
+	details += exists ? L";exists=1" : L";exists=0";
+	LogDiagnostic(L"native.toast.picture", ref new String(details.c_str()));
 }
 
 String^ NotificationTask::GetDate(JsonObject^ notification)

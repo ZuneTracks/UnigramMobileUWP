@@ -35,6 +35,7 @@ namespace Unigram
 				static void RemoveCallToast(String^ account, String^ group);
 				static void SavePendingCallPush(String^ content, String^ session, time_t receivedTime);
 				static void LogCallPushShape(JsonObject^ custom, long long skewSeconds);
+				static void LogPictureSource(String^ picture);
 				static void ClearPendingCallPush();
 				concurrency::task<void> UpdateToastAndTiles(String^ content /*, std::wofstream* log*/);
 				String^ GetCaption(JsonArray^ loc_args, String^ loc_key);
