@@ -529,7 +529,7 @@ namespace Unigram.Services
                 _controller = null;
 #if MODERN_TGCALLS
                 ClearPendingModernSignalingData(update.Call.Id);
-                DisposeModernCall();
+                DisposeModernCall(!(update.Call.IsOutgoing && discarded.Reason is CallDiscardReasonDeclined));
 #endif
                 _call = null;
             }
@@ -1787,7 +1787,7 @@ namespace Unigram.Services
         /// a throwing <see cref="IDisposable.Dispose"/> from leaving a dead call installed, which
         /// would make the service reject every later call for the lifetime of the process.
         /// </summary>
-        private void DisposeModernCall()
+        private void DisposeModernCall(bool hideCallUiBeforeTeardown = false)
         {
             var callId = _modernCallId;
             var controller = System.Threading.Interlocked.Exchange(ref _modernController, null);
@@ -1817,6 +1817,15 @@ namespace Unigram.Services
                     WriteModernMediaDiagnostic(
                         "result=video_output;state=teardown_begin;local=1;remote=1");
                     DetachModernVideoOutputs(controller, callPage);
+
+                    // Teardown blocks until the audio device is destroyed, which takes up
+                    // to ~2 s on W10M. Close the call screen now so it doesn't sit frozen
+                    // after hang-up; the outputs are already detached from its visuals.
+                    if (hideCallUiBeforeTeardown)
+                    {
+                        Hide();
+                    }
+
                     teardown = controller.Teardown();
                     WriteModernMediaDiagnostic(
                         "result=video_output;state=teardown_end;local=1;remote=1");
