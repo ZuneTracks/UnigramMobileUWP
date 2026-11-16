@@ -19,7 +19,9 @@ namespace Unigram.Common
 {
     public static class ImageHelper
     {
-        public static async Task<(int Width, int Height)> GetScaleAsync(StorageFile file, int requestedMinSide = 1280, BitmapEditState editState = null)
+        public const int PhotoMaxSide = 2560;
+
+        public static async Task<(int Width, int Height)> GetScaleAsync(StorageFile file, int requestedMinSide = PhotoMaxSide, BitmapEditState editState = null)
         {
             var props = await file.Properties.GetImagePropertiesAsync();
             var width = props.Width;
@@ -29,6 +31,24 @@ namespace Unigram.Common
             {
                 width = (uint)(crop.Width * props.Width);
                 height = (uint)(crop.Height * props.Height);
+            }
+            else if (editState == null)
+            {
+                // Phone cameras store portrait photos as landscape pixels plus an EXIF rotation;
+                // the sent JPEG is rotated, so the declared size must be too.
+                try
+                {
+                    using (var stream = await file.OpenReadAsync())
+                    {
+                        var decoder = await BitmapDecoder.CreateAsync(stream);
+                        width = decoder.OrientedPixelWidth;
+                        height = decoder.OrientedPixelHeight;
+                    }
+                }
+                catch
+                {
+                    // Keep the property dimensions when the image cannot be decoded here.
+                }
             }
 
             if (width > requestedMinSide || height > requestedMinSide)
@@ -80,6 +100,7 @@ namespace Unigram.Common
 
                 using (var resizedStream = await resizedImageFile.OpenAsync(FileAccessMode.ReadWrite))
                 {
+                    resizedStream.Size = 0;
                     BitmapTransform transform;
 
                     if (decoder.PixelWidth > requestedMinSide || decoder.PixelHeight > requestedMinSide)
@@ -91,11 +112,13 @@ namespace Unigram.Common
                         uint width = (uint)(originalPixelWidth * ratio);
                         uint height = (uint)(originalPixelHeight * ratio);
 
+                        // Fant averages every source pixel; Linear samples only 2x2 neighbours,
+                        // which aliased badly when shrinking multi-megapixel camera photos.
                         transform = new BitmapTransform
                         {
                             ScaledWidth = width,
                             ScaledHeight = height,
-                            InterpolationMode = BitmapInterpolationMode.Linear
+                            InterpolationMode = BitmapInterpolationMode.Fant
                         };
                     }
                     else
@@ -103,7 +126,9 @@ namespace Unigram.Common
                         transform = new BitmapTransform();
                     }
 
-                    var pixelData = await decoder.GetSoftwareBitmapAsync(decoder.BitmapPixelFormat, decoder.BitmapAlphaMode, transform, ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage);
+                    // Request Bgra8 rather than the decoder's native format: phone JPEG decoders
+                    // can report camera YUV layouts that the JPEG encoder does not take as-is.
+                    var pixelData = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, transform, ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage);
 
                     // Not using ATM, quality is too low
                     //var propertySet = new BitmapPropertySet();
@@ -113,6 +138,11 @@ namespace Unigram.Common
                     var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resizedStream/*, propertySet*/);
                     encoder.SetSoftwareBitmap(pixelData);
                     await encoder.FlushAsync();
+
+                    if (requestedMinSide > 90)
+                    {
+                        Logs.PushDiagnostics.Write("photo.scale", $"source={originalPixelWidth}x{originalPixelHeight};oriented={decoder.OrientedPixelWidth}x{decoder.OrientedPixelHeight};native_format={decoder.BitmapPixelFormat};output={pixelData.PixelWidth}x{pixelData.PixelHeight};max_side={requestedMinSide};bytes={resizedStream.Size}");
+                    }
                 }
             }
 
@@ -300,11 +330,11 @@ namespace Unigram.Common
                 transform.ScaledWidth = (uint)scaledSize.Width;
                 transform.ScaledHeight = (uint)scaledSize.Height;
                 transform.Bounds = bounds;
-                transform.InterpolationMode = BitmapInterpolationMode.Linear;
+                transform.InterpolationMode = BitmapInterpolationMode.Fant;
                 transform.Rotation = rotation;
                 transform.Flip = flip;
 
-                var pixelData = await decoder.GetSoftwareBitmapAsync(decoder.BitmapPixelFormat, decoder.BitmapAlphaMode, transform, ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage);
+                var pixelData = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, transform, ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage);
 
                 var propertySet = new BitmapPropertySet();
                 var qualityValue = new BitmapTypedValue(quality, PropertyType.Single);

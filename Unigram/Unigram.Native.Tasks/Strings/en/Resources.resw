@@ -318,6 +318,12 @@
   <data name="PINNED_AUDIO" xml:space="preserve">
     <value>pinned a voice message</value>
   </data>
+  <data name="VIDEO_CALL_MISSED" xml:space="preserve">
+    <value>You missed a video call from {0}</value>
+  </data>
+  <data name="VIDEO_CALL_REQUEST" xml:space="preserve">
+    <value>{0} is video calling you</value>
+  </data>
   <data name="PINNED_CONTACT" xml:space="preserve">
     <value>pinned a contact</value>
   </data>

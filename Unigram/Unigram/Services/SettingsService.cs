@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Diagnostics**\n• Records the chat list's screen state after going back from a chat and when returning to the app, to help track down blank screens";
+        public static readonly string CurrentChangelog = "**Photos**\n• Fixed camera photos arriving blurry and distorted for recipients: photos are now downscaled with high-quality filtering and sent at up to 2560px instead of 1280px\n\n**Calls**\n• Incoming video calls now ring with the accept/decline screen when the app is closed or minimized, and missed video calls show a proper notification instead of \"New Notification\"\n• Fixed incoming call notifications being discarded as expired when the phone's clock differs slightly from Telegram's\n\n**Diagnostics**\n• Records which call details Telegram includes in call notifications, to help fix answering calls while the app is closed";
 
         public int Session => _session;
 

@@ -201,8 +201,9 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		}
 
 		auto pushType = data->GetNamedString("loc_key");
-		auto isCallRequest = pushType->Equals(L"PHONE_CALL_REQUEST");
-		if (pushType->Equals(L"PHONE_CALL_MISSED"))
+		// Video calls use their own loc_keys; without them a video call was dropped as muted.
+		auto isCallRequest = pushType->Equals(L"PHONE_CALL_REQUEST") || pushType->Equals(L"VIDEO_CALL_REQUEST");
+		if (pushType->Equals(L"PHONE_CALL_MISSED") || pushType->Equals(L"VIDEO_CALL_MISSED"))
 		{
 			// The call is over: stop the ringing toast even if the chat is muted.
 			RemoveCallToast(session, GetGroup(data->GetNamedObject("custom", nullptr)));
@@ -318,7 +319,7 @@ String^ NotificationTask::GetCaption(JsonArray^ loc_args, String^ loc_key)
 	{
 		return loc_args->GetStringAt(0);
 	}
-	else if (key.find(L"PHONE_CALL") == 0)
+	else if (key.find(L"PHONE_CALL") == 0 || key.find(L"VIDEO_CALL") == 0)
 	{
 		return loc_args->GetStringAt(0);
 	}
