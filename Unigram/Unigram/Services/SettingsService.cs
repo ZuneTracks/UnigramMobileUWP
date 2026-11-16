@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Calls**\n• Accepting a call from its notification now opens the call when the app was closed or the phone was restarted\n\n**Diagnostics**\n• Call diagnostics now record camera start time, frame counts, capture resolution and app memory use\n• Exporting diagnostics now recovers a crash record left by a previous run";
+        public static readonly string CurrentChangelog = "**Reactions**\n• In private chats and small groups, reactions now show who reacted with small profile pictures instead of a count, like Unigram for desktop";
 
         public int Session => _session;
 
