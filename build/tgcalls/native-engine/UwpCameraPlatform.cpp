@@ -34,11 +34,66 @@
 namespace Unigram {
 namespace Native {
 namespace Calls {
+
+// One camera is live at a time, so process-wide counters describe it without needing a
+// synchronous hop onto the media thread that owns the capturer.
+struct CameraCaptureStats {
+    std::atomic<int> capturers{0};
+    std::atomic<bool> running{false};
+    std::atomic<unsigned int> starts{0};
+    std::atomic<unsigned int> startFailures{0};
+    std::atomic<long long> startTick{0};
+    std::atomic<long long> startMs{0};
+    std::atomic<long long> firstFrameTick{0};
+    std::atomic<long long> lastFrameTick{0};
+    std::atomic<unsigned int> frames{0};
+    std::atomic<int> capWidth{0};
+    std::atomic<int> capHeight{0};
+    std::atomic<int> capFps{0};
+    std::atomic<int> frameWidth{0};
+    std::atomic<int> frameHeight{0};
+};
+
+extern CameraCaptureStats g_cameraStats;
+
 namespace {
 
 std::mutex g_cameraOrientationHintsMutex;
 std::unordered_map<std::string, bool> g_cameraOrientationHints;
 
+}
+
+CameraCaptureStats g_cameraStats;
+
+std::string DescribeCameraCaptureStatus() {
+    auto& stats = g_cameraStats;
+    if (stats.capturers.load(std::memory_order_acquire) <= 0) {
+        return std::string();
+    }
+
+    const auto starts = stats.starts.load(std::memory_order_acquire);
+    std::string status = ";cam_run=" +
+        std::string(stats.running.load(std::memory_order_acquire) ? "1" : "0") +
+        ";cam_starts=" + std::to_string(starts) +
+        ";cam_start_fail=" + std::to_string(stats.startFailures.load(std::memory_order_acquire));
+    if (starts == 0) {
+        return status;
+    }
+
+    const auto now = static_cast<long long>(GetTickCount64());
+    const auto begin = stats.startTick.load(std::memory_order_acquire);
+    const auto first = stats.firstFrameTick.load(std::memory_order_acquire);
+    const auto last = stats.lastFrameTick.load(std::memory_order_acquire);
+    status += ";cam_start_ms=" + std::to_string(stats.startMs.load(std::memory_order_acquire));
+    status += ";cam_first_ms=" + (first != 0 ? std::to_string(first - begin) : std::string("pending"));
+    status += ";cam_frames=" + std::to_string(stats.frames.load(std::memory_order_acquire));
+    status += ";cam_idle_ms=" + (last != 0 ? std::to_string(now - last) : std::string("none"));
+    status += ";cam_cap=" + std::to_string(stats.capWidth.load(std::memory_order_acquire)) +
+        "x" + std::to_string(stats.capHeight.load(std::memory_order_acquire)) +
+        "@" + std::to_string(stats.capFps.load(std::memory_order_acquire));
+    status += ";cam_frame=" + std::to_string(stats.frameWidth.load(std::memory_order_acquire)) +
+        "x" + std::to_string(stats.frameHeight.load(std::memory_order_acquire));
+    return status;
 }
 
 void SetCameraDeviceOrientationHint(
@@ -77,6 +132,10 @@ webrtc::VideoRotation RotationForDevice(const std::string& deviceId) {
     return Unigram::Native::Calls::IsFrontCameraDevice(deviceId)
         ? kFrontPortraitRotation
         : kBackPortraitRotation;
+}
+
+Unigram::Native::Calls::CameraCaptureStats& Stats() {
+    return Unigram::Native::Calls::g_cameraStats;
 }
 
 class CameraCaptureOperationScope {
@@ -204,10 +263,12 @@ class UwpCameraCapturer final : public rtc::VideoSinkInterface<webrtc::VideoFram
 public:
     explicit UwpCameraCapturer(std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>> sink)
         : _sink(std::move(sink)) {
+        Stats().capturers.fetch_add(1, std::memory_order_acq_rel);
     }
 
     ~UwpCameraCapturer() override {
         Stop();
+        Stats().capturers.fetch_sub(1, std::memory_order_acq_rel);
     }
 
     void SetState(VideoState state) {
@@ -270,6 +331,15 @@ public:
     }
 
     void OnFrame(const webrtc::VideoFrame& frame) override {
+        auto& stats = Stats();
+        const auto now = static_cast<long long>(GetTickCount64());
+        long long noFrame = 0;
+        stats.firstFrameTick.compare_exchange_strong(noFrame, now, std::memory_order_acq_rel);
+        stats.lastFrameTick.store(now, std::memory_order_release);
+        stats.frames.fetch_add(1, std::memory_order_relaxed);
+        stats.frameWidth.store(frame.width(), std::memory_order_relaxed);
+        stats.frameHeight.store(frame.height(), std::memory_order_relaxed);
+
         if (_state.load(std::memory_order_acquire) != VideoState::Active || _sink == nullptr) {
             return;
         }
@@ -374,9 +444,17 @@ private:
             return false;
         }
 
+        auto& stats = Stats();
+        const auto begin = static_cast<long long>(GetTickCount64());
+        stats.startTick.store(begin, std::memory_order_release);
+        stats.firstFrameTick.store(0, std::memory_order_release);
+        stats.lastFrameTick.store(0, std::memory_order_release);
+        stats.frames.store(0, std::memory_order_release);
+
         _module = webrtc::VideoCaptureFactory::Create(deviceId.c_str());
         if (!_module) {
             RTC_LOG(LS_ERROR) << "Failed to create UWP camera capture.";
+            stats.startFailures.fetch_add(1, std::memory_order_acq_rel);
             return false;
         }
 
@@ -410,11 +488,18 @@ private:
 
         if (_module->StartCapture(_capability) != 0) {
             RTC_LOG(LS_ERROR) << "Failed to start UWP camera capture.";
+            stats.startFailures.fetch_add(1, std::memory_order_acq_rel);
             Stop();
             return false;
         }
 
         _dimensions = { _capability.width, _capability.height };
+        stats.capWidth.store(_capability.width, std::memory_order_release);
+        stats.capHeight.store(_capability.height, std::memory_order_release);
+        stats.capFps.store(_capability.maxFPS, std::memory_order_release);
+        stats.startMs.store(static_cast<long long>(GetTickCount64()) - begin, std::memory_order_release);
+        stats.starts.fetch_add(1, std::memory_order_acq_rel);
+        stats.running.store(true, std::memory_order_release);
         return true;
     }
 
@@ -424,6 +509,7 @@ private:
             return true;
         }
 
+        Stats().running.store(false, std::memory_order_release);
         const auto stopped = _module->StopCapture() == 0;
         _module->DeRegisterCaptureDataCallback();
         _module = nullptr;

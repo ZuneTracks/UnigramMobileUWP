@@ -2268,7 +2268,7 @@ std::string GetAudioDeviceStatus(const CallSessionPtr& session) {
     if (!session) {
         return "created=0";
     }
-    return session->AudioDeviceStatus();
+    return session->AudioDeviceStatus() + DescribeCameraCaptureStatus();
 }
 
 void StopCallSession(const CallSessionPtr& session) {

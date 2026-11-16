@@ -59,6 +59,9 @@ namespace Unigram.Views
         {
             // Native fault records are appended to a separate file, so fold them in
             // before sharing rather than leaving them for the next call to collect.
+#if MODERN_TGCALLS
+            Services.VoIPService.EnableModernCrashDiagnostics();
+#endif
             Logs.PushDiagnostics.DrainFaultFile();
 
             var folder = await ApplicationData.Current.LocalFolder.TryGetItemAsync(Logs.PushDiagnostics.DirectoryName) as StorageFolder;

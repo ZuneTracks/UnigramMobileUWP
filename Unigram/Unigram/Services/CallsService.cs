@@ -295,6 +295,14 @@ namespace Unigram.Services
 
             WriteAudioCallDiagnostic("voip.update", $"result=received;state={update.Call.State?.GetType().Name ?? "null"};outgoing={update.Call.IsOutgoing.ToString().ToLowerInvariant()};video={update.Call.IsVideo.ToString().ToLowerInvariant()}");
 
+#if MODERN_TDLIB
+            if (!update.Call.IsOutgoing)
+            {
+                // The call reached TDLib directly, so the saved push must not be replayed later.
+                NotificationsService.ClearPendingCallPush();
+            }
+#endif
+
             if (update.Call.State is CallStatePending pending)
             {
 #if MODERN_TGCALLS
@@ -962,16 +970,19 @@ namespace Unigram.Services
             }
         }
 
-        private static bool _modernCrashDiagnosticsEnabled;
+        private static int _modernCrashDiagnosticsEnabled;
 
-        private void EnableModernCrashDiagnostics()
+        /// <summary>
+        /// Installs the native fault reporter, which also recovers the in-flight step and the
+        /// last fault left by a previous process. Called before a call and before a log export,
+        /// so a crash is reported in the export that follows it rather than after the next call.
+        /// </summary>
+        public static void EnableModernCrashDiagnostics()
         {
-            if (_modernCrashDiagnosticsEnabled)
+            if (System.Threading.Interlocked.Exchange(ref _modernCrashDiagnosticsEnabled, 1) != 0)
             {
                 return;
             }
-
-            _modernCrashDiagnosticsEnabled = true;
 
             try
             {
@@ -991,7 +1002,7 @@ namespace Unigram.Services
             }
             catch (Exception error)
             {
-                WriteModernMediaDiagnostic($"result=fault_reporter;enabled=0;hresult=0x{error.HResult:X8}");
+                Logs.PushDiagnostics.Write("voip.media", $"result=fault_reporter;enabled=0;hresult=0x{error.HResult:X8}");
             }
         }
 
@@ -1523,12 +1534,24 @@ namespace Unigram.Services
                     // never leak. The default 256-character cap truncates the tail of that
                     // list, so it is raised here; the cap bounds length, not redaction, and
                     // every redaction rule still runs.
-                    summary += ";" + Logs.PushDiagnostics.SanitizeErrorMessage(session.GetAudioDeviceStatus(), 512);
+                    summary += ";" + Logs.PushDiagnostics.SanitizeErrorMessage(session.GetAudioDeviceStatus(), 768);
                 }
                 catch (Exception error)
                 {
                     summary += $";audio_device_error=0x{error.HResult:X8}";
                 }
+            }
+
+            // A process ended by the resource manager leaves no exception at all, so the
+            // memory trend is the only evidence that separates it from a native crash.
+            try
+            {
+                summary += $";mem_mb={Windows.System.MemoryManager.AppMemoryUsage / (1024 * 1024)}" +
+                    $";mem_limit_mb={Windows.System.MemoryManager.AppMemoryUsageLimit / (1024 * 1024)}";
+            }
+            catch (Exception error)
+            {
+                summary += $";mem_error=0x{error.HResult:X8}";
             }
 
             WriteModernMediaDiagnostic(summary);

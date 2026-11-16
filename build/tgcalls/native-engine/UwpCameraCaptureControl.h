@@ -10,6 +10,9 @@ void SetCameraDeviceOrientationHint(const std::string& deviceSelector, bool isFr
 bool IsFrontCameraDevice(const std::string& deviceSelector);
 void SetCameraCaptureInflightStage(const char* stage);
 void ClearCameraCaptureInflightStage();
+// Privacy-safe camera timing and frame counters for the live capturer, as ";key=value"
+// pairs; empty when no capturer exists.
+std::string DescribeCameraCaptureStatus();
 
 class UwpCameraCaptureControl {
 public:
