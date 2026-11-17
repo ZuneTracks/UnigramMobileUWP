@@ -55,6 +55,7 @@ namespace Unigram.Services
         IHandle<UpdateAuthorizationState>,
         IHandle<UpdateOption>,
         IHandle<UpdateUser>,
+        IHandle<UpdateChatPhoto>,
         IHandle<UpdateNotification>,
         IHandle<UpdateNotificationGroup>,
         IHandle<UpdateHavePendingNotifications>,
@@ -67,6 +68,7 @@ namespace Unigram.Services
         private readonly IEventAggregator _aggregator;
 
         private readonly DisposableMutex _registrationLock;
+        private readonly ToastAvatarCache _toastAvatars;
         private bool _alreadyRegistered;
         private PushNotificationChannel _channel;
         private DateTimeOffset _nextRegistrationAttempt;
@@ -89,6 +91,7 @@ namespace Unigram.Services
             _aggregator = aggregator;
 
             _registrationLock = new DisposableMutex();
+            _toastAvatars = new ToastAvatarCache(protoService, sessionService.Id);
 
             _aggregator.Subscribe(this);
 
@@ -1233,6 +1236,19 @@ namespace Unigram.Services
 #if MODERN_TDLIB
                 _ = ReplayPendingCallPushAsync();
 #endif
+                _toastAvatars.ScheduleSweep();
+            }
+            else if (update.AuthorizationState is AuthorizationStateLoggingOut)
+            {
+                _toastAvatars.Clear();
+            }
+        }
+
+        public void Handle(UpdateChatPhoto update)
+        {
+            if (_protoService.TryGetChat(update.ChatId, out Chat chat))
+            {
+                _ = _toastAvatars.UpdateAsync(chat, update.Photo);
             }
         }
 
@@ -1471,13 +1487,16 @@ namespace Unigram.Services
             if (isGroup && sender != null)
             {
                 Telegram.Td.Api.File senderPhoto = null;
+                string senderKey = null;
                 if (_protoService.TryGetUser(sender, out User senderUser))
                 {
                     senderPhoto = senderUser.ProfilePhoto?.Small;
+                    senderKey = "u" + senderUser.Id;
                 }
                 else if (_protoService.TryGetChat(sender, out Chat senderChat) && senderChat.Id != chat.Id)
                 {
                     senderPhoto = senderChat.Photo?.Small;
+                    senderKey = ToastAvatarCache.GetKey(senderChat);
                 }
 
                 if (senderPhoto != null)
@@ -1485,6 +1504,8 @@ namespace Unigram.Services
                     senderPhoto = await DownloadPhotoAsync(senderPhoto, "sender");
                     if (senderPhoto != null)
                     {
+                        _toastAvatars.Update(senderKey, senderPhoto);
+
                         var picture = await CachePhotoAsync(senderPhoto, "sender");
                         if (!string.IsNullOrEmpty(picture))
                         {
@@ -1499,6 +1520,8 @@ namespace Unigram.Services
                 var chatPhoto = await DownloadPhotoAsync(chat.Photo.Small, "chat");
                 if (chatPhoto != null)
                 {
+                    _toastAvatars.Update(ToastAvatarCache.GetKey(chat), chatPhoto);
+
                     var picture = await CachePhotoAsync(chatPhoto, "chat");
                     if (!string.IsNullOrEmpty(picture))
                     {

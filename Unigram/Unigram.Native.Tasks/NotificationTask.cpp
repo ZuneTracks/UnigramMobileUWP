@@ -71,6 +71,52 @@ namespace
 		result.UniversalTime = (static_cast<int64>(value) + 11644473600LL) * 10000000LL;
 		return result;
 	}
+
+	String^ GetLocArg(JsonArray^ loc_args, unsigned int index)
+	{
+		if (loc_args == nullptr || index >= loc_args->Size)
+		{
+			return nullptr;
+		}
+
+		auto value = loc_args->GetAt(index);
+		return value->ValueType == JsonValueType::String ? value->GetString() : nullptr;
+	}
+
+	bool StartsWith(const std::wstring& value, const wchar_t* prefix)
+	{
+		return value.compare(0, wcslen(prefix), prefix) == 0;
+	}
+
+	// Peer ids from the push become file names, so only plain digits are accepted.
+	bool IsPeerId(const std::wstring& value)
+	{
+		return !value.empty() && value.size() <= 20 && std::all_of(value.begin(), value.end(), [](wchar_t ch) { return ch >= L'0' && ch <= L'9'; });
+	}
+
+	// Single pass so an argument that itself contains "{1}" is never substituted again.
+	std::wstring FormatLocString(const std::wstring& format, JsonArray^ loc_args)
+	{
+		std::wstring result;
+		for (size_t i = 0; i < format.size(); i++)
+		{
+			if (format[i] == L'{' && i + 2 < format.size() && format[i + 1] >= L'0' && format[i + 1] <= L'9' && format[i + 2] == L'}')
+			{
+				auto arg = GetLocArg(loc_args, format[i + 1] - L'0');
+				if (arg != nullptr)
+				{
+					result += arg->Data();
+				}
+
+				i += 2;
+				continue;
+			}
+
+			result += format[i];
+		}
+
+		return result;
+	}
 }
 
 void NotificationTask::Run(IBackgroundTaskInstance^ taskInstance)
@@ -222,7 +268,8 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 		if (!muted || isCallRequest)
 		{
 			auto loc_key = data->GetNamedString("loc_key");
-			auto loc_args = data->GetNamedArray("loc_args");
+			// Some pushes (e.g. REACT_HIDDEN) carry no arguments at all.
+			auto loc_args = data->GetNamedArray("loc_args", ref new JsonArray());
 			auto custom = data->GetNamedObject("custom", nullptr);
 
 			//time_t rawtime = time(NULL);
@@ -247,8 +294,15 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 			auto launch = GetLaunch(custom, loc_key, sessionMapped ? session : nullptr);
 			auto group = GetGroup(custom);
 			auto isSecretChat = IsSecretChatPush(loc_key);
-			String^ picture = isSecretChat ? nullptr : GetPicture(custom, group, session);
-			LogPictureSource(picture);
+			String^ picture = nullptr;
+			if (isSecretChat)
+			{
+				LogDiagnostic(L"native.toast.picture", L"source=none;reason=secret_chat");
+			}
+			else
+			{
+				picture = GetPicture(custom, group, sessionMapped ? session : nullptr);
+			}
 			auto date = GetDate(notification);
 
 			if (message == nullptr)
@@ -304,58 +358,65 @@ task<void> NotificationTask::UpdateToastAndTiles(String^ content /*, std::wofstr
 String^ NotificationTask::GetCaption(JsonArray^ loc_args, String^ loc_key)
 {
 	std::wstring key = loc_key->Data();
+	String^ caption = nullptr;
 
-	if (key.find(L"CHAT") == 0 || key.find(L"GEOCHAT") == 0)
+	// CHAT_* (including CHAT_REACT_*) is titled with the group; the first argument is the sender.
+	if (StartsWith(key, L"CHAT") || StartsWith(key, L"GEOCHAT"))
 	{
-		return loc_args->GetStringAt(1);
+		caption = GetLocArg(loc_args, 1);
 	}
-	else if (key.find(L"MESSAGE") == 0)
+	else if (StartsWith(key, L"MESSAGE") || StartsWith(key, L"CHANNEL") || StartsWith(key, L"PINNED")
+		|| StartsWith(key, L"PHONE_CALL") || StartsWith(key, L"VIDEO_CALL") || StartsWith(key, L"REACT_"))
 	{
-		return loc_args->GetStringAt(0);
-	}
-	else if (key.find(L"CHANNEL") == 0)
-	{
-		return loc_args->GetStringAt(0);
-	}
-	else if (key.find(L"PINNED") == 0)
-	{
-		return loc_args->GetStringAt(0);
-	}
-	else if (key.find(L"PHONE_CALL") == 0 || key.find(L"VIDEO_CALL") == 0)
-	{
-		return loc_args->GetStringAt(0);
-	}
-	else if (key.find(L"AUTH") == 0 || key.find(L"CONTACT") == 0 || key.find(L"ENCRYPTED") == 0 || key.find(L"ENCRYPTION") == 0)
-	{
-		return "Telegram";
+		caption = GetLocArg(loc_args, 0);
 	}
 
-	return "Telegram";
+	// AUTH, CONTACT and secret chat pushes are deliberately titled "Telegram".
+	if (caption == nullptr || caption->Length() == 0)
+	{
+		return L"Telegram";
+	}
+
+	return caption;
 }
 
 String^ NotificationTask::GetMessage(JsonArray^ loc_args, String^ loc_key)
 {
 	auto resourceLoader = ResourceLoader::GetForViewIndependentUse("Unigram.Native.Tasks/Resources");
 	auto text = resourceLoader->GetString(loc_key);
-	if (text->Length())
+	if (text->Length() == 0)
 	{
-		std::wstring wtext = text->Data();
-
-		for (int i = 0; i < loc_args->Size; i++)
+		// Telegram keeps adding reaction kinds (gifts, todo lists, ...); describe unknown ones
+		// generically rather than falling back to "New Notification".
+		std::wstring key = loc_key->Data();
+		String^ fallback = nullptr;
+		if (StartsWith(key, L"CHAT_REACT_"))
 		{
-			wchar_t* code = new wchar_t[4];
-			swprintf_s(code, 4, L"{%d}", i);
-			std::string::size_type index = wtext.find(code);
-			if (index != std::string::npos)
-			{
-				wtext = wtext.replace(wtext.find(code), 3, loc_args->GetStringAt(i)->Data());
-			}
+			fallback = L"CHAT_REACT_NOTEXT";
+		}
+		else if (StartsWith(key, L"REACT_"))
+		{
+			fallback = key.find(L"HIDDEN") != std::wstring::npos ? L"REACT_HIDDEN" : L"REACT_NOTEXT";
 		}
 
-		return ref new String(wtext.c_str());
+		std::wstring details = L"type=";
+		details += SanitizePushType(loc_key)->Data();
+		details += fallback != nullptr ? L";result=fallback" : L";result=missing";
+		LogDiagnostic(L"native.payload.text", ref new String(details.c_str()));
+
+		if (fallback == nullptr)
+		{
+			return nullptr;
+		}
+
+		text = resourceLoader->GetString(fallback);
+		if (text->Length() == 0)
+		{
+			return nullptr;
+		}
 	}
 
-	return nullptr;
+	return ref new String(FormatLocString(text->Data(), loc_args).c_str());
 }
 
 String^ NotificationTask::GetLaunch(JsonObject^ custom, String^ loc_key, String^ session)
@@ -449,95 +510,70 @@ String^ NotificationTask::GetGroup(JsonObject^ custom)
 	return nullptr;
 }
 
+// Avatars are written by the managed ToastAvatarCache as LocalFolder\toast-avatars\{session}\{u|c}{id}.jpg.
+// The push itself carries no usable photo reference for modern TDLib, so only cached files are used.
 String^ NotificationTask::GetPicture(JsonObject^ custom, String^ group, String^ session)
 {
-	if (custom && custom->HasKey("mtpeer"))
+	if (session == nullptr || !IsPeerId(session->Data()))
 	{
-		auto mtpeer = custom->GetNamedObject("mtpeer");
-		if (mtpeer->HasKey("ph"))
-		{
-			auto ph = mtpeer->GetNamedObject("ph");
-			if (ph->HasKey("_layers") && ph->HasKey("1"))
-			{
-				ph = ph->GetNamedObject("1");
-			}
-
-			auto volume_id = ph->GetNamedString("volume_id");
-			auto local_id = ph->GetNamedString("local_id");
-
-			std::wstring volumeSTR = volume_id->Data();
-			auto volumeULL = wcstoull(volumeSTR.c_str(), NULL, 0);
-			auto volume = static_cast<signed long long>(volumeULL);
-
-			auto temp = ApplicationData::Current->LocalFolder->Path;
-
-			if (group == nullptr)
-			{
-				return nullptr;
-			}
-
-			// Must match SessionStorage.Root on the managed side: the modern TDLib build
-			// isolates per-session storage, and the avatar is stored under the session that
-			// actually received the push, never an assumed session 0.
-			std::wstring root = L"ms-appdata:///local/";
-#ifdef MODERN_TDLIB
-			root += L"tdlib-experimental/";
-#endif
-
-			std::wstringstream almost;
-			almost << root
-				<< (session != nullptr ? session->Data() : L"0")
-				<< L"/profile_photos/"
-				<< volume
-				<< L"_"
-				<< local_id->Data()
-				<< L".jpg";
-
-			return ref new String(almost.str().c_str());
-		}
-	}
-
-	if (group == nullptr)
-	{
+		LogDiagnostic(L"native.toast.picture", L"source=none;reason=no_session");
 		return nullptr;
 	}
 
-	std::wstringstream almost;
-	almost << L"ms-appdata:///local/temp/"
-		<< group->Data()
-		<< L"_placeholder.png";
-
-	return ref new String(almost.str().c_str());
-}
-
-// Records only which kind of avatar a toast references and whether that file exists; a
-// missing file makes the toast render without an avatar.
-void NotificationTask::LogPictureSource(String^ picture)
-{
-	if (picture == nullptr)
+	if (group == nullptr || group->Length() < 2 || !IsPeerId(std::wstring(group->Data() + 1)))
 	{
-		LogDiagnostic(L"native.toast.picture", L"source=none");
-		return;
+		LogDiagnostic(L"native.toast.picture", L"source=none;reason=no_peer");
+		return nullptr;
 	}
 
-	std::wstring uri = picture->Data();
-	const std::wstring prefix = L"ms-appdata:///local/";
-	const wchar_t* source = uri.find(L"/profile_photos/") != std::wstring::npos ? L"photo" : L"placeholder";
-	bool exists = false;
+	std::wstring folder = ApplicationData::Current->LocalFolder->Path->Data();
+	folder += L"\\toast-avatars\\";
+	folder += session->Data();
+	folder += L"\\";
 
-	if (uri.compare(0, prefix.length(), prefix) == 0)
+	auto tryKey = [&](const std::wstring& key) -> String^
 	{
-		std::wstring path = ApplicationData::Current->LocalFolder->Path->Data();
-		path += L"\\";
-		path += uri.substr(prefix.length());
-		std::replace(path.begin(), path.end(), L'/', L'\\');
-		exists = GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+		auto path = folder + key + L".jpg";
+		if (GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
+		{
+			return nullptr;
+		}
+
+		std::wstring uri = L"ms-appdata:///local/toast-avatars/";
+		uri += session->Data();
+		uri += L"/";
+		uri += key;
+		uri += L".jpg";
+		return ref new String(uri.c_str());
+	};
+
+	std::wstring groupKey = group->Data();
+	auto isChat = groupKey[0] == L'c';
+
+	// In groups the sender's photo is more useful than the group's, as on the managed side.
+	if (isChat && custom != nullptr && custom->HasKey(L"from_id"))
+	{
+		auto fromId = custom->GetNamedValue(L"from_id");
+		if (fromId->ValueType == JsonValueType::String && IsPeerId(fromId->GetString()->Data()))
+		{
+			auto picture = tryKey(std::wstring(L"u") + fromId->GetString()->Data());
+			if (picture != nullptr)
+			{
+				LogDiagnostic(L"native.toast.picture", L"source=sender");
+				return picture;
+			}
+		}
 	}
 
-	std::wstring details = L"source=";
-	details += source;
-	details += exists ? L";exists=1" : L";exists=0";
-	LogDiagnostic(L"native.toast.picture", ref new String(details.c_str()));
+	auto picture = tryKey(groupKey);
+	if (picture != nullptr)
+	{
+		LogDiagnostic(L"native.toast.picture", isChat ? L"source=chat" : L"source=user");
+		return picture;
+	}
+
+	LogDiagnostic(L"native.toast.picture", L"source=none;reason=not_cached");
+	return nullptr;
 }
 
 String^ NotificationTask::GetDate(JsonObject^ notification)

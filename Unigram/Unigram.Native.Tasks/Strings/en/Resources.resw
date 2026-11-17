@@ -366,4 +366,124 @@
   <data name="PINNED_VIDEO" xml:space="preserve">
     <value>pinned a video</value>
   </data>
+  <data name="REACT_AUDIO" xml:space="preserve">
+    <value>reacted {1} to your voice message</value>
+  </data>
+  <data name="REACT_CONTACT" xml:space="preserve">
+    <value>reacted {1} to your contact {2}</value>
+  </data>
+  <data name="REACT_DOC" xml:space="preserve">
+    <value>reacted {1} to your file</value>
+  </data>
+  <data name="REACT_GAME" xml:space="preserve">
+    <value>reacted {1} to your game</value>
+  </data>
+  <data name="REACT_GEO" xml:space="preserve">
+    <value>reacted {1} to your map</value>
+  </data>
+  <data name="REACT_GEOLIVE" xml:space="preserve">
+    <value>reacted {1} to your live location</value>
+  </data>
+  <data name="REACT_GIF" xml:space="preserve">
+    <value>reacted {1} to your GIF</value>
+  </data>
+  <data name="REACT_GIVEAWAY" xml:space="preserve">
+    <value>reacted {1} to your giveaway</value>
+  </data>
+  <data name="REACT_HIDDEN" xml:space="preserve">
+    <value>New reaction to your message</value>
+  </data>
+  <data name="REACT_INVOICE" xml:space="preserve">
+    <value>reacted {1} to your invoice</value>
+  </data>
+  <data name="REACT_NOTEXT" xml:space="preserve">
+    <value>reacted {1} to your message</value>
+  </data>
+  <data name="REACT_PHOTO" xml:space="preserve">
+    <value>reacted {1} to your photo</value>
+  </data>
+  <data name="REACT_PHOTO_SECRET" xml:space="preserve">
+    <value>reacted {1} to your self-destructing photo</value>
+  </data>
+  <data name="REACT_POLL" xml:space="preserve">
+    <value>reacted {1} to your poll {2}</value>
+  </data>
+  <data name="REACT_QUIZ" xml:space="preserve">
+    <value>reacted {1} to your quiz {2}</value>
+  </data>
+  <data name="REACT_ROUND" xml:space="preserve">
+    <value>reacted {1} to your video message</value>
+  </data>
+  <data name="REACT_STICKER" xml:space="preserve">
+    <value>reacted {1} to your {2} sticker</value>
+  </data>
+  <data name="REACT_STORY" xml:space="preserve">
+    <value>reacted {1} to your story</value>
+  </data>
+  <data name="REACT_STORY_HIDDEN" xml:space="preserve">
+    <value>New reaction to your story</value>
+  </data>
+  <data name="REACT_TEXT" xml:space="preserve">
+    <value>reacted {1} to your message &quot;{2}&quot;</value>
+  </data>
+  <data name="REACT_VIDEO" xml:space="preserve">
+    <value>reacted {1} to your video</value>
+  </data>
+  <data name="REACT_VIDEO_SECRET" xml:space="preserve">
+    <value>reacted {1} to your self-destructing video</value>
+  </data>
+  <data name="CHAT_REACT_AUDIO" xml:space="preserve">
+    <value>{0} reacted {2} to your voice message</value>
+  </data>
+  <data name="CHAT_REACT_CONTACT" xml:space="preserve">
+    <value>{0} reacted {2} to your contact {3}</value>
+  </data>
+  <data name="CHAT_REACT_DOC" xml:space="preserve">
+    <value>{0} reacted {2} to your file</value>
+  </data>
+  <data name="CHAT_REACT_GAME" xml:space="preserve">
+    <value>{0} reacted {2} to your game</value>
+  </data>
+  <data name="CHAT_REACT_GEO" xml:space="preserve">
+    <value>{0} reacted {2} to your map</value>
+  </data>
+  <data name="CHAT_REACT_GEOLIVE" xml:space="preserve">
+    <value>{0} reacted {2} to your live location</value>
+  </data>
+  <data name="CHAT_REACT_GIF" xml:space="preserve">
+    <value>{0} reacted {2} to your GIF</value>
+  </data>
+  <data name="CHAT_REACT_GIVEAWAY" xml:space="preserve">
+    <value>{0} reacted {2} to your giveaway</value>
+  </data>
+  <data name="CHAT_REACT_INVOICE" xml:space="preserve">
+    <value>{0} reacted {2} to your invoice</value>
+  </data>
+  <data name="CHAT_REACT_NOTEXT" xml:space="preserve">
+    <value>{0} reacted {2} to your message</value>
+  </data>
+  <data name="CHAT_REACT_PHOTO" xml:space="preserve">
+    <value>{0} reacted {2} to your photo</value>
+  </data>
+  <data name="CHAT_REACT_POLL" xml:space="preserve">
+    <value>{0} reacted {2} to your poll {3}</value>
+  </data>
+  <data name="CHAT_REACT_QUIZ" xml:space="preserve">
+    <value>{0} reacted {2} to your quiz {3}</value>
+  </data>
+  <data name="CHAT_REACT_ROUND" xml:space="preserve">
+    <value>{0} reacted {2} to your video message</value>
+  </data>
+  <data name="CHAT_REACT_STICKER" xml:space="preserve">
+    <value>{0} reacted {2} to your {3} sticker</value>
+  </data>
+  <data name="CHAT_REACT_STORY" xml:space="preserve">
+    <value>{0} reacted {2} to your story</value>
+  </data>
+  <data name="CHAT_REACT_TEXT" xml:space="preserve">
+    <value>{0} reacted {2} to your message &quot;{3}&quot;</value>
+  </data>
+  <data name="CHAT_REACT_VIDEO" xml:space="preserve">
+    <value>{0} reacted {2} to your video</value>
+  </data>
 </root>

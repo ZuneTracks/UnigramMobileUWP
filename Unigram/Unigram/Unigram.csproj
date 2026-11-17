@@ -646,6 +646,7 @@
     <Compile Include="Services\LocationService.cs" />
     <Compile Include="Services\NetworkService.cs" />
     <Compile Include="Services\NotificationsService.cs" />
+    <Compile Include="Services\ToastAvatarCache.cs" />
     <Compile Include="Services\Settings\AutoDownloadSettings.cs" />
     <Compile Include="Services\Settings\DiagnosticsSettings.cs" />
     <Compile Include="Services\Settings\EmojiSettings.cs" />
