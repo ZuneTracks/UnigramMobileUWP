@@ -212,7 +212,7 @@ namespace Unigram.Services
         #region App version
 
         // Keep this in sync with Package.appxmanifest for every shipped build.
-        public static readonly string CurrentChangelog = "**Calls**\n• Fixed a crash when switching between the front and rear camera during a video call";
+        public static readonly string CurrentChangelog = "**Notifications**\n• Reaction notifications now show who reacted and to what, instead of a generic \"Telegram\" alert\n• Notifications and the Live Tile now show contact and group photos when the app is closed";
 
         public int Session => _session;
 
