@@ -52,6 +52,7 @@ struct CameraCaptureStats {
     std::atomic<int> capFps{0};
     std::atomic<int> frameWidth{0};
     std::atomic<int> frameHeight{0};
+    std::atomic<unsigned int> capabilityCacheHits{0};
 };
 
 extern CameraCaptureStats g_cameraStats;
@@ -93,6 +94,7 @@ std::string DescribeCameraCaptureStatus() {
         "@" + std::to_string(stats.capFps.load(std::memory_order_acquire));
     status += ";cam_frame=" + std::to_string(stats.frameWidth.load(std::memory_order_acquire)) +
         "x" + std::to_string(stats.frameHeight.load(std::memory_order_acquire));
+    status += ";cam_cap_cache=" + std::to_string(stats.capabilityCacheHits.load(std::memory_order_acquire));
     return status;
 }
 
@@ -148,6 +150,40 @@ public:
         Unigram::Native::Calls::ClearCameraCaptureInflightStage();
     }
 };
+
+// Choosing a capability on Windows 10 Mobile opens a whole probe MediaCapture on the
+// sensor just to read its stream formats, closes it, and then the real capture opens
+// the same sensor again. During a camera switch that put three camera lifecycles back
+// to back on one driver, and a sensor's formats do not change while the app runs, so
+// each sensor is probed once per process. Profile-based capabilities carry COM objects
+// tied to the probe and are never cached.
+std::mutex g_capabilityCacheMutex;
+std::unordered_map<std::string, webrtc::VideoCaptureCapability> g_capabilityCache;
+
+bool TryGetCachedCapability(const std::string& deviceId, webrtc::VideoCaptureCapability* capability) {
+    std::lock_guard<std::mutex> lock(g_capabilityCacheMutex);
+    const auto cached = g_capabilityCache.find(deviceId);
+    if (cached == g_capabilityCache.end()) {
+        return false;
+    }
+
+    *capability = cached->second;
+    return true;
+}
+
+void CacheCapability(const std::string& deviceId, const webrtc::VideoCaptureCapability& capability) {
+    if (capability.media_capture_video_profile || capability.record_media_description) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_capabilityCacheMutex);
+    g_capabilityCache[deviceId] = capability;
+}
+
+void ForgetCachedCapability(const std::string& deviceId) {
+    std::lock_guard<std::mutex> lock(g_capabilityCacheMutex);
+    g_capabilityCache.erase(deviceId);
+}
 
 bool IsH264(const webrtc::SdpVideoFormat& format) {
     return format.name == "H264";
@@ -305,7 +341,10 @@ public:
         _rotation.store(rotation, std::memory_order_release);
         if (_state.load(std::memory_order_acquire) == VideoState::Active) {
             operation.SetStage("start");
-            return Start();
+            _operation = &operation;
+            const auto started = Start();
+            _operation = nullptr;
+            return started;
         }
 
         return true;
@@ -459,39 +498,48 @@ private:
         }
 
         _module->RegisterCaptureDataCallback(this);
-        auto requested = webrtc::VideoCaptureCapability();
-        requested.videoType = webrtc::VideoType::kI420;
-        requested.width = kPreferredWidth;
-        requested.height = kPreferredHeight;
-        requested.maxFPS = kPreferredFps;
         _capability = webrtc::VideoCaptureCapability();
-        const auto capabilityIndex = info->GetBestMatchedCapability(
-            _module->CurrentDeviceName(),
-            requested,
-            _capability);
-        if (capabilityIndex < 0 ||
-            _capability.width == 0 ||
-            _capability.height == 0 ||
-            _capability.maxFPS == 0) {
-            _capability.width = kPreferredWidth;
-            _capability.height = kPreferredHeight;
-            _capability.maxFPS = kPreferredFps;
-            _capability.videoType = webrtc::VideoType::kI420;
+        if (TryGetCachedCapability(deviceId, &_capability)) {
+            stats.capabilityCacheHits.fetch_add(1, std::memory_order_acq_rel);
+        } else {
+            SetOperationStage("start:probe");
+            auto requested = webrtc::VideoCaptureCapability();
+            requested.videoType = webrtc::VideoType::kI420;
+            requested.width = kPreferredWidth;
+            requested.height = kPreferredHeight;
+            requested.maxFPS = kPreferredFps;
+            const auto capabilityIndex = info->GetBestMatchedCapability(
+                _module->CurrentDeviceName(),
+                requested,
+                _capability);
+            if (capabilityIndex < 0 ||
+                _capability.width == 0 ||
+                _capability.height == 0 ||
+                _capability.maxFPS == 0) {
+                _capability.width = kPreferredWidth;
+                _capability.height = kPreferredHeight;
+                _capability.maxFPS = kPreferredFps;
+                _capability.videoType = webrtc::VideoType::kI420;
+            }
+
+            if (_capability.profile_id.empty() && !SetFallbackDeviceId(&_capability, deviceId)) {
+                RTC_LOG(LS_ERROR) << "Failed to preserve the UWP camera device identifier.";
+                _module->DeRegisterCaptureDataCallback();
+                _module = nullptr;
+                return false;
+            }
         }
 
-        if (_capability.profile_id.empty() && !SetFallbackDeviceId(&_capability, deviceId)) {
-            RTC_LOG(LS_ERROR) << "Failed to preserve the UWP camera device identifier.";
-            _module->DeRegisterCaptureDataCallback();
-            _module = nullptr;
-            return false;
-        }
-
+        SetOperationStage("start:open");
         if (_module->StartCapture(_capability) != 0) {
             RTC_LOG(LS_ERROR) << "Failed to start UWP camera capture.";
             stats.startFailures.fetch_add(1, std::memory_order_acq_rel);
+            ForgetCachedCapability(deviceId);
             Stop();
             return false;
         }
+
+        CacheCapability(deviceId, _capability);
 
         _dimensions = { _capability.width, _capability.height };
         stats.capWidth.store(_capability.width, std::memory_order_release);
@@ -523,6 +571,15 @@ private:
         }
     }
 
+    // Only a switch carries an operation scope; the scope owns the in-flight marker and
+    // clears it, so a stage is never set outside one.
+    void SetOperationStage(const char* stage) {
+        if (_operation) {
+            _operation->SetStage(stage);
+        }
+    }
+
+    CameraCaptureOperationScope* _operation = nullptr;
     std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>> _sink;
     rtc::scoped_refptr<webrtc::VideoCaptureModule> _module;
     webrtc::VideoCaptureCapability _capability;

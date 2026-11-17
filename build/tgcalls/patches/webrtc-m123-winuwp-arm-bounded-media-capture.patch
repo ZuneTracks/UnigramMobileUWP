@@ -263,10 +263,66 @@ index 3d20c65698..61a4e536cf 100644
    Microsoft::WRL::ComPtr<IAsyncInfo> async_info;
    std::shared_ptr<HANDLE> event_completed_handle_ptr = NULL;
 diff --git a/modules/video_capture/windows/video_capture_winrt.cc b/modules/video_capture/windows/video_capture_winrt.cc
-index 706327bfc3..0dfd6ccee7 100644
+index 706327bfc3..f91dd30e26 100644
 --- a/modules/video_capture/windows/video_capture_winrt.cc
 +++ b/modules/video_capture/windows/video_capture_winrt.cc
-@@ -143,6 +143,8 @@ VideoCaptureWinRTInternal::~VideoCaptureWinRTInternal() {
+@@ -22,7 +22,11 @@
+ #include <wrl/wrappers/corewrappers.h>
+
+ #include <cassert>
++#include <chrono>
++#include <condition_variable>
+ #include <functional>
++#include <memory>
++#include <mutex>
+
+ #include "modules/video_capture/video_capture_config.h"
+ #include "modules/video_capture/windows/help_functions_winrt.h"
+@@ -107,6 +111,22 @@ typedef std::function<int32_t(uint8_t*,
+                               int64_t)>
+     PFNIncomingFrameType;
+
++struct VideoCaptureWinRTInternal;
++
++// FrameArrived runs on a Media Foundation worker, and removing the handler does not
++// wait for a callback that is already running. Without this gate a frame can still be
++// inside the reader, or inside this object, while StopCapture closes the MediaCapture
++// under it or the destructor frees it. The handler holds the gate rather than the
++// owner, so a callback delivered after the stop finds no owner and returns.
++struct FrameArrivedGate {
++  std::mutex lock;
++  std::condition_variable drained;
++  VideoCaptureWinRTInternal* owner = nullptr;
++  int active = 0;
++};
++
++constexpr DWORD kFrameCallbackDrainTimeoutMs = 1000;
++
+ struct VideoCaptureWinRTInternal {
+  public:
+   explicit VideoCaptureWinRTInternal(
+@@ -118,6 +138,11 @@ struct VideoCaptureWinRTInternal {
+   HRESULT StopCapture();
+   bool CaptureStarted();
+
++  // Stops new frame callbacks and waits for any that are running. It has to be called
++  // without the module's api lock, because a running callback takes that lock to
++  // deliver its frame.
++  bool QuiesceFrameCallbacks(DWORD timeout_ms);
++
+   HRESULT FrameArrived(IMediaFrameReader* sender,
+                        IMediaFrameArrivedEventArgs* args);
+
+@@ -126,6 +151,8 @@ struct VideoCaptureWinRTInternal {
+
+   ComPtr<IMediaFrameReader> media_frame_reader_;
+   EventRegistrationToken media_source_frame_arrived_token;
++  std::mutex frame_gate_lock_;
++  std::shared_ptr<FrameArrivedGate> frame_gate_;
+
+   bool is_capturing = false;
+   PFNIncomingFrameType pfn_incoming_frame_;
+@@ -143,6 +170,8 @@ VideoCaptureWinRTInternal::~VideoCaptureWinRTInternal() {
 
  HRESULT VideoCaptureWinRTInternal::StartCapture(
      const VideoCaptureCapability& capability) {
@@ -275,7 +331,7 @@ index 706327bfc3..0dfd6ccee7 100644
    HRESULT hr = S_OK;
    ComPtr<IMediaCaptureInitializationSettings> initialization_settings;
    ComPtr<IMediaFrameSource> media_frame_source;
-@@ -338,7 +340,7 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
+@@ -338,7 +367,7 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
        }
 
        if (SUCCEEDED(hr)) {
@@ -284,7 +340,7 @@ index 706327bfc3..0dfd6ccee7 100644
        }
 
        break;
-@@ -369,7 +371,8 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
+@@ -369,7 +398,8 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
    }
 
    if (SUCCEEDED(hr)) {
@@ -294,7 +350,47 @@ index 706327bfc3..0dfd6ccee7 100644
    }
 
    // Assigns a new media frame reader
-@@ -397,7 +400,8 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
+@@ -378,12 +408,36 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
+   }
+
+   if (SUCCEEDED(hr)) {
++    const std::shared_ptr<FrameArrivedGate> gate =
++        std::make_shared<FrameArrivedGate>();
++    gate->owner = this;
++    {
++      std::lock_guard<std::mutex> gate_guard(frame_gate_lock_);
++      frame_gate_ = gate;
++    }
+     hr = media_frame_reader_->add_FrameArrived(
+         Callback<
+             ITypedEventHandler<MediaFrameReader*, MediaFrameArrivedEventArgs*>>(
+-            [this](IMediaFrameReader* pSender,
+-                   IMediaFrameArrivedEventArgs* pEventArgs) {
+-              return this->FrameArrived(pSender, pEventArgs);
++            [gate](IMediaFrameReader* pSender,
++                   IMediaFrameArrivedEventArgs* pEventArgs) -> HRESULT {
++              VideoCaptureWinRTInternal* owner = nullptr;
++              {
++                std::lock_guard<std::mutex> guard(gate->lock);
++                owner = gate->owner;
++                if (owner == nullptr) {
++                  return S_OK;
++                }
++                ++gate->active;
++              }
++
++              const HRESULT result = owner->FrameArrived(pSender, pEventArgs);
++
++              {
++                std::lock_guard<std::mutex> guard(gate->lock);
++                --gate->active;
++              }
++              gate->drained.notify_all();
++              return result;
+             })
+             .Get(),
+         &media_source_frame_arrived_token);
+@@ -397,7 +451,8 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
    }
 
    if (SUCCEEDED(hr)) {
@@ -304,3 +400,133 @@ index 706327bfc3..0dfd6ccee7 100644
    }
 
    if (SUCCEEDED(hr)) {
+@@ -422,9 +477,55 @@ HRESULT VideoCaptureWinRTInternal::StartCapture(
+   return hr;
+ }
+
++namespace {
++
++// Releases a WinRT resource through IClosable when it supports it. Closing is
++// best effort: a frame that cannot be closed still has to let the rest go.
++template <typename T>
++void CloseIfPossible(const ComPtr<T>& value) {
++  if (!value) {
++    return;
++  }
++
++  ComPtr<IClosable> closable;
++  if (SUCCEEDED(value.As(&closable)) && closable) {
++    closable->Close();
++  }
++}
++
++}  // namespace
++
++bool VideoCaptureWinRTInternal::QuiesceFrameCallbacks(DWORD timeout_ms) {
++  std::shared_ptr<FrameArrivedGate> gate;
++  {
++    std::lock_guard<std::mutex> gate_guard(frame_gate_lock_);
++    gate = frame_gate_;
++  }
++  if (!gate) {
++    return true;
++  }
++
++  std::unique_lock<std::mutex> guard(gate->lock);
++  gate->owner = nullptr;
++  const bool drained = gate->drained.wait_for(
++      guard, std::chrono::milliseconds(timeout_ms),
++      [&gate] { return gate->active == 0; });
++  if (!drained) {
++    RTC_LOG(LS_WARNING) << "StopCapture warning: a frame callback is still "
++                           "running after "
++                        << timeout_ms << " ms";
++  }
++  return drained;
++}
++
+ HRESULT VideoCaptureWinRTInternal::StopCapture() {
+   HRESULT hr = S_OK;
+
++  // Normally already drained by VideoCaptureWinRT::StopCapture outside the api lock,
++  // in which case this returns at once. The direct path from StartCapture runs under
++  // that lock, so it is kept short: a callback waiting for the lock cannot finish.
++  QuiesceFrameCallbacks(100);
++
+   if (media_frame_reader_) {
+     ComPtr<IAsyncAction> async_action;
+
+@@ -438,7 +539,14 @@ HRESULT VideoCaptureWinRTInternal::StopCapture() {
+     }
+
+     if (SUCCEEDED(hr)) {
+-      hr = WaitForAsyncAction(async_action.Get(), 250);
++      hr = WaitForAsyncAction(async_action.Get(), 1000);
++    }
++
++    // Close the reader explicitly before the MediaCapture that owns its source, rather
++    // than leaving the final release to drop it after the capture is already closed.
++    // A reader whose stop did not complete is left alone, as the capture is below.
++    if (SUCCEEDED(hr)) {
++      CloseIfPossible(media_frame_reader_);
+     }
+   }
+
+@@ -460,6 +568,10 @@ HRESULT VideoCaptureWinRTInternal::StopCapture() {
+
+   media_frame_reader_.Reset();
+   media_capture_.Reset();
++  {
++    std::lock_guard<std::mutex> gate_guard(frame_gate_lock_);
++    frame_gate_.reset();
++  }
+
+   return hr;
+ }
+@@ -468,24 +580,6 @@ bool VideoCaptureWinRTInternal::CaptureStarted() {
+   return is_capturing;
+ }
+
+-namespace {
+-
+-// Releases a WinRT resource through IClosable when it supports it. Closing is
+-// best effort: a frame that cannot be closed still has to let the rest go.
+-template <typename T>
+-void CloseIfPossible(const ComPtr<T>& value) {
+-  if (!value) {
+-    return;
+-  }
+-
+-  ComPtr<IClosable> closable;
+-  if (SUCCEEDED(value.As(&closable)) && closable) {
+-    closable->Close();
+-  }
+-}
+-
+-}  // namespace
+-
+ HRESULT VideoCaptureWinRTInternal::FrameArrived(
+     IMediaFrameReader* sender_no_ref,
+     IMediaFrameArrivedEventArgs* args_no_ref) {
+@@ -681,6 +775,10 @@ VideoCaptureWinRT::VideoCaptureWinRT()
+                     std::placeholders::_7))) {}
+
+ VideoCaptureWinRT::~VideoCaptureWinRT() {
++  // A running callback delivers into this object, so it has to finish before the
++  // object goes away. No lock is held here, so the callback can complete.
++  Impl(video_capture_internal_)
++      ->QuiesceFrameCallbacks(kFrameCallbackDrainTimeoutMs);
+   delete Impl(video_capture_internal_);
+ }
+
+@@ -750,6 +848,10 @@ int32_t VideoCaptureWinRT::StartCapture(
+ }
+
+ int32_t VideoCaptureWinRT::StopCapture() {
++  // Drained before taking api_lock_: a running callback takes that lock to deliver its
++  // frame, so waiting for it while holding the lock could only time out.
++  Impl(video_capture_internal_)
++      ->QuiesceFrameCallbacks(kFrameCallbackDrainTimeoutMs);
+   webrtc::MutexLock lock(&api_lock_);
+   return Impl(video_capture_internal_)->StopCapture();
+ }
