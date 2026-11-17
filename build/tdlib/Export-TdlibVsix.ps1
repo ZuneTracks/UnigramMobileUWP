@@ -48,11 +48,41 @@ Copy-Into $designTime "DesignTime\CommonConfiguration\ARM"
 Copy-Item (Join-Path $template "LICENSE_1_0.txt") $staging
 Copy-Item $manifestPath $staging
 
+# OpenSSL (Apache-2.0) and zlib licence texts must accompany the redistributed DLLs.
+$licenseShare = Join-Path $WorkRoot "vcpkg_installed\arm-uwp-dynamic-v141\share"
+$thirdParty = Join-Path $staging "third-party-licenses"
+New-Item -ItemType Directory -Force -Path $thirdParty | Out-Null
+foreach ($port in @("openssl", "zlib")) {
+    $license = Join-Path $licenseShare "$port\copyright"
+    if (-not (Test-Path $license)) { throw "Missing $port licence: $license" }
+    Copy-Item $license (Join-Path $thirdParty "$port-LICENSE.txt")
+}
+
 $patchDest = Join-Path $staging "patches"
 New-Item -ItemType Directory -Force -Path $patchDest | Out-Null
 Copy-Item (Join-Path $PSScriptRoot "patches\*.patch") $patchDest
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
+
+$notice = @(
+    "Third-party components in this package",
+    "",
+    "Telegram.Td.dll, Telegram.Td.winmd, Telegram.Td.pri, Telegram.Td.lib",
+    "  TDLib $version (commit $($buildInfo["TDLIB_COMMIT"])) - https://github.com/tdlib/td",
+    "  Boost Software License 1.0 - see LICENSE_1_0.txt",
+    "  Modified by the UnigramMobile project - see patches/",
+    "",
+    "libcrypto-3-arm.dll, libssl-3-arm.dll",
+    "  OpenSSL $($buildInfo["OPENSSL_VERSION"]) - https://www.openssl.org/",
+    "  Apache License 2.0 - see third-party-licenses/openssl-LICENSE.txt",
+    "  Built for ARM UWP with the overlay port in build/tdlib/overlays/openssl of the UnigramMobile repository",
+    "",
+    "z.dll",
+    "  zlib $($buildInfo["ZLIB_VERSION"]) - https://zlib.net/",
+    "  zlib License - see third-party-licenses/zlib-LICENSE.txt",
+    ""
+) -join "`r`n"
+[IO.File]::WriteAllText((Join-Path $staging "THIRD-PARTY-NOTICES.txt"), $notice, $utf8)
 
 $sdkManifest = (Get-Content -LiteralPath (Join-Path $template "SDKManifest.xml") -Raw) `
     -replace 'SupportedArchitectures="[^"]*"', 'SupportedArchitectures="ARM"'
