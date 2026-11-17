@@ -60,6 +60,10 @@
          retained for validated Windows 10 Mobile calls. -->
     <UseModernTgCalls Condition="'$(UseModernTgCalls)' == ''">false</UseModernTgCalls>
     <ModernTgCallsBridgeRoot Condition="'$(ModernTgCallsBridgeRoot)' == ''">$(ModernTdlibWorkRoot)\bridge-probe</ModernTgCallsBridgeRoot>
+    <!-- Set to true with ModernTgCallsBridgeRoot pointing at an extracted
+         ModernCallsBridge-UWP-ARM.zip to use it as-is instead of rebuilding
+         the bridge from the external WebRTC/TgCalls trees. -->
+    <ModernTgCallsBridgePrebuilt Condition="'$(ModernTgCallsBridgePrebuilt)' == ''">false</ModernTgCallsBridgePrebuilt>
     <ModernTgCallsBridgeBuildScript>$(MSBuildThisFileDirectory)..\..\build\tgcalls\Build-ModernCallsBridgeProof.ps1</ModernTgCallsBridgeBuildScript>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
   </PropertyGroup>
@@ -2908,7 +2912,7 @@
     <Message Importance="High" Text="Preparing pinned TDLib $(ModernTdlibVersion) in $(ModernTdlibWorkRoot)..." />
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(ModernTdlibBuildScript)&quot; -WorkRoot &quot;$(ModernTdlibWorkRoot)&quot; -Stage All" />
   </Target>
-  <Target Name="EnsureModernTgCallsBridge" BeforeTargets="ValidateModernTgCallsBridge" Condition="'$(UseModernTgCalls)' == 'true'">
+  <Target Name="EnsureModernTgCallsBridge" BeforeTargets="ValidateModernTgCallsBridge" Condition="'$(UseModernTgCalls)' == 'true' And '$(ModernTgCallsBridgePrebuilt)' != 'true'">
     <Message Importance="High" Text="Preparing the opt-in ARM TgCalls bridge in $(ModernTgCallsBridgeRoot)..." />
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(ModernTgCallsBridgeBuildScript)&quot; -OutputRoot &quot;$(ModernTgCallsBridgeRoot)&quot;" />
   </Target>
@@ -2917,6 +2921,7 @@
   </Target>
   <Target Name="ValidateModernTgCallsBridge" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="EnsureModernTgCallsBridge" Condition="'$(UseModernTgCalls)' == 'true'">
     <Error Condition="'$(Platform)' != 'ARM'" Text="The modern TgCalls bridge is ARM-only." />
+    <Message Importance="High" Condition="'$(ModernTgCallsBridgePrebuilt)' == 'true'" Text="Using the prebuilt ARM TgCalls bridge in $(ModernTgCallsBridgeRoot)." />
     <Error Condition="!Exists('$(ModernTgCallsBridgeRoot)\Unigram.Native.Calls.Proof.winmd')" Text="Modern TgCalls WinMD was not found at $(ModernTgCallsBridgeRoot)\Unigram.Native.Calls.Proof.winmd." />
     <Error Condition="!Exists('$(ModernTgCallsBridgeRoot)\ModernCallsBridge.dll')" Text="Modern TgCalls implementation was not found at $(ModernTgCallsBridgeRoot)\ModernCallsBridge.dll." />
     <Error Condition="!Exists('$(ModernTgCallsBridgeRoot)\Unigram.Native.Calls.Proof.pri')" Text="Modern TgCalls PRI resources were not found at $(ModernTgCallsBridgeRoot)\Unigram.Native.Calls.Proof.pri." />
